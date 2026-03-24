@@ -44,11 +44,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }, [])
 
   const handleNewChat = () => {
-    if (messages.length > 0) {
-      const firstUserMsg = messages.find(m => m.role === 'user')
-      const title = firstUserMsg?.content.substring(0, 30) || 'Nova conversa'
-      addConversation(title)
-    }
     clearMessages()
     router.push('/app')
   }

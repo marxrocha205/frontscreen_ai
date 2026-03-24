@@ -10,6 +10,13 @@ export const translations = {
     'login.signup': 'Cadastre-se',
     'login.admin_access': 'Acesso Administrativo',
     
+    'register.title': 'Crie sua conta',
+    'register.subtitle': 'Junte-se ao ScreenAI para começar',
+    'register.password_placeholder': 'Digite sua senha',
+    'register.create_account': 'Criar conta',
+    'register.has_account': 'Já tem uma conta?',
+    'register.login': 'Entrar',
+    
     'app.new_chat': 'Nova conversa',
     'app.settings': 'Configurações',
     'app.free_plan': 'Plano Free',
@@ -51,6 +58,13 @@ export const translations = {
     'login.signup': 'Sign up',
     'login.admin_access': 'Admin Access',
     
+    'register.title': 'Create your account',
+    'register.subtitle': 'Join ScreenAI to get started',
+    'register.password_placeholder': 'Enter your password',
+    'register.create_account': 'Create account',
+    'register.has_account': 'Already have an account?',
+    'register.login': 'Log in',
+    
     'app.new_chat': 'New conversation',
     'app.settings': 'Settings',
     'app.free_plan': 'Free Plan',
@@ -91,6 +105,13 @@ export const translations = {
     'login.no_account': '¿No tienes una cuenta?',
     'login.signup': 'Regístrate',
     'login.admin_access': 'Acceso Administrativo',
+
+    'register.title': 'Crea tu cuenta',
+    'register.subtitle': 'Únete a ScreenAI para empezar',
+    'register.password_placeholder': 'Introduce tu contraseña',
+    'register.create_account': 'Crear cuenta',
+    'register.has_account': '¿Ya tienes una cuenta?',
+    'register.login': 'Iniciar sesión',
 
     'app.new_chat': 'Nueva conversación',
     'app.settings': 'Configuración',

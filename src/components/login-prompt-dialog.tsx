@@ -5,10 +5,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpenChange: (open: boolean) => void }) {
   const { t } = useI18n()
   const router = useRouter()
+  const [email, setEmail] = useState('')
+
+  const handleContinue = () => {
+    if (email.trim()) {
+      router.push(`/register?email=${encodeURIComponent(email)}`)
+    } else {
+      router.push('/login')
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -41,10 +51,12 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
            <div className="space-y-3">
               <Input 
                 type="email" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email address" 
                 className="bg-[#1f1f1f] border-zinc-700 h-12 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-600 focus-visible:border-zinc-500 transition-all text-base px-4" 
               />
-              <Button onClick={() => router.push('/login')} className="w-full bg-white text-black hover:bg-zinc-200 rounded-lg h-12 font-medium">
+              <Button onClick={handleContinue} className="w-full bg-white text-black hover:bg-zinc-200 rounded-lg h-12 font-medium">
                 Continue
               </Button>
            </div>

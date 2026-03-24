@@ -12,8 +12,9 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
-import { Mic, Navigation, MonitorUp, Eye, MessageSquare, Copy, Check } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Eye, MessageSquare, Copy, Check, Square, Zap } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { useRouter } from 'next/navigation'
 
 function CopyButton({ content }: { content: string }) {
   const [copied, setCopied] = useState(false)
@@ -36,13 +37,39 @@ function CopyButton({ content }: { content: string }) {
   )
 }
 
+function OutOfCreditsCard({ onUpgrade }: { onUpgrade: () => void }) {
+  return (
+    <div className="flex justify-start w-full">
+      <div className="max-w-sm rounded-2xl border border-amber-500/20 bg-amber-500/5 px-5 py-4 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-amber-500/10">
+            <Zap className="w-4 h-4 text-amber-400" />
+          </div>
+          <span className="text-sm font-semibold text-amber-300">Créditos esgotados</span>
+        </div>
+        <p className="text-xs text-zinc-400 leading-relaxed">
+          Você usou todos os seus créditos disponíveis. Faça upgrade para o plano Pro e continue conversando sem limites.
+        </p>
+        <Button
+          onClick={onUpgrade}
+          className="w-full h-9 bg-amber-500 hover:bg-amber-400 text-zinc-900 font-semibold text-xs rounded-xl transition-all"
+        >
+          <Zap className="w-3.5 h-3.5 mr-1.5" />
+          Fazer Upgrade
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 export default function ChatPage() {
   const { t } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [voiceMode, setVoiceMode] = useState(false)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const router = useRouter()
 
-  const { messages, sendMessage, isStreaming } = useWebsocket()
+  const { messages, sendMessage, stopMessage, isStreaming } = useWebsocket()
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare(3000)
   const { isLoggedIn } = useAuth()
@@ -144,27 +171,32 @@ export default function ChatPage() {
             <Eye className="w-12 h-12 text-zinc-800" />
             <p className="max-w-[300px] text-zinc-400 mb-2">Your AI assistant is ready. Share your screen or start typing to begin.</p>
 
-            <Button onClick={() => document.getElementById('chat-input')?.focus()} variant="outline" className="bg-[#1a1a1a] border-zinc-800/80 text-zinc-300 hover:text-white hover:bg-zinc-800 h-10 gap-2 rounded-xl">
-              <MessageSquare className="w-4 h-4" />
-              Iniciar nova conversa
+            <Button onClick={handleScreenShareToggle} variant="outline" className="bg-[#1a1a1a] border-zinc-800/80 text-zinc-300 hover:text-white hover:bg-zinc-800 h-10 gap-2 rounded-xl">
+              <MonitorUp className="w-4 h-4" />
+              {t('app.share_screen')}
             </Button>
           </div>
         )}
 
-        {messages.map((m, index) => (
-          <div key={m.id} data-role={m.role} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'} min-w-0`}>
-            <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-4 flex flex-col gap-2 ${m.role === 'user' ? 'bg-[#2a2a2a] text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-200'} min-w-0 overflow-hidden`}>
-              <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-zinc-800 text-sm max-w-none whitespace-pre-wrap [word-break:break-word] break-words">
-                <ReactMarkdown>{m.content}</ReactMarkdown>
-              </div>
-              {m.role === 'assistant' && m.content.length > 0 && (
-                <div className="flex items-center gap-2 mt-2">
-                  <CopyButton content={m.content} />
+        {messages.map((m, index) => {
+          if (m.role === 'assistant' && m.isError && m.errorType === 'out_of_credits') {
+            return <OutOfCreditsCard key={m.id} onUpgrade={() => router.push('/pricing')} />
+          }
+          return (
+            <div key={m.id} data-role={m.role} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'} min-w-0`}>
+              <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl px-5 py-4 flex flex-col gap-2 ${m.role === 'user' ? 'bg-[#2a2a2a] text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-200'} min-w-0 overflow-hidden`}>
+                <div className="prose prose-invert prose-p:leading-relaxed prose-pre:bg-[#111] prose-pre:border prose-pre:border-zinc-800 text-sm max-w-none whitespace-pre-wrap [word-break:break-word] break-words">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
                 </div>
-              )}
+                {m.role === 'assistant' && m.content.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <CopyButton content={m.content} />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
 
         {isStreaming && (messages.length === 0 || messages[messages.length - 1].role !== 'assistant' || messages[messages.length - 1].content.length === 0) && (
           <div className="flex justify-start">
@@ -208,29 +240,40 @@ export default function ChatPage() {
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => {
-                if (e.key === 'Enter') {
+                if (e.key === 'Enter' && !isStreaming) {
                   e.preventDefault()
                   handleSend()
                 }
               }}
               placeholder={t('app.type_message')}
-              className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-500 h-10 px-2 text-sm"
+              disabled={isStreaming}
+              className="flex-1 bg-transparent border-none shadow-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-500 h-10 px-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
             />
 
             {!voiceMode && (
-              <Button size="icon" variant="ghost" className="rounded-full text-zinc-400 hover:text-white shrink-0 hover:bg-zinc-800 w-10 h-10">
+              <Button size="icon" variant="ghost" disabled={isStreaming} className="rounded-full text-zinc-400 hover:text-white shrink-0 hover:bg-zinc-800 w-10 h-10 disabled:opacity-50">
                 <Mic className="w-4 h-4" />
               </Button>
             )}
 
-            <Button
-              size="icon"
-              onClick={handleSend}
-              disabled={!inputValue.trim()}
-              className="rounded-full bg-zinc-300 text-zinc-900 hover:bg-white shrink-0 w-10 h-10 ml-1 disabled:opacity-50"
-            >
-              <Navigation className="w-4 h-4 mr-0.5 mt-0.5" />
-            </Button>
+            {isStreaming ? (
+              <Button
+                size="icon"
+                onClick={stopMessage}
+                className="rounded-full bg-zinc-300 text-zinc-900 hover:bg-white shrink-0 w-10 h-10 ml-1"
+              >
+                <Square className="w-4 h-4 fill-zinc-900" />
+              </Button>
+            ) : (
+              <Button
+                size="icon"
+                onClick={handleSend}
+                disabled={!inputValue.trim()}
+                className="rounded-full bg-zinc-300 text-zinc-900 hover:bg-white shrink-0 w-10 h-10 ml-1 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Navigation className="w-4 h-4 mr-0.5 mt-0.5" />
+              </Button>
+            )}
           </div>
         </div>
 

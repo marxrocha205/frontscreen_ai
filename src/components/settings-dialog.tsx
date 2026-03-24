@@ -146,6 +146,12 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: { trigger: R
                      <span className="text-sm font-medium text-zinc-200">Plano Atual</span>
                      <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Free</span>
                    </div>
+
+                   <div className="mt-4 mb-4 p-3 rounded-md bg-zinc-950/50 border border-zinc-800/50 flex justify-between items-center">
+                     <span className="text-xs text-zinc-400">Saldo (Créditos)</span>
+                     <span className="text-sm font-semibold text-emerald-400">100</span>
+                   </div>
+
                    <p className="text-xs text-zinc-400 mb-4">Você está usando o plano gratuito do ScreenAI</p>
                    <ul className="text-xs text-zinc-500 space-y-1.5 list-disc pl-4 mb-4">
                      <li>10 conversas por mês</li>

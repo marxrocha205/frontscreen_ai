@@ -4,6 +4,8 @@ export interface Message {
   id: string
   role: 'user' | 'assistant'
   content: string
+  isError?: boolean
+  errorType?: 'out_of_credits' | string
 }
 
 export const AI_MODELS = [
