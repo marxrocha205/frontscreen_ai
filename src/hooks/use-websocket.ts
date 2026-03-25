@@ -1,6 +1,24 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from './use-chat-store'
 
+// -------------------------------------------------------------------
+// MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
+let currentPremiumAudio: HTMLAudioElement | null = null;
+
+// Função exportada que corta imediatamente qualquer áudio da IA
+export function stopAllAudio() {
+  // 1. Para o áudio Premium (OpenAI/Base64)
+  if (currentPremiumAudio) {
+    currentPremiumAudio.pause();
+    currentPremiumAudio.currentTime = 0; // Volta ao início
+    currentPremiumAudio = null;
+  }
+  // 2. Para o áudio Free (Navegador / SpeechSynthesis)
+  if (typeof window !== 'undefined' && window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+  }
+}
+
 export function useWebsocket() {
   const { messages, isStreaming, addMessage, setIsStreaming, setCredits } = useChatStore()
   const wsRef = useRef<WebSocket | null>(null)
@@ -43,11 +61,11 @@ export function useWebsocket() {
           setIsStreaming(false)
           // 1. Renderiza a resposta de texto
           addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
-          
+          stopAllAudio()
           // 2. Toca o áudio realista (se for plano pago) ou fallback (se for Free)
           if (data.audio_base64) {
-            const audio = new Audio("data:audio/mp3;base64," + data.audio_base64)
-            audio.play().catch(e => console.error("Erro ao tocar áudio:", e))
+            currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
+            currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
           } else if (data.message) {
             // Fallback para vozes gratuitas do navegador (Plano Free)
             const utterance = new SpeechSynthesisUtterance(data.message.replace(/[*#_]/g, ''))
