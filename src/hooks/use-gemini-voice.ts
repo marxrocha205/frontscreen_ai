@@ -1,42 +1,75 @@
-import { useState, useCallback, useRef } from 'react'
+"use client"
 
-export function useGeminiVoice(speechThreshold: number, silenceMs: number) {
+import { useState, useRef, useCallback } from 'react'
+
+/**
+ * Hook para gerenciar a gravação de voz e conversão para Base64.
+ * @param threshold Sensibilidade (reservado para lógica futura de VAD)
+ * @param silenceTimeout Tempo de silêncio (reservado para lógica futura de auto-stop)
+ */
+export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1500) {
   const [isRecording, setIsRecording] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false) // Activity detected (VAD)
-  const audioContextRef = useRef<AudioContext | null>(null)
-  const streamRef = useRef<MediaStream | null>(null)
-  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([]) // Mudado para Blob[] para melhor tipagem
+
   const startRecording = useCallback(async () => {
+    // Limpeza de segurança caso já exista uma gravação rodando
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop()
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      streamRef.current = stream
-      audioContextRef.current = new AudioContext()
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       
-      const source = audioContextRef.current.createMediaStreamSource(stream)
-      const analyser = audioContextRef.current.createAnalyser()
-      source.connect(analyser)
-      
-      // Basic mock interval for VAD simulation
-      // In a real VAD, we'd process `analyser.getFloatTimeDomainData` or use a worklet
-      setIsRecording(true)
-      console.log('Voice recording started. Threshold:', speechThreshold)
-    } catch (err) {
-      console.error('Failed to get user media', err)
-    }
-  }, [speechThreshold])
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
 
-  const stopRecording = useCallback(() => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop())
-      streamRef.current = null
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      
+      console.log(`[VoiceLog] Gravação iniciada. Threshold: ${threshold}, Timeout: ${silenceTimeout}`)
+    } catch (error) {
+      console.error("[VoiceError] Erro ao acessar o microfone:", error)
+      alert("Por favor, permita o acesso ao microfone no seu navegador.")
     }
-    if (audioContextRef.current) {
-      audioContextRef.current.close()
-      audioContextRef.current = null
-    }
-    setIsRecording(false)
-    setIsSpeaking(false)
+  }, [threshold, silenceTimeout])
+
+  const stopRecording = useCallback((): Promise<string | undefined> => {
+    return new Promise((resolve) => {
+      const recorder = mediaRecorderRef.current
+
+      if (!recorder || recorder.state === 'inactive') {
+        setIsRecording(false)
+        resolve(undefined)
+        return
+      }
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const reader = new FileReader()
+        
+        reader.readAsDataURL(audioBlob)
+        reader.onloadend = () => {
+          // O resultado do FileReader inclui o prefixo "data:audio/webm;base64,"
+          const base64String = reader.result as string
+          resolve(base64String)
+        }
+
+        // Cleanup: Desliga o hardware do microfone
+        recorder.stream.getTracks().forEach(track => track.stop())
+        setIsRecording(false)
+      }
+
+      recorder.stop()
+    })
   }, [])
 
-  return { isRecording, isSpeaking, startRecording, stopRecording }
+  return { isRecording, startRecording, stopRecording }
 }

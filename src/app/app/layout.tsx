@@ -1,3 +1,4 @@
+
 "use client"
 
 import { ReactNode } from 'react'
@@ -19,14 +20,22 @@ import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const { isLoggedIn, user, logout } = useAuth()
-  const { conversations, removeConversation, addConversation } = useConversations()
+  
+  // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
+  const { conversations, fetchConversations, loadConversation, activeId, isLoading, createNewConversation } = useConversations()
   const { messages, clearMessages, selectedModel, setSelectedModel } = useChatStore()
+  
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false) // Default to false for mobile SSR
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const currentModel = AI_MODELS.find(m => m.id === selectedModel)
+
+  // Dispara a busca do histórico no banco de dados assim que a tela abre
+  useEffect(() => {
+    fetchConversations()
+  }, [fetchConversations])
 
   useEffect(() => {
-    // Set initial state based on window width
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
         setSidebarOpen(true)
@@ -35,16 +44,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       }
     }
     
-    // Run once on mount
     handleResize()
-    
-    // Try to keep it responsive if user resizes window significantly
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   const handleNewChat = () => {
-    clearMessages()
+    createNewConversation?.() // Limpa o ID ativo no Store de Conversas
+    clearMessages()           // Limpa a tela
     router.push('/app')
   }
 
@@ -68,23 +75,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Button>
 
           <DropdownMenu>
-            <DropdownMenuTrigger render={
+            <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="rounded-full bg-transparent border-none w-10 h-10 text-zinc-400 hover:bg-transparent hover:text-white data-[state=open]:text-white outline-none ring-0 focus-visible:ring-0">
                 <HelpCircle className="w-6 h-6" />
               </Button>
-            } />
+            </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-[#232323] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl overflow-hidden z-[100]">
               <DropdownMenuItem onClick={() => router.push('/pricing')} className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                 <Sparkles className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
                 <span className="font-medium">See plans and pricing</span>
               </DropdownMenuItem>
 
-              <SettingsDialog trigger={
-                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+              <DropdownMenuItem asChild>
+                <SettingsDialog
+                trigger = {
+                <div className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                   <SettingsIcon className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
                   <span className="font-medium">Settings</span>
-                </DropdownMenuItem>
-              } />
+                </div>
+                }
+                />
+             </DropdownMenuItem>
 
               <DropdownMenuSeparator className="bg-zinc-800/50 my-1.5 mx-1" />
 
@@ -97,7 +108,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Mobile Backdrop Overlay */}
       {sidebarOpen && (
         <div 
           className="lg:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
@@ -105,7 +115,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         />
       )}
 
-      {/* Floating Animated Toggle Button */}
       <div 
         className={`absolute top-[12px] z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${
           sidebarOpen ? 'left-[204px]' : 'left-[12px]'
@@ -119,7 +128,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           }`}
           title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          {/* Logo (Visible when closed) */}
           <div className={`flex items-center justify-center transition-all duration-300 ${
             sidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
           }`}>
@@ -132,8 +140,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 priority
               />
           </div>
-
-          {/* Icon (Close when open, Open when closed & hovered) */}
           <div className={`flex items-center justify-center transition-all duration-300 ${
             sidebarOpen 
               ? 'opacity-100 rotate-0' 
@@ -144,7 +150,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </Button>
       </div>
 
-      {/* Sidebar */}
       <div
         className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
@@ -160,9 +165,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               priority
             />
           </div>
-          {/* Invisible spacer to keep flex layout intact */}
           <div className="w-10 h-10 pointer-events-none" />
         </div>
+        
         <div className="px-3 pb-3 flex flex-col gap-2">
           <Button
             variant="ghost"
@@ -191,34 +196,39 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
-          {conversations.length > 0 && (
-            <div className="px-3 py-2 mb-1">
-              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Suas conversas</span>
-            </div>
-          )}
-          {/* History List */}
+          <div className="px-3 py-2 mb-1">
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Suas conversas</span>
+          </div>
+          
           <div className="space-y-[2px]">
-            {conversations.map((item) => (
-              <div key={item.id} className="w-full relative flex items-center group">
-                <button
-                  onClick={() => clearMessages()}
-                  className="w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800/50 hover:text-white rounded-lg transition-colors pr-10"
-                >
-                  <MessageSquare className="w-4 h-4 shrink-0 text-zinc-500 group-hover:text-zinc-400" />
-                  <span className="truncate flex-1">{item.title}</span>
-                </button>
-                <button
-                  onClick={(e) => { e.stopPropagation(); removeConversation(item.id); }}
-                  className="absolute right-2 p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-zinc-800"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ))}
+            {isLoading ? (
+               <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">A carregar...</div>
+            ) : conversations.length === 0 ? (
+               <div className="text-zinc-600 text-[13px] px-3 mt-2">Nenhuma conversa ainda.</div>
+            ) : (
+              conversations.map((item) => (
+                <div key={item.id} className="w-full relative flex items-center group">
+                  <button
+                    onClick={() => loadConversation(item.id)}
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-10 ${
+                      activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
+                    }`}
+                  >
+                    <MessageSquare className={`w-4 h-4 shrink-0 ${activeId === item.id ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                    <span className="truncate flex-1">{item.title}</span>
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); /* TODO: Implementar rota de apagar no backend */ }}
+                    className="absolute right-2 p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-zinc-800"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        {/* Bottom Actions */}
         <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
           {!isLoggedIn && (
             <div className="px-1 py-2 flex flex-col gap-3">
@@ -267,26 +277,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </div>
 
-      {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-        {/* Top bar */}
         <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between pr-4 pl-[20px] pt-3 h-[80px] pointer-events-none">
-          {/* Empty space where the floating toggle button will go */}
-          <div className="w-auto h-10 relative flex items-center justify-center">
-            {/* The actual button is rendered outside context to float freely */}
-          </div>
+          <div className="w-auto h-10 relative flex items-center justify-center"></div>
 
-          {/* AI Model selector */}
           <DropdownMenu>
-            <DropdownMenuTrigger render={
+            <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 className="pointer-events-auto flex items-center gap-1.5 h-9 px-3 rounded-xl text-zinc-200 hover:bg-zinc-800/60 font-semibold text-sm transition-all"
               >
-                {selectedModel.label}
+                {currentModel?.label}
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
               </Button>
-            } />
+           </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
               className="w-56 bg-[#232323] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl overflow-hidden z-[100] pointer-events-auto"
@@ -294,7 +298,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               {AI_MODELS.map(model => (
                 <DropdownMenuItem
                   key={model.id}
-                  onClick={() => handleAuthAction(() => setSelectedModel(model))}
+                  onClick={() => setSelectedModel(model.id)}
                   className="gap-3 py-2.5 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group"
                 >
                   <div className="flex flex-col flex-1">
@@ -303,7 +307,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       <span className="text-[10px] text-indigo-400 font-medium mt-0.5">{model.badge}</span>
                     )}
                   </div>
-                  {selectedModel.id === model.id && (
+                  {selectedModel === model.id && (
                     <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
                   )}
                 </DropdownMenuItem>
@@ -311,7 +315,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {/* Right spacer to balance layout */}
           <div className="w-9" />
         </div>
 

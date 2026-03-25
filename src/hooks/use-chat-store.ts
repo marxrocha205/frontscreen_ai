@@ -2,9 +2,9 @@ import { create } from 'zustand'
 
 // RESTAURADO: Constante de modelos que o seu layout.tsx exige
 export const AI_MODELS = [
-  { id: 'gemini-1.5-flash', name: 'Gemini Flash' },
-  { id: 'gemini-1.5-pro', name: 'Gemini Pro' },
-  { id: 'claude-3-opus', name: 'Claude 3 Opus' }
+  { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
+  { id: 'gemini-1.5-pro', label: 'Gemini Pro', badge: 'PRO' },
+  { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' }
 ]
 
 export interface Message {
