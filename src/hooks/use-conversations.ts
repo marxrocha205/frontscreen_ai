@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { useChatStore } from './use-chat-store'
 import { stopAllAudio } from './use-websocket'
 
+
 export interface Conversation {
   id: string
   title: string
@@ -18,6 +19,7 @@ interface ConversationsState {
   fetchConversations: () => Promise<void>
   loadConversation: (id: string) => Promise<void>
   createNewConversation: () => void
+  setActiveId: (id: string) => void // NOVO: Para setar o ID após a 1ª mensagem
 }
 
 export const useConversations = create<ConversationsState>((set, get) => ({
@@ -25,14 +27,12 @@ export const useConversations = create<ConversationsState>((set, get) => ({
   activeId: null,
   isLoading: false,
 
-  // 1. Busca a lista de todas as conversas na barra lateral
   fetchConversations: async () => {
     set({ isLoading: true })
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      // NOTA: Ajuste o prefixo '/api/chat' ou '/chat' conforme o seu main.py
       const res = await fetch('http://127.0.0.1:8000/api/chat/sessions', {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -53,12 +53,10 @@ export const useConversations = create<ConversationsState>((set, get) => ({
     }
   },
 
-  // 2. Carrega as mensagens de uma conversa específica para a tela
   loadConversation: async (id: string) => {
     stopAllAudio()
     set({ activeId: id })
     
-    // Limpa a tela atual puxando a função do nosso outro Store
     const { clearMessages, addMessage } = useChatStore.getState()
     clearMessages()
 
@@ -73,11 +71,10 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       if (res.ok) {
         const messages = await res.json()
         
-        // Injeta as mensagens antigas na tela do utilizador
         messages.forEach((msg: any) => {
           addMessage({
             id: msg.id || Date.now().toString() + Math.random(),
-            role: msg.role, // 'user' ou 'assistant'
+            role: msg.role,
             content: msg.content
           })
         })
@@ -87,12 +84,12 @@ export const useConversations = create<ConversationsState>((set, get) => ({
     }
   },
 
-  // 3. Botão de "Nova Conversa"
   createNewConversation: () => {
     stopAllAudio()
     set({ activeId: null })
     useChatStore.getState().clearMessages()
-    // Opcional: Aqui poderíamos forçar o fechamento e reabertura do WebSocket 
-    // se o backend exigir um novo session_id na conexão.
-  }
+  },
+
+  // NOVO: Função para o input de chat atualizar o ID ativo
+  setActiveId: (id: string) => set({ activeId: id }) 
 }))

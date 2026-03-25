@@ -7,24 +7,26 @@ import { useGeminiVoice } from '@/hooks/use-gemini-voice'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
+import { useConversations } from '@/hooks/use-conversations' // NOVO: Importado para a Opção 1
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Mic, Navigation, MonitorUp, Zap, Check, Copy } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 
 export default function ChatPage() {
   const { t } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming } = useWebsocket()
-  const { credits } = useChatStore()
+  const { credits, addMessage, setIsStreaming } = useChatStore()
   
-  // CORREÇÃO 1: Verifique se useGeminiVoice aceita parâmetros no arquivo do hook
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
   
-  // CORREÇÃO 2: Gerenciamento manual da Ref do Vídeo para maior controle
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare() 
 
@@ -50,7 +52,6 @@ export default function ChatPage() {
 
   const captureScreenFrame = (): string | undefined => {
     if (!isScreenShared || !videoRef.current) return undefined;
-    
     try {
       const canvas = document.createElement("canvas");
       canvas.width = videoRef.current.videoWidth;
@@ -66,6 +67,15 @@ export default function ChatPage() {
     return undefined;
   }
 
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0])
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // MÁGICA DO ENVIO HÍBRIDO (OPÇÃO 1)
+  // -------------------------------------------------------------------------
   const handleSend = async () => {
     requireAuth(async () => {
       let audioBase64 = undefined;
@@ -73,16 +83,67 @@ export default function ChatPage() {
         audioBase64 = await stopRecording();
       }
 
-      if (!inputValue.trim() && !isScreenShared && !audioBase64) return
+      if (!inputValue.trim() && !isScreenShared && !audioBase64 && !selectedFile) return
       
-      const payload = {
-        text: inputValue.trim() || undefined,
-        image_base64: captureScreenFrame(),
-        audio_base64: audioBase64
+      const currentText = inputValue.trim();
+      setInputValue('') // Limpa o input imediatamente para resposta visual rápida
+      
+      // SE TEM ARQUIVO PESADO -> Vai pela API REST (Multipart FormData)
+      if (selectedFile) {
+        const { activeId, setActiveId, fetchConversations } = useConversations.getState();
+        const token = localStorage.getItem('access_token') || '';
+
+        // 1. Otimismo na UI: Mostra a mensagem do usuário logo de cara
+        addMessage({ 
+          id: Date.now().toString(), 
+          role: 'user', 
+          content: currentText || `[Arquivo: ${selectedFile.name}]` 
+        });
+        
+        setIsStreaming(true);
+        const fileToSend = selectedFile;
+        setSelectedFile(null); // Limpa o arquivo da tela
+
+        // 2. Prepara o pacote HTTP
+        const formData = new FormData();
+        formData.append('token', token);
+        if (currentText) formData.append('text', currentText);
+        formData.append('file', fileToSend);
+        if (activeId) formData.append('session_id', activeId);
+
+        try {
+          // 3. Envia para o nosso chat_controller.py
+          const res = await fetch('http://127.0.0.1:8000/api/chat/message', {
+            method: 'POST',
+            body: formData
+          });
+          const data = await res.json();
+
+          setIsStreaming(false);
+
+          if (data.status === 'success') {
+            // Se for conversa nova, ajusta a barra lateral
+            if (!activeId && data.session_id) {
+              setActiveId(data.session_id);
+              await fetchConversations();
+            }
+            // Adiciona a resposta da IA na tela
+            addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response });
+          }
+        } catch (error) {
+          console.error("Erro ao enviar arquivo via REST:", error);
+          setIsStreaming(false);
+        }
+      } 
+      // SE NÃO TEM ARQUIVO -> Vai pelo WebSocket para ser instantâneo!
+      else {
+        const payload = {
+          text: currentText || undefined,
+          image_base64: captureScreenFrame(),
+          audio_base64: audioBase64
+        }
+        sendMessage(payload)
       }
-      
-      sendMessage(payload)
-      setInputValue('')
     })
   }
 
@@ -90,7 +151,6 @@ export default function ChatPage() {
     <div className="flex flex-col h-full w-full relative pt-4 pb-0 overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
 
-      {/* PAINEL DE CRÉDITOS */}
       <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
         <Zap className={`w-4 h-4 ${credits !== null && credits < 20 ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
         <span className="text-sm font-bold text-zinc-200">
@@ -98,17 +158,10 @@ export default function ChatPage() {
         </span>
       </div>
 
-      {/* Preview da Tela */}
       {isScreenShared && (
         <div className="absolute top-4 left-4 z-10 hidden lg:block">
           <div className="w-64 h-36 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
-             <video 
-               ref={videoRef} 
-               autoPlay 
-               playsInline 
-               muted 
-               className="w-full h-full object-cover" 
-             />
+             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
              <div className="absolute top-2 right-2">
                <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse">LIVE</span>
              </div>
@@ -116,7 +169,6 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* Feed do Chat */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-24 lg:px-64 pt-16 pb-40 flex flex-col gap-8 custom-scrollbar">
         {messages.map((m) => (
           <div key={m.id} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
@@ -138,44 +190,66 @@ export default function ChatPage() {
         )}
       </div>
 
-      {/* Input de Baixo */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-20">
-        <div className="bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl">
+        <div className="bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
+          
+          {selectedFile && (
+            <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
+              <div className="bg-indigo-500/20 p-1.5 rounded-lg">
+                <FileUp className="w-4 h-4 text-indigo-400" />
+              </div>
+              <span className="text-sm font-medium text-zinc-200 max-w-[180px] truncate">
+                {selectedFile.name}
+              </span>
+              <button onClick={() => setSelectedFile(null)} className="ml-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 p-1 rounded-md transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
             
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={isScreenShared ? stopSharing : startSharing} 
-              className={`rounded-full h-10 w-10 ${isScreenShared ? 'text-blue-500 bg-blue-500/10' : 'text-zinc-400'}`}
-            >
-              <MonitorUp className="w-5 h-5" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
+                  <Plus className="w-5 h-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
+                
+                {/* ÍCONES ALINHADOS À ESQUERDA - Estilo Premium */}
+                <DropdownMenuItem onClick={isScreenShared ? stopSharing : startSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                  <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
+                  <span className="font-medium text-[14px]">
+                    {isScreenShared ? 'Parar compartilhamento' : 'Compartilhar Tela'}
+                  </span>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group mt-1">
+                  <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
+                  <span className="font-medium text-[14px]">Enviar Arquivo</span>
+                </DropdownMenuItem>
+                
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
             
             <Input
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && handleSend()}
-              placeholder="Pergunte sobre sua tela..."
-              className="flex-1 bg-transparent border-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-600"
+              placeholder="Envie uma mensagem..."
+              className="flex-1 bg-transparent border-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px]"
             />
             
             <div className="flex items-center gap-1.5">
-              <Button 
-                size="icon" 
-                onClick={isVoiceActive ? handleSend : startRecording} 
-                className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800'}`}
-              >
-                <Mic className="w-4 h-4" />
+              <Button size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
+                <Mic className="w-5 h-5" />
               </Button>
               
-              <Button 
-                size="icon" 
-                onClick={handleSend} 
-                disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive} 
-                className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10"
-              >
-                <Navigation className="w-4 h-4" />
+              <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
+                <Navigation className="w-5 h-5" />
               </Button>
             </div>
           </div>
