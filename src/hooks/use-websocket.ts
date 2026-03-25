@@ -1,5 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from './use-chat-store'
+import { useConversations } from './use-conversations' // NOVO: Importando o gerenciador de conversas
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -59,9 +60,23 @@ export function useWebsocket() {
       switch (data.type) {
         case 'ai_response':
           setIsStreaming(false)
+
+          // ==========================================
+          // NOVO: MÁGICA DA BARRA LATERAL AQUI!
+          // Se o backend devolveu um session_id e nós não tínhamos um,
+          // significa que uma nova conversa foi criada no banco.
+          const { activeId, setActiveId, fetchConversations } = useConversations.getState()
+          
+          if (!activeId && data.session_id) {
+            setActiveId(data.session_id) // Trava a tela nesta nova conversa
+            fetchConversations() // Recarrega a barra lateral para ela aparecer lá
+          }
+          // ==========================================
+
           // 1. Renderiza a resposta de texto
           addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
           stopAllAudio()
+          
           // 2. Toca o áudio realista (se for plano pago) ou fallback (se for Free)
           if (data.audio_base64) {
             currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
@@ -103,13 +118,23 @@ export function useWebsocket() {
   const sendMessage = useCallback((payload: { text?: string, image_base64?: string, audio_base64?: string }) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       
+      // NOVO: Pega o ID da conversa atual no momento do envio
+      const { activeId } = useConversations.getState()
+
       // Só adiciona a mensagem visualmente se houver texto escrito
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
       }
       
       setIsStreaming(true)
-      wsRef.current.send(JSON.stringify(payload))
+
+      // NOVO: Injeta o session_id no payload antes de enviar para o Python
+      const finalPayload = {
+        ...payload,
+        session_id: activeId // Se for null, o Python criará uma conversa nova
+      }
+
+      wsRef.current.send(JSON.stringify(finalPayload))
     } else {
       alert("Aguarde a conexão com o servidor de IA.")
     }
