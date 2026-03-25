@@ -4,7 +4,6 @@ import { useI18n } from '@/context/i18n-context'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { MonitorPlay } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
@@ -14,11 +13,48 @@ export default function LoginPage() {
   const { t } = useI18n()
   const router = useRouter()
   const { login } = useAuth()
+  
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleLogin = () => {
-    login(email || 'user@example.com')
-    router.push('/app')
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Por favor, preencha email e senha.')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const formData = new URLSearchParams()
+      formData.append('username', email)
+      formData.append('password', password)
+
+      const response = await fetch('http://127.0.0.1:8000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData,
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Guarda o token para o WebSocket usar depois
+        localStorage.setItem('access_token', data.access_token)
+        login(email)
+        router.push('/app')
+      } else {
+        const errData = await response.json()
+        setError(errData.detail || 'Email ou senha incorretos.')
+      }
+    } catch (err) {
+      console.error('Erro de rede:', err)
+      setError('Erro ao contactar o servidor.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -37,20 +73,10 @@ export default function LoginPage() {
 
         <Card className="w-full bg-zinc-950 border-zinc-900 rounded-2xl shadow-none">
           <CardContent className="pt-6 pb-4 space-y-4">
-            <Button onClick={handleLogin} variant="outline" className="w-full bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-lg h-11 flex items-center justify-center gap-2">
-              <span className="text-lg font-medium">G</span> {t('login.google')}
-            </Button>
             
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-800" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-zinc-950 px-2 text-zinc-500">{t('login.or')}</span>
-              </div>
-            </div>
+            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
-            <div className="space-y-3">
+            <div className="space-y-3 mt-4">
               <Input 
                 type="email" 
                 value={email}
@@ -58,20 +84,21 @@ export default function LoginPage() {
                 placeholder={t('login.email_placeholder')} 
                 className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700" 
               />
-              <Button onClick={handleLogin} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
-                {t('login.continue')}
+              <Input 
+                type="password" 
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Sua senha secreta" 
+                className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700" 
+              />
+              <Button onClick={handleLogin} disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
+                {isLoading ? 'Conectando...' : t('login.continue')}
               </Button>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pb-6">
             <div className="text-sm text-zinc-400 text-center w-full">
               {t('login.no_account')} <Link href="/register" className="font-medium text-zinc-100 hover:underline">{t('login.signup')}</Link>
-            </div>
-            
-            <div className="w-full border-t border-zinc-800/60 pt-4 flex justify-center">
-               <Link href="/admin" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
-                  {t('login.admin_access')}
-               </Link>
             </div>
           </CardFooter>
         </Card>

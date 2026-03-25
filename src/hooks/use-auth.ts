@@ -14,7 +14,13 @@ export const useAuth = create<AuthState>()(
       isLoggedIn: false,
       user: null,
       login: (email) => set({ isLoggedIn: true, user: { email } }),
-      logout: () => set({ isLoggedIn: false, user: null }),
+      logout: () => {
+        // Remove o token do navegador por segurança
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('access_token')
+        }
+        set({ isLoggedIn: false, user: null })
+      },
     }),
     {
       name: 'screenai-auth',
