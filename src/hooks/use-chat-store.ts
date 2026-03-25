@@ -1,37 +1,42 @@
 import { create } from 'zustand'
 
+// RESTAURADO: Constante de modelos que o seu layout.tsx exige
+export const AI_MODELS = [
+  { id: 'gemini-1.5-flash', name: 'Gemini Flash' },
+  { id: 'gemini-1.5-pro', name: 'Gemini Pro' },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus' }
+]
+
 export interface Message {
   id: string
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'system' 
   content: string
-  isError?: boolean
-  errorType?: 'out_of_credits' | string
 }
-
-export const AI_MODELS = [
-  { id: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash', badge: 'Recommended' },
-  { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro', badge: null },
-  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', badge: null },
-]
 
 interface ChatState {
   messages: Message[]
   isStreaming: boolean
-  selectedModel: typeof AI_MODELS[0]
+  credits: number | null // NOVO: Estado dos créditos
+  selectedModel: string  // RESTAURADO: Modelo selecionado
+  
   addMessage: (message: Message) => void
   updateLastAssistantMessage: (content: string) => void
   setIsStreaming: (isStreaming: boolean) => void
-  setSelectedModel: (model: typeof AI_MODELS[0]) => void
+  setCredits: (credits: number) => void // NOVO: Função para atualizar créditos
+  setSelectedModel: (modelId: string) => void // RESTAURADO
   clearMessages: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isStreaming: false,
-  selectedModel: AI_MODELS[0],
+  credits: null,
+  selectedModel: AI_MODELS[0].id, // Valor padrão restaurado
+  
   addMessage: (message) => set((state) => ({ 
     messages: [...state.messages, message] 
   })),
+  
   updateLastAssistantMessage: (content) => set((state) => {
     const newMessages = [...state.messages]
     const lastIdx = newMessages.findLastIndex(m => m.role === 'assistant')
@@ -40,7 +45,9 @@ export const useChatStore = create<ChatState>((set) => ({
     }
     return { messages: newMessages }
   }),
+  
   setIsStreaming: (isStreaming) => set({ isStreaming }),
-  setSelectedModel: (selectedModel) => set({ selectedModel }),
+  setCredits: (credits) => set({ credits }),
+  setSelectedModel: (modelId) => set({ selectedModel: modelId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
 }))

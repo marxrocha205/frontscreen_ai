@@ -4,7 +4,6 @@ import { useI18n } from '@/context/i18n-context'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { MonitorPlay } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
@@ -20,6 +19,8 @@ function RegisterForm() {
   
   const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     if (initialEmail) {
@@ -27,10 +28,55 @@ function RegisterForm() {
     }
   }, [initialEmail])
 
-  const handleRegister = () => {
-    // Para simplificar, usamos a mesma função login do contexto auth
-    login(email || 'user@example.com')
-    router.push('/app')
+  const handleRegister = async () => {
+    if (!email || !password) {
+      setError('Por favor, preencha email e senha.')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      // 1. Cria a conta na API (JSON)
+      const registerRes = await fetch('http://127.0.0.1:8000/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+
+      if (!registerRes.ok) {
+        const errData = await registerRes.json()
+        throw new Error(errData.detail || 'Erro ao criar conta.')
+      }
+
+      // 2. Faz o Login Automático (URL Encoded)
+      const formData = new URLSearchParams()
+      formData.append('username', email)
+      formData.append('password', password)
+
+      const loginRes = await fetch('http://127.0.0.1:8000/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: formData,
+      })
+
+      if (loginRes.ok) {
+        const data = await loginRes.json()
+        localStorage.setItem('access_token', data.access_token)
+        login(email)
+        router.push('/app')
+      } else {
+        // Se falhar o login automático, atira para a tela de login
+        router.push('/login')
+      }
+
+    } catch (err: any) {
+      console.error('Erro de registo:', err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -49,18 +95,8 @@ function RegisterForm() {
 
         <Card className="w-full bg-zinc-950 border-zinc-900 rounded-2xl shadow-none">
           <CardContent className="pt-6 pb-4 space-y-4">
-            <Button onClick={handleRegister} variant="outline" className="w-full bg-zinc-900 border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:text-white rounded-lg h-11 flex items-center justify-center gap-2">
-              <span className="text-lg font-medium">G</span> {t('login.google')}
-            </Button>
             
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-zinc-800" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-zinc-950 px-2 text-zinc-500">{t('login.or')}</span>
-              </div>
-            </div>
+            {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
             <div className="space-y-3">
               <Input 
@@ -74,11 +110,11 @@ function RegisterForm() {
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder={t('register.password_placeholder')} 
+                placeholder={t('register.password_placeholder') || 'Sua senha'} 
                 className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700" 
               />
-              <Button onClick={handleRegister} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
-                {t('register.create_account')}
+              <Button onClick={handleRegister} disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
+                {isLoading ? 'A criar conta...' : t('register.create_account')}
               </Button>
             </div>
           </CardContent>
@@ -95,7 +131,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-zinc-950">Carregando...</div>}>
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-zinc-950">A carregar...</div>}>
       <RegisterForm />
     </Suspense>
   )
