@@ -18,6 +18,7 @@ interface ChatState {
   isStreaming: boolean
   credits: number | null // NOVO: Estado dos créditos
   selectedModel: string  // RESTAURADO: Modelo selecionado
+  isFloatingMode: boolean
   
   addMessage: (message: Message) => void
   updateLastAssistantMessage: (content: string) => void
@@ -25,6 +26,7 @@ interface ChatState {
   setCredits: (credits: number) => void // NOVO: Função para atualizar créditos
   setSelectedModel: (modelId: string) => void // RESTAURADO
   clearMessages: () => void
+  toggleFloatingMode: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -32,7 +34,8 @@ export const useChatStore = create<ChatState>((set) => ({
   isStreaming: false,
   credits: null,
   selectedModel: AI_MODELS[0].id, // Valor padrão restaurado
-  
+  isFloatingMode: false,
+
   addMessage: (message) => set((state) => ({ 
     messages: [...state.messages, message] 
   })),
@@ -50,4 +53,5 @@ export const useChatStore = create<ChatState>((set) => ({
   setCredits: (credits) => set({ credits }),
   setSelectedModel: (modelId) => set({ selectedModel: modelId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
+  toggleFloatingMode: () => set((state) => ({ isFloatingMode: !state.isFloatingMode })),
 }))

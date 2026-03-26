@@ -1,8 +1,7 @@
-
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PanelLeft } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PanelLeft, PictureInPicture2 } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -23,7 +22,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
   const { conversations, fetchConversations, loadConversation, activeId, isLoading, createNewConversation } = useConversations()
-  const { messages, clearMessages, selectedModel, setSelectedModel } = useChatStore()
+  
+  // NOVO: Puxamos o isFloatingMode e toggleFloatingMode do Store
+  const { messages, clearMessages, selectedModel, setSelectedModel, isFloatingMode, toggleFloatingMode } = useChatStore()
   
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
@@ -193,6 +194,23 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <MonitorUp className="w-4 h-4" />
             <span className="text-sm font-medium">{t('app.share_screen')}</span>
           </Button>
+          
+          {/* NOVO: Botão de Destacar Chat (PiP) */}
+          <Button
+            variant="ghost"
+            onClick={toggleFloatingMode}
+            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
+              isFloatingMode 
+                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300' 
+                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+            }`}
+          >
+            <PictureInPicture2 className={`w-4 h-4 ${isFloatingMode ? 'text-blue-400' : ''}`} />
+            <span className="text-sm font-medium">
+              {isFloatingMode ? 'Restaurar Chat' : 'Destacar Chat (PiP)'}
+            </span>
+          </Button>
+
         </div>
 
         <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
