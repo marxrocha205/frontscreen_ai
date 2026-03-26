@@ -21,7 +21,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { isLoggedIn, user, logout } = useAuth()
   
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
-  const { conversations, fetchConversations, loadConversation, activeId, isLoading, createNewConversation } = useConversations()
+  const { conversations, fetchConversations, loadConversation, deleteConversation, activeId, isLoading, createNewConversation } = useConversations()
   
   // NOVO: Puxamos o isFloatingMode e toggleFloatingMode do Store
   const { messages, clearMessages, selectedModel, setSelectedModel, isFloatingMode, toggleFloatingMode } = useChatStore()
@@ -236,7 +236,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     <span className="truncate flex-1">{item.title}</span>
                   </button>
                   <button
-                    onClick={(e) => { e.stopPropagation(); /* TODO: Implementar rota de apagar no backend */ }}
+                    onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
                     className="absolute right-2 p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-zinc-800"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

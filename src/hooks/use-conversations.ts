@@ -18,6 +18,7 @@ interface ConversationsState {
   // Ações
   fetchConversations: () => Promise<void>
   loadConversation: (id: string) => Promise<void>
+  deleteConversation: (id: string) => Promise<void>
   createNewConversation: () => void
   setActiveId: (id: string) => void // NOVO: Para setar o ID após a 1ª mensagem
 }
@@ -81,6 +82,37 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       }
     } catch (error) {
       console.error("Erro ao carregar mensagens antigas:", error)
+    }
+  },
+
+  deleteConversation: async (id: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      if (!token) return
+
+      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+
+      if (res.ok) {
+        // Remove da lista local
+        set((state) => ({
+          conversations: state.conversations.filter((c) => c.id !== id),
+          // Se era a conversa ativa, limpa a tela
+          activeId: state.activeId === id ? null : state.activeId
+        }))
+
+        // Se era a conversa ativa, limpa as mensagens no chat store
+        if (get().activeId === null) {
+          useChatStore.getState().clearMessages()
+          stopAllAudio()
+        }
+      } else {
+        console.error("Erro ao excluir conversa:", await res.text())
+      }
+    } catch (error) {
+      console.error("Erro de rede ao excluir conversa:", error)
     }
   },
 
