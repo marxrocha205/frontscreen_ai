@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useI18n } from '@/context/i18n-context'
-import { useWebsocket } from '@/hooks/use-websocket'
+import { useWebsocket, stopAllAudio } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
@@ -23,12 +23,12 @@ export default function ChatPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming } = useWebsocket()
-  const { credits, addMessage, setIsStreaming } = useChatStore()
-  
+  const { credits, addMessage, setIsStreaming, setCredits } = useChatStore()
+
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
-  
+
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare() 
+  const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -59,7 +59,7 @@ export default function ChatPage() {
       const ctx = canvas.getContext("2d");
       if (ctx && canvas.width > 0) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL("image/jpeg", 0.7); 
+        return canvas.toDataURL("image/jpeg", 0.7);
       }
     } catch (err) {
       console.error("Erro ao capturar frame:", err);
@@ -84,22 +84,22 @@ export default function ChatPage() {
       }
 
       if (!inputValue.trim() && !isScreenShared && !audioBase64 && !selectedFile) return
-      
+
       const currentText = inputValue.trim();
       setInputValue('') // Limpa o input imediatamente para resposta visual rápida
-      
+
       // SE TEM ARQUIVO PESADO -> Vai pela API REST (Multipart FormData)
       if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState();
         const token = localStorage.getItem('access_token') || '';
 
         // 1. Otimismo na UI: Mostra a mensagem do usuário logo de cara
-        addMessage({ 
-          id: Date.now().toString(), 
-          role: 'user', 
-          content: currentText || `[Arquivo: ${selectedFile.name}]` 
+        addMessage({
+          id: Date.now().toString(),
+          role: 'user',
+          content: currentText || `[Arquivo: ${selectedFile.name}]`
         });
-        
+
         setIsStreaming(true);
         const fileToSend = selectedFile;
         setSelectedFile(null); // Limpa o arquivo da tela
@@ -129,12 +129,28 @@ export default function ChatPage() {
             }
             // Adiciona a resposta da IA na tela
             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response });
+
+            // Toca o áudio da resposta (mesma lógica do WebSocket)
+            stopAllAudio();
+            if (data.audio_base64) {
+              const audio = new Audio("data:audio/mp3;base64," + data.audio_base64);
+              audio.play().catch(e => console.error("Erro ao tocar áudio:", e));
+            } else if (data.response) {
+              const utterance = new SpeechSynthesisUtterance(data.response.replace(/[*#_]/g, ''));
+              utterance.lang = 'pt-BR';
+              window.speechSynthesis.speak(utterance);
+            }
+
+            // Atualiza o saldo de créditos na UI
+            if (data.remaining_credits !== undefined) {
+              setCredits(data.remaining_credits);
+            }
           }
         } catch (error) {
           console.error("Erro ao enviar arquivo via REST:", error);
           setIsStreaming(false);
         }
-      } 
+      }
       // SE NÃO TEM ARQUIVO -> Vai pelo WebSocket para ser instantâneo!
       else {
         const payload = {
@@ -161,10 +177,10 @@ export default function ChatPage() {
       {isScreenShared && (
         <div className="absolute top-4 left-4 z-10 hidden lg:block">
           <div className="w-64 h-36 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
-             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-             <div className="absolute top-2 right-2">
-               <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse">LIVE</span>
-             </div>
+            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+            <div className="absolute top-2 right-2">
+              <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse">LIVE</span>
+            </div>
           </div>
         </div>
       )}
@@ -192,7 +208,7 @@ export default function ChatPage() {
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-20">
         <div className="bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-          
+
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
               <div className="bg-indigo-500/20 p-1.5 rounded-lg">
@@ -208,7 +224,7 @@ export default function ChatPage() {
           )}
 
           <div className="flex items-center gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
-            
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
@@ -216,7 +232,7 @@ export default function ChatPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                
+
                 {/* ÍCONES ALINHADOS À ESQUERDA - Estilo Premium */}
                 <DropdownMenuItem onClick={isScreenShared ? stopSharing : startSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                   <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
@@ -229,12 +245,12 @@ export default function ChatPage() {
                   <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                   <span className="font-medium text-[14px]">Enviar Arquivo</span>
                 </DropdownMenuItem>
-                
+
               </DropdownMenuContent>
             </DropdownMenu>
 
             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
-            
+
             <Input
               value={inputValue}
               onChange={e => setInputValue(e.target.value)}
@@ -242,12 +258,12 @@ export default function ChatPage() {
               placeholder="Envie uma mensagem..."
               className="flex-1 bg-transparent border-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px]"
             />
-            
+
             <div className="flex items-center gap-1.5">
               <Button size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
               </Button>
-              
+
               <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
                 <Navigation className="w-5 h-5" />
               </Button>
