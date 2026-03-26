@@ -2,18 +2,16 @@
 "use client"
 
 import * as React from 'react'
-import * as DialogPrimitive from "@radix-ui/react-dialog"
-
 import { useI18n } from '@/context/i18n-context'
 import { useTheme } from 'next-themes'
 import { useVoiceConfig } from '@/hooks/use-voice-config'
-
-export const Dialog = DialogPrimitive.Root
-export const DialogTrigger = DialogPrimitive.Trigger
-export const DialogContent = DialogPrimitive.Content
-export const DialogHeader = ({ children }: any) => <div>{children}</div>
-export const DialogTitle = DialogPrimitive.Title
-
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   Select, 
@@ -33,7 +31,7 @@ import { useRouter } from 'next/navigation'
 
 interface SettingsDialogProps {
   children?: React.ReactNode
-  trigger: React.ReactNode
+  trigger: React.ReactElement
   defaultTab?: string;
 }
 
@@ -80,9 +78,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
           No Base UI, o DialogTrigger por padrão funciona como um wrapper. 
           Certifique-se que seu componente Button use forwardRef.
       */}
-<DialogTrigger asChild>
-  {trigger}
-</DialogTrigger>
+      <DialogTrigger render={trigger} />
       
       <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 text-zinc-100 p-0 overflow-hidden shadow-2xl focus:outline-none">
         <DialogHeader className="px-6 pt-6 pb-4 border-b border-zinc-900">
