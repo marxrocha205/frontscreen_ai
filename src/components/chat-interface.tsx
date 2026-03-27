@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useI18n } from '@/context/i18n-context'
 import { useWebsocket, stopAllAudio } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
-import { useScreenShare } from '@/hooks/use-screen-share'
+import { useScreenShare, captureScreenFrame } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { useConversations } from '@/hooks/use-conversations'
@@ -29,7 +29,7 @@ export function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow } = useChatStore()
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
@@ -39,8 +39,10 @@ export function ChatInterface() {
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream
+      // Garante que o vídeo toque, especialmente útil após mover pelo Portal num novo PiP
+      videoRef.current.play().catch(e => console.error('Erro ao tocar vídeo da tela:', e))
     }
-  }, [stream])
+  }, [stream, floatingState])
 
   const { isLoggedIn } = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -56,22 +58,9 @@ export function ChatInterface() {
     else action()
   }
 
-  const captureScreenFrame = (): string | undefined => {
-    if (!isScreenShared || !videoRef.current) return undefined
-    try {
-      const canvas = document.createElement('canvas')
-      canvas.width = videoRef.current.videoWidth
-      canvas.height = videoRef.current.videoHeight
-      const ctx = canvas.getContext('2d')
-      if (ctx && canvas.width > 0) {
-        ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height)
-        return canvas.toDataURL('image/jpeg', 0.7)
-      }
-    } catch (err) {
-      console.error('Erro ao capturar frame:', err)
-    }
-    return undefined
-  }
+  // captureScreenFrame agora é importado de use-screen-share.ts
+  // Ele usa um vídeo oculto global que sempre vive no documento principal,
+  // garantindo captura funcional tanto na tela principal quanto no PiP.
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -168,7 +157,7 @@ export function ChatInterface() {
       </div>
 
       {isScreenShared && (
-        <div className="absolute top-4 left-4 z-10 hidden lg:block">
+        <div className="absolute top-4 left-4 z-10">
           <div className="w-64 h-36 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
             <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
             <div className="absolute top-2 right-2">
@@ -224,7 +213,7 @@ export function ChatInterface() {
                   <Plus className="w-5 h-5" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
+              <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
                 <DropdownMenuItem onClick={isScreenShared ? stopSharing : startSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                   <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
                   <span className="font-medium text-[14px]">

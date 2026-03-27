@@ -8,6 +8,11 @@ import { useChatStore } from './use-chat-store'
  * É isso que garante que o componente de chat terá a mesma aparência visual fora da aba principal.
  */
 function syncStylesheets(targetDoc: Document) {
+  // Copia as classes do <html> e <body> da página original
+  // Isso carrega a fonte (Inter) gerada pelo Next.js e também o tema (dark mode)
+  targetDoc.documentElement.className = document.documentElement.className
+  targetDoc.body.className = document.body.className
+
   // Limpa estilos antigos para não duplicar se o chat for aberto e fechado várias vezes
   targetDoc.head.innerHTML = '<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">'
 
