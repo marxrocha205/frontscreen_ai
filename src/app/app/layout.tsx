@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PanelLeft, PictureInPicture2 } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2 } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -15,6 +15,7 @@ import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
+import { useFloatingChat } from '@/hooks/use-floating-chat'
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n()
@@ -23,8 +24,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
   const { conversations, fetchConversations, loadConversation, deleteConversation, activeId, isLoading, createNewConversation } = useConversations()
   
-  // NOVO: Puxamos o isFloatingMode e toggleFloatingMode do Store
-  const { messages, clearMessages, selectedModel, setSelectedModel, isFloatingMode, toggleFloatingMode } = useChatStore()
+  // Puxamos o floatingState para saber qual label / cor mostrar no botão
+  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState } = useChatStore()
+  const { openChat } = useFloatingChat()
   
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
@@ -195,19 +197,21 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <span className="text-sm font-medium">{t('app.share_screen')}</span>
           </Button>
           
-          {/* NOVO: Botão de Destacar Chat (PiP) */}
+          {/* Botão de Destacar Chat (PiP / Popup) */}
           <Button
             variant="ghost"
-            onClick={toggleFloatingMode}
+            onClick={openChat}
             className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
-              isFloatingMode 
-                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300' 
+              floatingState !== 'none'
+                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
                 : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
             }`}
           >
-            <PictureInPicture2 className={`w-4 h-4 ${isFloatingMode ? 'text-blue-400' : ''}`} />
+            <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
             <span className="text-sm font-medium">
-              {isFloatingMode ? 'Restaurar Chat' : 'Destacar Chat (PiP)'}
+              {floatingState === 'none' && 'Destacar Chat (PiP)'}
+              {floatingState === 'pip' && 'Restaurar (PiP Nativo)'}
+              {floatingState === 'popup' && 'Restaurar (Popup)'}
             </span>
           </Button>
 

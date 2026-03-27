@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 
-// RESTAURADO: Constante de modelos que o seu layout.tsx exige
 export const AI_MODELS = [
   { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
   { id: 'gemini-1.5-pro', label: 'Gemini Pro', badge: 'PRO' },
@@ -9,35 +8,41 @@ export const AI_MODELS = [
 
 export interface Message {
   id: string
-  role: 'user' | 'assistant' | 'system' 
+  role: 'user' | 'assistant' | 'system'
   content: string
 }
+
+// Tipo discriminado para os 3 estados possíveis do chat flutuante
+export type FloatingState = 'none' | 'pip' | 'popup'
 
 interface ChatState {
   messages: Message[]
   isStreaming: boolean
-  credits: number | null // NOVO: Estado dos créditos
-  selectedModel: string  // RESTAURADO: Modelo selecionado
-  isFloatingMode: boolean
-  
+  credits: number | null
+  selectedModel: string
+  floatingState: FloatingState
+  pipWindow: Window | null
+
   addMessage: (message: Message) => void
   updateLastAssistantMessage: (content: string) => void
   setIsStreaming: (isStreaming: boolean) => void
-  setCredits: (credits: number) => void // NOVO: Função para atualizar créditos
-  setSelectedModel: (modelId: string) => void // RESTAURADO
+  setCredits: (credits: number) => void
+  setSelectedModel: (modelId: string) => void
   clearMessages: () => void
-  toggleFloatingMode: () => void
+  openFloatingMode: (win: Window, type: 'pip' | 'popup') => void
+  closeFloatingMode: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isStreaming: false,
   credits: null,
-  selectedModel: AI_MODELS[0].id, // Valor padrão restaurado
-  isFloatingMode: false,
+  selectedModel: AI_MODELS[0].id,
+  floatingState: 'none',
+  pipWindow: null,
 
-  addMessage: (message) => set((state) => ({ 
-    messages: [...state.messages, message] 
+  addMessage: (message) => set((state) => ({
+    messages: [...state.messages, message]
   })),
   
   updateLastAssistantMessage: (content) => set((state) => {
@@ -53,5 +58,7 @@ export const useChatStore = create<ChatState>((set) => ({
   setCredits: (credits) => set({ credits }),
   setSelectedModel: (modelId) => set({ selectedModel: modelId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
-  toggleFloatingMode: () => set((state) => ({ isFloatingMode: !state.isFloatingMode })),
+
+  openFloatingMode: (win, type) => set({ floatingState: type, pipWindow: win }),
+  closeFloatingMode: () => set({ floatingState: 'none', pipWindow: null }),
 }))

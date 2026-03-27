@@ -28,6 +28,9 @@ export const translations = {
     'app.disclaimer': 'ScreenAI pode cometer erros. Verifique informações importantes.',
     'app.search_chat': 'Buscar conversa',
     'app.share_screen': 'Compartilhar tela',
+    'app.stop_sharing': 'Parar compartilhamento',
+    'app.send_file': 'Enviar Arquivo',
+    'app.send_message': 'Envie uma mensagem...',
     
     'settings.title': 'Configurações',
     'settings.general': 'Geral',
@@ -76,6 +79,9 @@ export const translations = {
     'app.disclaimer': 'ScreenAI can make mistakes. Verify important information.',
     'app.search_chat': 'Search conversation',
     'app.share_screen': 'Share screen',
+    'app.stop_sharing': 'Stop sharing',
+    'app.send_file': 'Send File',
+    'app.send_message': 'Send a message...',
     
     'settings.title': 'Settings',
     'settings.general': 'General',
@@ -124,6 +130,9 @@ export const translations = {
     'app.disclaimer': 'ScreenAI puede cometer errores. Verifica la información importante.',
     'app.search_chat': 'Buscar conversación',
     'app.share_screen': 'Compartir pantalla',
+    'app.stop_sharing': 'Dejar de compartir',
+    'app.send_file': 'Enviar Archivo',
+    'app.send_message': 'Envía un mensaje...',
     
     'settings.title': 'Configuración',
     'settings.general': 'General',
