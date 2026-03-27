@@ -27,6 +27,7 @@ interface ChatState {
   updateLastAssistantMessage: (content: string) => void
   setIsStreaming: (isStreaming: boolean) => void
   setCredits: (credits: number) => void
+  fetchCredits: () => Promise<void>
   setSelectedModel: (modelId: string) => void
   clearMessages: () => void
   openFloatingMode: (win: Window, type: 'pip' | 'popup') => void
@@ -59,6 +60,30 @@ export const useChatStore = create<ChatState>((set) => ({
   
   setIsStreaming: (isStreaming) => set({ isStreaming }),
   setCredits: (credits) => set({ credits }),
+
+  fetchCredits: async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      if (!token) return
+
+      const res = await fetch('http://127.0.0.1:8000/api/users/me', {
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        if (data.remaining_credits !== undefined) {
+          set({ credits: data.remaining_credits })
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao buscar créditos:", error)
+    }
+  },
+
   setSelectedModel: (modelId) => set({ selectedModel: modelId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
 

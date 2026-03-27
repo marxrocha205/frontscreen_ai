@@ -30,7 +30,15 @@ export function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits } = useChatStore()
+  const { isLoggedIn } = useAuth()
+
+  useEffect(() => {
+    // Só tenta buscar créditos se o usuário estiver de fato logado e a montagem inicial terminou
+    if (isLoggedIn) {
+      fetchCredits()
+    }
+  }, [isLoggedIn, fetchCredits])
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
@@ -76,7 +84,12 @@ export function ChatInterface() {
     }
   }, [stream])
 
-  const { isLoggedIn } = useAuth()
+  useEffect(() => {
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream
+    }
+  }, [stream])
+
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -184,9 +197,9 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
 
       <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
-        <Zap className={`w-4 h-4 ${credits !== null && credits < 20 ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
+        <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
         <span className="text-sm font-bold text-zinc-200">
-          {credits !== null ? `${credits} Créditos` : '...'}
+          {(credits !== null) ? `${credits} Créditos` : '0 Créditos'}
         </span>
       </div>
 
