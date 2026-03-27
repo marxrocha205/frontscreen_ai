@@ -10,9 +10,9 @@ export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
 export const DropdownMenuContent = React.forwardRef<
   HTMLDivElement,
-  DropdownMenuPrimitive.DropdownMenuContentProps
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
+  DropdownMenuPrimitive.DropdownMenuContentProps & { container?: HTMLElement | null }
+>(({ className, container, ...props }, ref) => (
+  <DropdownMenuPrimitive.Portal container={container}>
     <DropdownMenuPrimitive.Content
       ref={ref}
       className={cn(
