@@ -15,6 +15,14 @@ function syncStylesheets(targetDoc: Document) {
   Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).forEach((el) => {
     targetDoc.head.appendChild(el.cloneNode(true))
   })
+
+  // Aplica estilos base no body da nova janela para remover espaços brancos e rolagem
+  targetDoc.body.style.margin = '0'
+  targetDoc.body.style.padding = '0'
+  targetDoc.body.style.width = '100vw'
+  targetDoc.body.style.height = '100vh'
+  targetDoc.body.style.overflow = 'hidden'
+  targetDoc.body.style.backgroundColor = '#0a0a0a'
 }
 
 export function useFloatingChat() {

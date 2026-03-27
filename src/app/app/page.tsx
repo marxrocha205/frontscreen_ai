@@ -32,7 +32,19 @@ export default function ChatPage() {
 
   // Se temos uma janela externa esperando, usamos o portal para renderizar lá
   if (portalContainer) {
-    return createPortal(chatUI, portalContainer)
+    return (
+      <div className="w-full h-full flex flex-col">
+        {createPortal(chatUI, portalContainer)}
+        <div className="flex flex-col items-center justify-center flex-1 w-full text-zinc-400 gap-4 bg-[#0a0a0a]">
+          <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800/50 flex flex-col items-center gap-3">
+            <span className="text-2xl font-semibold text-zinc-200">Chat Flutuante Aberto</span>
+            <span className="text-sm text-center max-w-sm">
+              Sua conversa está ativa em uma janela flutuante. Feche-a para continuar interagindo na tela principal.
+            </span>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Caso contrário, renderiza normalmente na tela principal
