@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useRef, useCallback } from 'react'
+import { stopAllAudio } from './use-websocket'
 
 /**
  * Hook para gerenciar a gravação de voz e conversão para Base64.
@@ -19,7 +20,19 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // 1. Interrompe qualquer áudio que a IA esteja falando no momento (Barge-In)
+      stopAllAudio()
+
+      // 2. Configura microfone com cancelamento de eco agressivo
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: { ideal: true },
+          noiseSuppression: { ideal: true },
+          autoGainControl: { ideal: true },
+          // @ts-ignore - Propriedade experimental para forçar o browser a ignorar áudio local
+          suppressLocalAudioPlayback: true,
+        }
+      })
       const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
       
       mediaRecorderRef.current = mediaRecorder

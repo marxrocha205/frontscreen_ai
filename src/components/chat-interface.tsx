@@ -30,15 +30,8 @@ export function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound } = useChatStore()
   const { isLoggedIn } = useAuth()
-
-  useEffect(() => {
-    // Só tenta buscar créditos se o usuário estiver de fato logado e a montagem inicial terminou
-    if (isLoggedIn) {
-      fetchCredits()
-    }
-  }, [isLoggedIn, fetchCredits])
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
@@ -51,7 +44,7 @@ export function ChatInterface() {
     const isCurrentlySharing = useScreenShare.getState().isSharing;
     const frame = isCurrentlySharing ? captureScreenFrame() : undefined;
 
-    sendMessage({ 
+    sendMessage({
       audio_base64: audioBase64,
       image_base64: frame
     })
@@ -115,6 +108,9 @@ export function ChatInterface() {
 
   const handleSend = async () => {
     requireAuth(async () => {
+      // Interrompe áudio da IA imediatamente ao enviar nova mensagem
+      stopAllAudio()
+
       let audioBase64 = undefined
       if (isVoiceActive) {
         audioBase64 = await stopRecording()
@@ -286,9 +282,9 @@ export function ChatInterface() {
 
             <div className="flex items-center gap-1.5">
               {floatingState !== 'none' && (
-                <Button 
-                  size="icon" 
-                  onClick={toggleContinuousMic} 
+                <Button
+                  size="icon"
+                  onClick={toggleContinuousMic}
                   title={isContinuousMicOn ? "Desativar Microfone Contínuo" : "Microfone Sempre Ligado"}
                   className={`rounded-full w-10 h-10 transition-all ${isContinuousMicOn ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
                 >
