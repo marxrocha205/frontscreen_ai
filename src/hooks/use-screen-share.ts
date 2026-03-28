@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { create } from 'zustand'
 
 // =====================================================================
 // VÍDEO DE CAPTURA - Vive SEMPRE no documento principal (fora do React).
@@ -49,12 +49,19 @@ export function captureScreenFrame(): string | undefined {
   return undefined
 }
 
-export function useScreenShare(intervalMs: number = 3000) {
-  const [isSharing, setIsSharing] = useState(false)
-  const [stream, setStream] = useState<MediaStream | null>(null)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+interface ScreenShareState {
+  isSharing: boolean;
+  stream: MediaStream | null;
+  startSharing: (intervalMs?: number) => Promise<void>;
+  stopSharing: () => void;
+}
 
-  const startSharing = useCallback(async () => {
+let intervalRef: NodeJS.Timeout | null = null;
+
+export const useScreenShare = create<ScreenShareState>((set, get) => ({
+  isSharing: false,
+  stream: null,
+  startSharing: async (intervalMs: number = 3000) => {
     try {
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: { displaySurface: "monitor" }
@@ -65,35 +72,33 @@ export function useScreenShare(intervalMs: number = 3000) {
       video.srcObject = mediaStream
       video.play().catch(e => console.error('Erro ao iniciar vídeo de captura:', e))
 
-      setStream(mediaStream)
-      setIsSharing(true)
+      set({ stream: mediaStream, isSharing: true })
       
-      intervalRef.current = setInterval(() => {
+      intervalRef = setInterval(() => {
         console.log("Captured frame at interval")
       }, intervalMs)
       
       mediaStream.getVideoTracks()[0].onended = () => {
-        stopSharing()
+        get().stopSharing()
       }
     } catch (err) {
       console.error("Failed to share screen", err)
     }
-  }, [intervalMs])
-
-  const stopSharing = useCallback(() => {
+  },
+  stopSharing: () => {
+    const { stream } = get()
     if (stream) {
       stream.getTracks().forEach(track => track.stop())
-      setStream(null)
+      set({ stream: null })
     }
     // Limpa o vídeo de captura global
     if (captureVideo) {
       captureVideo.srcObject = null
     }
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current)
+    if (intervalRef) {
+      clearInterval(intervalRef)
+      intervalRef = null
     }
-    setIsSharing(false)
-  }, [stream])
-
-  return { isSharing, startSharing, stopSharing, stream }
-}
+    set({ isSharing: false })
+  }
+}))
