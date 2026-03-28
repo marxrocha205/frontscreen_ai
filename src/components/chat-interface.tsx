@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useI18n } from '@/context/i18n-context'
 import { useWebsocket, stopAllAudio } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
@@ -12,8 +12,9 @@ import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 
 /**
  * Componente de Interface de Chat.
@@ -28,21 +29,52 @@ export function ChatInterface() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const { messages, sendMessage, isStreaming } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow } = useChatStore()
+  const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound } = useChatStore()
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
+
+  const handleSpeechStart = useCallback(() => {
+    stopAllAudio()
+    sendCancel()
+  }, [sendCancel])
+
+  const handleSpeechEnd = useCallback((audioBase64: string) => {
+    const isCurrentlySharing = useScreenShare.getState().isSharing;
+    const frame = isCurrentlySharing ? captureScreenFrame() : undefined;
+
+    sendMessage({ 
+      audio_base64: audioBase64,
+      image_base64: frame
+    })
+  }, [sendMessage])
+
+  const { isActive: isContinuousMicOn, isUserSpeaking, toggleContinuousMic } = useContinuousVoice(handleSpeechStart, handleSpeechEnd)
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
 
+  // Se o painel voltar ao normal ou o usuário acionar gravação manual, forçamos o VAD a desligar
   useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream
-      // Garante que o vídeo toque, especialmente útil após mover pelo Portal num novo PiP
-      videoRef.current.play().catch(e => console.error('Erro ao tocar vídeo da tela:', e))
+    if (floatingState === 'none' && isContinuousMicOn) {
+      toggleContinuousMic() // Desliga
     }
-  }, [stream, floatingState])
+  }, [floatingState, isContinuousMicOn, toggleContinuousMic])
+
+  useEffect(() => {
+    if (isVoiceActive && isContinuousMicOn) {
+      toggleContinuousMic() // Desliga o contínuo ao forçar manual
+    }
+  }, [isVoiceActive, isContinuousMicOn, toggleContinuousMic])
+
+  useEffect(() => {
+    if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
+      videoRef.current.srcObject = stream
+      videoRef.current.play().catch(e => {
+        if (e.name !== 'AbortError') console.error("Error playing video:", e)
+      })
+    }
+  }, [stream])
 
   const { isLoggedIn } = useAuth()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -117,13 +149,15 @@ export function ChatInterface() {
             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response })
 
             stopAllAudio()
-            if (data.audio_base64) {
-              const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64)
-              audio.play().catch(e => console.error('Erro ao tocar áudio:', e))
-            } else if (data.response) {
-              const utterance = new SpeechSynthesisUtterance(data.response.replace(/[*#_]/g, ''))
-              utterance.lang = 'pt-BR'
-              window.speechSynthesis.speak(utterance)
+            if (isSoundEnabled) {
+              if (data.audio_base64) {
+                const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64)
+                audio.play().catch(e => console.error('Erro ao tocar áudio:', e))
+              } else if (data.response) {
+                const utterance = new SpeechSynthesisUtterance(data.response.replace(/[*#_]/g, ''))
+                utterance.lang = 'pt-BR'
+                window.speechSynthesis.speak(utterance)
+              }
             }
 
             if (data.remaining_credits !== undefined) {
@@ -214,7 +248,7 @@ export function ChatInterface() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                <DropdownMenuItem onClick={isScreenShared ? stopSharing : startSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                <DropdownMenuItem onClick={isScreenShared ? stopSharing : () => startSharing()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                   <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
                   <span className="font-medium text-[14px]">
                     {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
@@ -238,8 +272,26 @@ export function ChatInterface() {
             />
 
             <div className="flex items-center gap-1.5">
+              {floatingState !== 'none' && (
+                <Button 
+                  size="icon" 
+                  onClick={toggleContinuousMic} 
+                  title={isContinuousMicOn ? "Desativar Microfone Contínuo" : "Microfone Sempre Ligado"}
+                  className={`rounded-full w-10 h-10 transition-all ${isContinuousMicOn ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
+                >
+                  <AudioLines className={`w-5 h-5 ${isUserSpeaking ? 'animate-pulse scale-110' : ''}`} />
+                </Button>
+              )}
               <Button size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
+              </Button>
+              <Button
+                size="icon"
+                onClick={toggleSound}
+                title={isSoundEnabled ? 'Silenciar IA' : 'Ativar voz da IA'}
+                className={`rounded-full w-10 h-10 transition-all ${!isSoundEnabled ? 'bg-zinc-800 text-zinc-500' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
+              >
+                {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-zinc-600" />}
               </Button>
               <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
                 <Navigation className="w-5 h-5" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from './use-chat-store'
-import { useConversations } from './use-conversations' // NOVO: Importando o gerenciador de conversas
+import { useConversations } from './use-conversations'
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -77,15 +77,17 @@ export function useWebsocket() {
           addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
           stopAllAudio()
           
-          // 2. Toca o áudio realista (se for plano pago) ou fallback (se for Free)
-          if (data.audio_base64) {
-            currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
-            currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
-          } else if (data.message) {
-            // Fallback para vozes gratuitas do navegador (Plano Free)
-            const utterance = new SpeechSynthesisUtterance(data.message.replace(/[*#_]/g, ''))
-            utterance.lang = 'pt-BR'
-            window.speechSynthesis.speak(utterance)
+          // 2. Toca áudio só se o botão de som estiver ativado
+          const { isSoundEnabled } = useChatStore.getState()
+          if (isSoundEnabled) {
+            if (data.audio_base64) {
+              currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
+              currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
+            } else if (data.message) {
+              const utterance = new SpeechSynthesisUtterance(data.message.replace(/[*#_]/g, ''))
+              utterance.lang = 'pt-BR'
+              window.speechSynthesis.speak(utterance)
+            }
           }
 
           // 3. Atualiza os créditos na tela (A MÁGICA DA SPRINT 4)
@@ -140,5 +142,11 @@ export function useWebsocket() {
     }
   }, [addMessage, setIsStreaming])
 
-  return { messages, isConnected, isStreaming, sendMessage }
+  const sendCancel = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "cancel_generation" }))
+    }
+  }, [])
+
+  return { messages, isConnected, isStreaming, sendMessage, sendCancel }
 }
