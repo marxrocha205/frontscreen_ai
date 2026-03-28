@@ -19,6 +19,7 @@ interface ConversationsState {
   fetchConversations: () => Promise<void>
   loadConversation: (id: string) => Promise<void>
   deleteConversation: (id: string) => Promise<void>
+  renameConversation: (id: string, newTitle: string) => Promise<void>
   createNewConversation: () => void
   setActiveId: (id: string) => void // NOVO: Para setar o ID após a 1ª mensagem
 }
@@ -113,6 +114,32 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       }
     } catch (error) {
       console.error("Erro de rede ao excluir conversa:", error)
+    }
+  },
+
+  renameConversation: async (id: string, newTitle: string) => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      if (!token) return
+
+      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ title: newTitle })
+      })
+
+      if (res.ok) {
+        set((state) => ({
+          conversations: state.conversations.map((c) => c.id === id ? { ...c, title: newTitle } : c)
+        }))
+      } else {
+        console.error("Erro ao renomear conversa:", await res.text())
+      }
+    } catch (error) {
+      console.error("Erro de rede ao renomear conversa:", error)
     }
   },
 

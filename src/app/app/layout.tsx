@@ -1,11 +1,12 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2 } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
 import { useConversations } from '@/hooks/use-conversations'
@@ -23,7 +24,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { isLoggedIn, user, logout } = useAuth()
   
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
-  const { conversations, fetchConversations, loadConversation, deleteConversation, activeId, isLoading, createNewConversation } = useConversations()
+  const { conversations, fetchConversations, loadConversation, deleteConversation, renameConversation, activeId, isLoading, createNewConversation } = useConversations()
   
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
   const { messages, clearMessages, selectedModel, setSelectedModel, floatingState } = useChatStore()
@@ -33,6 +34,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editingTitle, setEditingTitle] = useState('')
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
 
   // Dispara a busca do histórico no banco de dados assim que a tela abre
@@ -65,6 +70,31 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       action()
     } else {
       setShowLoginPrompt(true)
+    }
+  }
+
+  const filteredConversations = conversations.filter(c => 
+    c.title.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  const startEditing = (e: React.MouseEvent, id: string, currentTitle: string) => {
+    e.stopPropagation()
+    setEditingId(id)
+    setEditingTitle(currentTitle)
+  }
+
+  const handleRenameSubmit = async (id: string) => {
+    if (editingTitle.trim() && editingTitle.trim() !== conversations.find(c => c.id === id)?.title) {
+      await renameConversation(id, editingTitle.trim())
+    }
+    setEditingId(null)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent, id: string) => {
+    if (e.key === 'Enter') {
+      handleRenameSubmit(id)
+    } else if (e.key === 'Escape') {
+      setEditingId(null)
     }
   }
 
@@ -184,12 +214,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => handleAuthAction(() => { })}
+            onClick={() => handleAuthAction(() => setIsSearchOpen(!isSearchOpen))}
             className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
           >
             <Search className="w-4 h-4" />
             <span className="text-sm font-medium">{t('app.search_chat')}</span>
           </Button>
+
+          {isSearchOpen && (
+            <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
+              <Input
+                autoFocus
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Buscar conversa..."
+                className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
+              />
+            </div>
+          )}
+
           <Button
             variant="ghost"
             onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : startSharing() })}
@@ -231,26 +274,52 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="space-y-[2px]">
             {isLoading ? (
                <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">A carregar...</div>
-            ) : conversations.length === 0 ? (
-               <div className="text-zinc-600 text-[13px] px-3 mt-2">Nenhuma conversa ainda.</div>
+            ) : filteredConversations.length === 0 ? (
+               <div className="text-zinc-600 text-[13px] px-3 mt-2">
+                 {searchQuery ? 'Nenhuma conversa encontrada.' : 'Nenhuma conversa ainda.'}
+               </div>
             ) : (
-              conversations.map((item) => (
+              filteredConversations.map((item) => (
                 <div key={item.id} className="w-full relative flex items-center group">
                   <button
                     onClick={() => loadConversation(item.id)}
-                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-10 ${
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${
                       activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
                     }`}
                   >
-                    <MessageSquare className={`w-4 h-4 shrink-0 ${activeId === item.id ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-                    <span className="truncate flex-1">{item.title}</span>
+                    <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+                    
+                    {editingId === item.id ? (
+                      <Input
+                        autoFocus
+                        value={editingTitle}
+                        onChange={(e) => setEditingTitle(e.target.value)}
+                        onBlur={() => handleRenameSubmit(item.id)}
+                        onKeyDown={(e) => handleKeyDown(e, item.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        maxLength={30}
+                        className="h-6 px-1.5 py-0 bg-zinc-900 border-zinc-700 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-indigo-500 flex-1 min-w-0"
+                      />
+                    ) : (
+                      <span className="truncate flex-1">{item.title}</span>
+                    )}
                   </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
-                    className="absolute right-2 p-1.5 text-zinc-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity rounded-md hover:bg-zinc-800"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <button
+                      onClick={(e) => startEditing(e, item.id, item.title)}
+                      className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                      title="Renomear"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
+                      className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                      title="Excluir"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
