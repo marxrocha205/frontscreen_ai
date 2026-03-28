@@ -16,6 +16,7 @@ import { useState, useEffect } from 'react'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
+import { useScreenShare } from '@/hooks/use-screen-share'
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n()
@@ -27,6 +28,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
   const { messages, clearMessages, selectedModel, setSelectedModel, floatingState } = useChatStore()
   const { openChat } = useFloatingChat()
+  const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
   
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
@@ -190,11 +192,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </Button>
           <Button
             variant="ghost"
-            onClick={() => handleAuthAction(() => { })}
-            className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : startSharing() })}
+            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
+              isScreenShared 
+                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
+                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+            }`}
           >
             <MonitorUp className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('app.share_screen')}</span>
+            <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
           </Button>
           
           {/* Botão de Destacar Chat (PiP / Popup) */}
