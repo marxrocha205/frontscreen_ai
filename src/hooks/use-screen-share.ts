@@ -41,7 +41,7 @@ export function captureScreenFrame(): string | undefined {
     const ctx = canvas.getContext('2d')
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
-      return canvas.toDataURL('image/jpeg', 0.7)
+      return canvas.toDataURL('image/jpeg', 0.95)
     }
   } catch (err) {
     console.error('Erro ao capturar frame:', err)
@@ -61,7 +61,10 @@ let intervalRef: NodeJS.Timeout | null = null;
 export const useScreenShare = create<ScreenShareState>((set, get) => ({
   isSharing: false,
   stream: null,
-  startSharing: async (intervalMs: number = 3000) => {
+  startSharing: async (intervalMs: number | any = 3000) => {
+    // Impede que o objeto 'SyntheticEvent' do React entre como intervalo numérico
+    const delay = typeof intervalMs === 'number' ? intervalMs : 3000;
+    
     try {
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: { displaySurface: "monitor" }
@@ -69,14 +72,18 @@ export const useScreenShare = create<ScreenShareState>((set, get) => ({
 
       // Conecta o stream ao vídeo oculto global (para captura)
       const video = getCaptureVideo()
-      video.srcObject = mediaStream
-      video.play().catch(e => console.error('Erro ao iniciar vídeo de captura:', e))
+      if (video.srcObject !== mediaStream) {
+        video.srcObject = mediaStream
+        video.play().catch(e => {
+          if (e.name !== 'AbortError') console.error('Erro ao iniciar vídeo de captura:', e)
+        })
+      }
 
       set({ stream: mediaStream, isSharing: true })
       
       intervalRef = setInterval(() => {
-        console.log("Captured frame at interval")
-      }, intervalMs)
+        // Reservado para snapshot interval se necessário no futuro
+      }, delay)
       
       mediaStream.getVideoTracks()[0].onended = () => {
         get().stopSharing()

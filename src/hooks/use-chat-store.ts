@@ -31,6 +31,8 @@ interface ChatState {
   clearMessages: () => void
   openFloatingMode: (win: Window, type: 'pip' | 'popup') => void
   closeFloatingMode: () => void
+  isSoundEnabled: boolean
+  toggleSound: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -40,6 +42,7 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedModel: AI_MODELS[0].id,
   floatingState: 'none',
   pipWindow: null,
+  isSoundEnabled: true,
 
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message]
@@ -61,4 +64,5 @@ export const useChatStore = create<ChatState>((set) => ({
 
   openFloatingMode: (win, type) => set({ floatingState: type, pipWindow: win }),
   closeFloatingMode: () => set({ floatingState: 'none', pipWindow: null }),
+  toggleSound: () => set((state) => ({ isSoundEnabled: !state.isSoundEnabled })),
 }))
