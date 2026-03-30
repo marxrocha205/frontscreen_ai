@@ -18,6 +18,8 @@ export const useAuth = create<AuthState>()(
         // Remove o token do navegador por segurança
         if (typeof window !== 'undefined') {
           localStorage.removeItem('access_token')
+          document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+
         }
         set({ isLoggedIn: false, user: null })
       },
