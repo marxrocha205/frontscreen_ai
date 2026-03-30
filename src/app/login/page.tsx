@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { useState } from 'react'
+import Cookies from 'js-cookie'
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -43,6 +44,12 @@ export default function LoginPage() {
         const data = await response.json()
         // Guarda o token para o WebSocket usar depois
         localStorage.setItem('access_token', data.access_token)
+        Cookies.set('access_token', data.access_token, { 
+    expires: 7, // 7 dias (alinhar com o backend)
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  })
+        
         login(email)
         router.push('/app')
       } else {
