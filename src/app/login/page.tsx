@@ -52,7 +52,7 @@ export default function LoginPage() {
   })
         
         login(email)
-        router.push('/app')
+        window.location.href = '/app'
       } else {
         const errData = await response.json()
         setError(errData.detail || 'Email ou senha incorretos.')
