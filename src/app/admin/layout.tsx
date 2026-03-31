@@ -1,11 +1,11 @@
 "use client"
 
-import { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { LayoutDashboard, Users, Activity, HardDrive, Radio, Settings, ShieldCheck, Database, CreditCard } from 'lucide-react'
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+function AdminLayoutContent({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab') || 'dashboard'
 
@@ -49,9 +49,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
          </nav>
          
          <div className="mt-auto px-2 pb-2 text-xs text-zinc-600">
-           <Link href="/login" className="hover:text-zinc-400 transition-colors">
-             &larr; Back to Platform
-           </Link>
+            <Link href="/login" className="hover:text-zinc-400 transition-colors">
+              &larr; Back to Platform
+            </Link>
          </div>
       </div>
       {/* CORREÇÃO: Fundo escuro restaurado */}
@@ -59,5 +59,13 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
     </div>
+  )
+}
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen bg-zinc-950" />}>
+      <AdminLayoutContent children={children} />
+    </Suspense>
   )
 }

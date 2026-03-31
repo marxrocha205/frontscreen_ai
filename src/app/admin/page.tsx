@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { DashboardTab } from "./tabs/DashboardTab"
 import { UsersTab } from "./tabs/UserTab"
@@ -9,16 +10,11 @@ import { WebsocketsTab } from "./tabs/WebsocketsTab"
 import { AuditTab } from "./tabs/AudiTab"
 import { SettingsTab } from "./tabs/SettingsTab"
 
-// Importe as outras abas conforme for criando:
-// import { UsersTab } from "./tabs/UsersTab"
-// import { SessionsTab } from "./tabs/SessionsTab"
-
 /**
- * AdminPage (Orquestrador)
- * Responsabilidade: Ler a URL e renderizar o componente (Aba) correspondente.
- * Sem dependências de Data Fetching direto.
+ * AdminPageContent (Componente Interno)
+ * Extraído para permitir o uso de Suspense.
  */
-export default function AdminPage() {
+function AdminPageContent() {
   const searchParams = useSearchParams()
   const currentTab = searchParams.get('tab') || 'dashboard'
 
@@ -27,10 +23,8 @@ export default function AdminPage() {
       case 'dashboard':
         return <DashboardTab />
       case 'users':
-        // return <UsersTab />  <- Descomente após criar o arquivo
         return <UsersTab />
       case 'sessions':
-        // return <SessionsTab /> <- Descomente após criar o arquivo
         return <SessionsTab />
       
         case 'storage':
@@ -95,5 +89,21 @@ export default function AdminPage() {
       {/* O renderizador limpo e elegante */}
       {renderContent()}
     </div>
+  )
+}
+
+/**
+ * AdminPage (Ponto de Entrada)
+ * Envolve o conteúdo em um Suspense boundary para evitar erros de Prerender no Next.js (Client-side bailout).
+ */
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-full p-8">
+        <div className="text-zinc-500 animate-pulse font-medium">Carregando painel...</div>
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   )
 }
