@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Radio, Activity, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { config } from "@/lib/config"
 
 export function WebsocketsTab() {
   const [stats, setStats] = useState({ total_active: 0, active_users: [] })
@@ -12,7 +13,7 @@ export function WebsocketsTab() {
     // mas para o Admin, um polling de 5s é eficiente e seguro.
     const interval = setInterval(async () => {
       const token = localStorage.getItem("access_token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/websockets/stats`, {
+      const res = await fetch(`${config.apiUrl}/api/admin/websockets/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()

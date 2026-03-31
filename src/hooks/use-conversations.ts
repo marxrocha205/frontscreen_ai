@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { config } from '@/lib/config'
 import { useChatStore } from './use-chat-store'
 import { stopAllAudio } from './use-websocket'
 
@@ -35,7 +36,7 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch('http://127.0.0.1:8000/api/chat/sessions', {
+      const res = await fetch(`${config.apiUrl}/api/chat/sessions`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -66,7 +67,7 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}/messages`, {
+      const res = await fetch(`${config.apiUrl}/api/chat/sessions/${id}/messages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       
@@ -91,7 +92,7 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}`, {
+      const res = await fetch(`${config.apiUrl}/api/chat/sessions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -122,7 +123,7 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch(`http://127.0.0.1:8000/api/chat/sessions/${id}`, {
+      const res = await fetch(`${config.apiUrl}/api/chat/sessions/${id}`, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${token}`,

@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { config } from "@/lib/config"
 
 interface BillingData {
     id: number
@@ -40,7 +41,7 @@ export function BillingTab() {
         if (!token) throw new Error("Não autenticado")
 
         // 1. Agora consumimos a rota dedicada de faturação
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/billing`, {
+        const res = await fetch(`${config.apiUrl}/api/admin/billing`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         })
@@ -72,7 +73,7 @@ export function BillingTab() {
         setIsSubmitting(true)
         try {
             const token = localStorage.getItem("access_token")
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${selectedUser.id}/credits`, {
+            const res = await fetch(`${config.apiUrl}/api/admin/users/${selectedUser.id}/credits`, {
                 method: "POST",
                 headers: {
                     "Authorization": `Bearer ${token}`,

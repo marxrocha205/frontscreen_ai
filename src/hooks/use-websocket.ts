@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from './use-chat-store'
 import { useConversations } from './use-conversations'
+import { config } from '@/lib/config'
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -38,7 +39,7 @@ export function useWebsocket() {
       return
     }
 
-    const ws = new WebSocket(`ws://127.0.0.1:8000/ws/assistente?token=${token}`)
+    const ws = new WebSocket(`${config.wsUrl}/ws/assistente?token=${token}`)
     wsRef.current = ws
 
     ws.onopen = () => {

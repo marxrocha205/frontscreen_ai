@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { config } from '@/lib/config'
 
 export const AI_MODELS = [
   { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
@@ -66,7 +67,7 @@ export const useChatStore = create<ChatState>((set) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch('http://127.0.0.1:8000/api/users/me', {
+      const res = await fetch(`${config.apiUrl}/api/users/me`, {
         headers: { 
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

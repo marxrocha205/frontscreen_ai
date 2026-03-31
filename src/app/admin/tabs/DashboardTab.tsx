@@ -5,6 +5,7 @@ import { Users, MessageSquare, Coins, History, Loader2, AlertCircle } from "luci
 import { MetricCard } from "../components/MetricCard"
 import { TrendsChart, TrendData } from "../components/TrendsChart"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { config } from "@/lib/config"
 
 interface AdminMetrics {
   total_users: number
@@ -28,7 +29,7 @@ export function DashboardTab() {
         if (!token) throw new Error("Não autenticado")
 
         const headers = { Authorization: `Bearer ${token}` }
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL
+        const baseUrl = config.apiUrl
 
         // Promise.all executa as chamadas em paralelo, reduzindo o tempo de espera a metade
         const [metricsRes, trendsRes] = await Promise.all([

@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { useState, Suspense, useEffect } from 'react'
+import { config } from '@/lib/config'
 
 function RegisterForm() {
   const { t } = useI18n()
@@ -39,7 +40,7 @@ function RegisterForm() {
 
     try {
       // 1. Cria a conta na API (JSON)
-      const registerRes = await fetch('http://127.0.0.1:8000/auth/register', {
+      const registerRes = await fetch(`${config.apiUrl}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -55,7 +56,7 @@ function RegisterForm() {
       formData.append('username', email)
       formData.append('password', password)
 
-      const loginRes = await fetch('http://127.0.0.1:8000/auth/login', {
+      const loginRes = await fetch(`${config.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData,

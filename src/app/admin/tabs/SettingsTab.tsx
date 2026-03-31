@@ -1,5 +1,6 @@
 "use client"
 import { useEffect, useState } from "react"
+import { config } from "@/lib/config"
 import { Settings2, Save, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -13,7 +14,7 @@ export function SettingsTab() {
   useEffect(() => {
     async function fetchSettings() {
       const token = localStorage.getItem("access_token")
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings`, {
+      const res = await fetch(`${config.apiUrl}/api/admin/settings`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       const data = await res.json()
@@ -26,7 +27,7 @@ export function SettingsTab() {
   const handleSave = async (key: string, value: string) => {
     setSavingKey(key)
     const token = localStorage.getItem("access_token")
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/settings/${key}`, {
+    await fetch(`${config.apiUrl}/api/admin/settings/${key}`, {
       method: "PATCH",
       headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify({ value })

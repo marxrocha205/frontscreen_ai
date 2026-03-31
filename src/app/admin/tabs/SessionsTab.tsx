@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { Loader2, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { config } from "@/lib/config"
 
 interface SessionData {
   session_id: string
@@ -25,7 +26,7 @@ export function SessionsTab() {
         const token = localStorage.getItem("access_token")
         if (!token) throw new Error("Não autenticado")
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/sessions`, {
+        const res = await fetch(`${config.apiUrl}/api/admin/sessions`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         })

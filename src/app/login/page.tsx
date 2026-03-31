@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { useState } from 'react'
 import Cookies from 'js-cookie'
+import { config } from '@/lib/config'
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -34,7 +35,7 @@ export default function LoginPage() {
       formData.append('username', email)
       formData.append('password', password)
 
-      const response = await fetch('http://127.0.0.1:8000/auth/login', {
+      const response = await fetch(`${config.apiUrl}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData,

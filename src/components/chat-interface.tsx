@@ -8,6 +8,7 @@ import { useScreenShare, captureScreenFrame } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { useConversations } from '@/hooks/use-conversations'
+import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -142,7 +143,7 @@ export function ChatInterface() {
         if (activeId) formData.append('session_id', activeId)
 
         try {
-          const res = await fetch('http://127.0.0.1:8000/api/chat/message', {
+          const res = await fetch(`${config.apiUrl}/api/chat/message`, {
             method: 'POST',
             body: formData
           })

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { Loader2, AlertCircle, Power } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { config } from "@/lib/config"
 
 // Tipagem rigorosa
 interface UserData {
@@ -28,7 +29,7 @@ export function UsersTab() {
         const token = localStorage.getItem("access_token")
         if (!token) throw new Error("Não autenticado")
 
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
+        const res = await fetch(`${config.apiUrl}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         })
@@ -57,7 +58,7 @@ export function UsersTab() {
       const token = localStorage.getItem("access_token")
       const newStatus = !currentStatus
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users/${userId}/status`, {
+      const res = await fetch(`${config.apiUrl}/api/admin/users/${userId}/status`, {
         method: "PATCH",
         headers: {
           "Authorization": `Bearer ${token}`,
