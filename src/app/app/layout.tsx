@@ -101,20 +101,18 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
       {!isLoggedIn && (
-        <div className="absolute top-3 right-4 z-40 flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-2 sm:top-4 sm:right-5">
-          <div className="flex items-center gap-2">
-            <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-9 sm:h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
-              Log in
-            </Button>
-            <Button onClick={() => router.push('/login')} className="hidden sm:inline-flex rounded-[20px] bg-[#1a1a1a] text-white hover:bg-zinc-800 h-10 px-5 font-semibold border border-zinc-700/50 text-sm">
-              Sign up for free
-            </Button>
-          </div>
+        <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+          <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
+            Log in
+          </Button>
+          <Button onClick={() => router.push('/login')} className="hidden sm:inline-flex rounded-[20px] bg-[#1a1a1a] text-white hover:bg-zinc-800 h-10 px-5 font-semibold border border-zinc-700/50 text-sm">
+            Sign up for free
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="rounded-full bg-transparent border-none w-8 h-8 sm:w-10 sm:h-10 text-zinc-400 hover:bg-transparent hover:text-white data-[state=open]:text-white outline-none ring-0 focus-visible:ring-0">
-                <HelpCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+              <Button variant="outline" size="icon" className="hidden sm:inline-flex rounded-full bg-transparent border-none w-10 h-10 text-zinc-400 hover:bg-transparent hover:text-white data-[state=open]:text-white outline-none ring-0 focus-visible:ring-0">
+                <HelpCircle className="w-6 h-6" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-64 bg-[#232323] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl overflow-hidden z-[100]">
