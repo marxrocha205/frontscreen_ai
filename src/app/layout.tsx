@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { I18nProvider } from "@/context/i18n-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -35,7 +36,9 @@ export default function RootLayout({
         >
           <I18nProvider>
             <TooltipProvider>
-              {children}
+              <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
+                {children}
+              </GoogleOAuthProvider>
             </TooltipProvider>
           </I18nProvider>
         </ThemeProvider>
