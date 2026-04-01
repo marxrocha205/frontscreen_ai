@@ -206,7 +206,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="px-3 pb-3 flex flex-col gap-2">
           <Button
             variant="ghost"
-            onClick={handleNewChat}
+            onClick={() => handleAuthAction(handleNewChat)}
             className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
           >
             <Plus className="w-4 h-4 text-zinc-400" />
@@ -249,7 +249,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {/* Botão de Destacar Chat (PiP / Popup) */}
           <Button
             variant="ghost"
-            onClick={openChat}
+            onClick={() => handleAuthAction(openChat)}
             className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
               floatingState !== 'none'
                 ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
@@ -346,12 +346,23 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          <SettingsDialog trigger={
-            <Button variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+          {isLoggedIn ? (
+            <SettingsDialog trigger={
+              <Button variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+                <span className="text-sm">{t('app.settings')}</span>
+              </Button>
+            } />
+          ) : (
+            <Button
+              variant="ghost"
+              onClick={() => handleAuthAction(() => {})}
+              className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
+            >
               <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
               <span className="text-sm">{t('app.settings')}</span>
             </Button>
-          } />
+          )}
 
           {isLoggedIn && (
             <SettingsDialog
