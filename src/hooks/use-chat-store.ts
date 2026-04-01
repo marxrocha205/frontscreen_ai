@@ -5,7 +5,7 @@ export const AI_MODELS = [
   { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
   { id: 'gemini-1.5-pro', label: 'Gemini Pro', badge: 'PRO' },
   { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' },
-  { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' }
+  { id: 'gpt-5', label: 'ChatGPT 5', badge: 'NEW', disabled: true }
 ]
 
 export interface Message {
@@ -45,7 +45,7 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedModel: AI_MODELS[0].id,
   floatingState: 'none',
   pipWindow: null,
-  isSoundEnabled: true,
+  isSoundEnabled: false,
 
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message]
