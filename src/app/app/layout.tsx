@@ -151,14 +151,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       )}
 
       <div 
-        className={`absolute top-[12px] z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'left-[204px]' : 'left-[12px]'
+        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${
+          sidebarOpen ? 'left-[204px]' : 'left-4'
         }`}
       >
         <Button
           variant="ghost"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`h-14 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${
             sidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
           }`}
           title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
@@ -170,8 +170,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 src="/logobranco-semfundo.png"
                 alt="Screen AI Logo"
                 width={180}
-                height={56}
-                className="h-10 md:h-12 lg:h-14 w-auto object-contain"
+                height={40}
+                className="h-8 md:h-9 w-auto object-contain"
                 priority
               />
           </div>
@@ -375,14 +375,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-        <div className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between pr-4 pl-[20px] pt-3 h-[80px] pointer-events-none">
-          <div className="w-auto h-10 relative flex items-center justify-center"></div>
+        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10">
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
-                className="pointer-events-auto flex items-center gap-1.5 h-9 px-3 rounded-xl text-zinc-200 hover:bg-zinc-800/60 font-semibold text-sm transition-all"
+                className="pointer-events-auto flex items-center gap-1.5 h-10 px-3 md:px-4 rounded-xl text-zinc-200 hover:bg-zinc-800/60 font-semibold text-sm transition-all"
               >
                 {currentModel?.label}
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
@@ -411,8 +410,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
-
-          <div className="w-9" />
         </div>
 
         {children}
