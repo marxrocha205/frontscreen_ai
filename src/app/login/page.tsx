@@ -118,16 +118,19 @@ export default function LoginPage() {
             
             {error && <div className="text-red-500 text-sm text-center">{error}</div>}
 
-            <div className="w-full flex justify-center">
+            <div className="w-full flex justify-center py-2">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={() => {
                   setError('O login com Google falhou.')
                 }}
-                useOneTap
+                useOneTap={false}
                 theme="filled_black"
-                shape="pill"
-                width="352"
+                shape="rectangular"
+                size="large"
+                width="344"
+                logo_alignment="left"
+                text="continue_with"
               />
             </div>
 
