@@ -10,6 +10,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "ScreenAI",
   description: "Your real-time AI screen analysis assistant",
+   icons: {
+    icon: "/icon.png",
+  },
 };
 
 export default function RootLayout({
