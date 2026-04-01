@@ -15,6 +15,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -73,6 +75,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   }
 
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false
+    return window.innerWidth < 768 || navigator.maxTouchPoints > 0
+  }
+
+  const handleStartSharing = () => {
+    if (isMobileDevice()) {
+      setShowMobileWarning(true)
+      return
+    }
+    startSharing()
+  }
+
   const filteredConversations = conversations.filter(c => 
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -101,8 +116,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
       {!isLoggedIn && (
-        <div className="absolute top-4 right-5 z-40 flex items-center gap-2">
-          <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-5 font-semibold text-sm shadow-sm">
+        <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
+          <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
             Log in
           </Button>
           <Button onClick={() => router.push('/login')} className="hidden sm:inline-flex rounded-[20px] bg-[#1a1a1a] text-white hover:bg-zinc-800 h-10 px-5 font-semibold border border-zinc-700/50 text-sm">
@@ -111,7 +126,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="rounded-full bg-transparent border-none w-10 h-10 text-zinc-400 hover:bg-transparent hover:text-white data-[state=open]:text-white outline-none ring-0 focus-visible:ring-0">
+              <Button variant="outline" size="icon" className="hidden sm:inline-flex rounded-full bg-transparent border-none w-10 h-10 text-zinc-400 hover:bg-transparent hover:text-white data-[state=open]:text-white outline-none ring-0 focus-visible:ring-0">
                 <HelpCircle className="w-6 h-6" />
               </Button>
             </DropdownMenuTrigger>
@@ -206,7 +221,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="px-3 pb-3 flex flex-col gap-2">
           <Button
             variant="ghost"
-            onClick={handleNewChat}
+            onClick={() => handleAuthAction(handleNewChat)}
             className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
           >
             <Plus className="w-4 h-4 text-zinc-400" />
@@ -235,7 +250,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           <Button
             variant="ghost"
-            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : startSharing() })}
+            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
             className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
               isScreenShared 
                 ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
@@ -249,7 +264,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {/* Botão de Destacar Chat (PiP / Popup) */}
           <Button
             variant="ghost"
-            onClick={openChat}
+            onClick={() => handleAuthAction(openChat)}
             className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
               floatingState !== 'none'
                 ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
@@ -346,12 +361,23 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          <SettingsDialog trigger={
-            <Button variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+          {isLoggedIn ? (
+            <SettingsDialog trigger={
+              <Button variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+                <span className="text-sm">{t('app.settings')}</span>
+              </Button>
+            } />
+          ) : (
+            <Button
+              variant="ghost"
+              onClick={() => handleAuthAction(() => {})}
+              className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
+            >
               <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
               <span className="text-sm">{t('app.settings')}</span>
             </Button>
-          } />
+          )}
 
           {isLoggedIn && (
             <SettingsDialog
@@ -415,6 +441,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
 
+      <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
+        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
+              <MonitorUp className="w-6 h-6 text-zinc-400" />
+            </div>
+            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
+              Função exclusiva para Desktop
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
+              O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => setShowMobileWarning(false)}
+            className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
+          >
+            Entendi
+          </Button>
+        </DialogContent>
+      </Dialog>
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
     </div>
   )
