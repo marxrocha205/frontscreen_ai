@@ -205,10 +205,11 @@ export function ChatInterface() {
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
       {isLoggedIn && (
-        <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+        <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-3 md:px-4 h-10 flex items-center gap-1.5 shadow-lg">
           <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
-          <span className="text-sm font-bold text-zinc-200">
-            {(credits !== null) ? `${credits} Créditos` : '-- Créditos'}
+          <span className="text-sm font-bold text-zinc-200 flex items-center gap-1">
+            <span>{(credits !== null) ? credits : '--'}</span>
+            <span className="hidden sm:inline">Créditos</span>
           </span>
         </div>
       )}
