@@ -4,6 +4,7 @@ import { config } from '@/lib/config'
 export const AI_MODELS = [
   { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
   { id: 'gemini-1.5-pro', label: 'Gemini Pro', badge: 'PRO' },
+  { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' },
   { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' }
 ]
 
@@ -49,7 +50,7 @@ export const useChatStore = create<ChatState>((set) => ({
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message]
   })),
-  
+
   updateLastAssistantMessage: (content) => set((state) => {
     const newMessages = [...state.messages]
     const lastIdx = newMessages.findLastIndex(m => m.role === 'assistant')
@@ -58,7 +59,7 @@ export const useChatStore = create<ChatState>((set) => ({
     }
     return { messages: newMessages }
   }),
-  
+
   setIsStreaming: (isStreaming) => set({ isStreaming }),
   setCredits: (credits) => set({ credits }),
 
@@ -68,12 +69,12 @@ export const useChatStore = create<ChatState>((set) => ({
       if (!token) return
 
       const res = await fetch(`${config.apiUrl}/api/users/me`, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
-      
+
       if (res.ok) {
         const data = await res.json()
         if (data.remaining_credits !== undefined) {
