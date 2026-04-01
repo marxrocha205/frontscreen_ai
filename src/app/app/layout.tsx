@@ -15,6 +15,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
@@ -33,6 +34,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -71,6 +73,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     } else {
       setShowLoginPrompt(true)
     }
+  }
+
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false
+    return window.innerWidth < 768 || navigator.maxTouchPoints > 0
+  }
+
+  const handleStartSharing = () => {
+    if (isMobileDevice()) {
+      setShowMobileWarning(true)
+      return
+    }
+    startSharing()
   }
 
   const filteredConversations = conversations.filter(c => 
@@ -235,7 +250,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           <Button
             variant="ghost"
-            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : startSharing() })}
+            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
             className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
               isScreenShared 
                 ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
@@ -426,6 +441,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         {children}
       </div>
 
+      <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
+        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
+              <MonitorUp className="w-6 h-6 text-zinc-400" />
+            </div>
+            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
+              Função exclusiva para Desktop
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
+              O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => setShowMobileWarning(false)}
+            className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
+          >
+            Entendi
+          </Button>
+        </DialogContent>
+      </Dialog>
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
     </div>
   )

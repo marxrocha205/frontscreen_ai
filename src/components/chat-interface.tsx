@@ -17,6 +17,7 @@ import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, 
 import ReactMarkdown from 'react-markdown'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 /**
  * Componente de Interface de Chat.
@@ -28,6 +29,7 @@ export function ChatInterface() {
   const { t } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -62,6 +64,19 @@ export function ChatInterface() {
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
+
+  const isMobileDevice = () => {
+    if (typeof window === 'undefined') return false
+    return window.innerWidth < 768 || navigator.maxTouchPoints > 0
+  }
+
+  const handleStartSharing = () => {
+    if (isMobileDevice()) {
+      setShowMobileWarning(true)
+      return
+    }
+    startSharing()
+  }
 
   // Se o painel voltar ao normal ou o usuário acionar gravação manual, forçamos o VAD a desligar
   useEffect(() => {
@@ -204,6 +219,28 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
+      <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
+        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+          <DialogHeader>
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
+              <MonitorUp className="w-6 h-6 text-zinc-400" />
+            </div>
+            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
+              Função exclusiva para Desktop
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
+              O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => setShowMobileWarning(false)}
+            className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
+          >
+            Entendi
+          </Button>
+        </DialogContent>
+      </Dialog>
+
       {isLoggedIn && (
         <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-3 md:px-4 h-10 flex items-center gap-1.5 shadow-lg">
           <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
@@ -302,7 +339,7 @@ export function ChatInterface() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                <DropdownMenuItem onClick={isScreenShared ? stopSharing : () => startSharing()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                <DropdownMenuItem onClick={isScreenShared ? stopSharing : handleStartSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                   <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
                   <span className="font-medium text-[14px]">
                     {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
