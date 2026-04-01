@@ -31,8 +31,14 @@ export function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits } = useChatStore()
   const { isLoggedIn } = useAuth()
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchCredits()
+    }
+  }, [isLoggedIn])
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 

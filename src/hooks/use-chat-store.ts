@@ -68,7 +68,7 @@ export const useChatStore = create<ChatState>((set) => ({
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
       if (!token) return
 
-      const res = await fetch(`${config.apiUrl}/api/users/me`, {
+      const res = await fetch(`${config.apiUrl}/api/users/me/credits`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
