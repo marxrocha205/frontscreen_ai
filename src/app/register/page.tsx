@@ -9,6 +9,9 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { useState, Suspense, useEffect } from 'react'
 import { config } from '@/lib/config'
+import Cookies from 'js-cookie'
+import { GoogleLogin } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
 
 function RegisterForm() {
   const { t } = useI18n()
@@ -21,7 +24,49 @@ function RegisterForm() {
   const [email, setEmail] = useState(initialEmail)
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsGoogleLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`${config.apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        localStorage.setItem('access_token', data.access_token)
+        Cookies.set('access_token', data.access_token, { 
+          expires: 7,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict'
+        })
+        
+        let userEmail = ''
+        try {
+          const decoded: any = jwtDecode(credentialResponse.credential)
+          userEmail = decoded.email || ''
+        } catch (e) {
+          console.error("Falha ao ler o email do token", e)
+        }
+
+        login(userEmail)
+        window.location.href = '/app'
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        setError(errData.detail || 'Falha ao logar com o Google.')
+      }
+    } catch (err) {
+      console.error('Erro no Google Login:', err)
+      setError('Erro ao contactar o servidor para o Google Login.')
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
 
   useEffect(() => {
     if (initialEmail) {
@@ -98,6 +143,28 @@ function RegisterForm() {
           <CardContent className="pt-6 pb-4 space-y-4">
             
             {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
+            <div className="w-full flex justify-center py-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  setError('O cadastro com Google falhou.')
+                }}
+                useOneTap={false}
+                theme="filled_black"
+                shape="pill"
+                width="352"
+              />
+            </div>
+
+            <div className="relative pt-2 pb-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-semibold">
+                <span className="bg-zinc-950 px-3 text-zinc-500">ou cadastre-se com email</span>
+              </div>
+            </div>
 
             <div className="space-y-3">
               <Input 

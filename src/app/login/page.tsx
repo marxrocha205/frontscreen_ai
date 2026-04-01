@@ -10,6 +10,8 @@ import { useAuth } from '@/hooks/use-auth'
 import { useState } from 'react'
 import Cookies from 'js-cookie'
 import { config } from '@/lib/config'
+import { GoogleLogin } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -19,7 +21,49 @@ export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsGoogleLoading(true)
+    setError('')
+    try {
+      const res = await fetch(`${config.apiUrl}/auth/google`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credentialResponse.credential }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        localStorage.setItem('access_token', data.access_token)
+        Cookies.set('access_token', data.access_token, { 
+          expires: 7,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'strict'
+        })
+        
+        let userEmail = ''
+        try {
+          const decoded: any = jwtDecode(credentialResponse.credential)
+          userEmail = decoded.email || ''
+        } catch (e) {
+          console.error("Falha ao ler o email do token", e)
+        }
+
+        login(userEmail)
+        window.location.href = '/app'
+      } else {
+        const errData = await res.json().catch(() => ({}))
+        setError(errData.detail || 'Falha ao logar com o Google.')
+      }
+    } catch (err) {
+      console.error('Erro no Google Login:', err)
+      setError('Erro ao contactar o servidor para o Google Login.')
+    } finally {
+      setIsGoogleLoading(false)
+    }
+  }
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -83,6 +127,28 @@ export default function LoginPage() {
           <CardContent className="pt-6 pb-4 space-y-4">
             
             {error && <div className="text-red-500 text-sm text-center">{error}</div>}
+
+            <div className="w-full flex justify-center py-2">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => {
+                  setError('O login com Google falhou.')
+                }}
+                useOneTap={false}
+                theme="filled_black"
+                shape="pill"
+                width="352"
+              />
+            </div>
+
+            <div className="relative pt-2 pb-2">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-zinc-800" />
+              </div>
+              <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-semibold">
+                <span className="bg-zinc-950 px-3 text-zinc-500">ou continue com email</span>
+              </div>
+            </div>
 
             <div className="space-y-3 mt-4">
               <Input 
