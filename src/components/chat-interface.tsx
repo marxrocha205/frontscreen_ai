@@ -215,13 +215,43 @@ export function ChatInterface() {
       )}
 
       {isScreenShared && (
-        <div className="absolute top-4 left-4 z-10">
-          <div className="w-64 h-36 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl">
-            <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
-            <div className="absolute top-2 right-2">
-              <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse">LIVE</span>
+        <div 
+          className={`absolute top-4 left-4 z-40 transition-all duration-300 ${
+            floatingState !== 'none' ? 'group' : ''
+          }`}
+        >
+          {floatingState !== 'none' ? (
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-3 py-1.5 backdrop-blur-md shadow-lg cursor-default">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                <span className="text-[10px] font-bold text-red-500 tracking-wider uppercase">Screen Capturing</span>
+                <button 
+                  onClick={stopSharing}
+                  className="ml-1 p-0.5 hover:bg-red-500/20 rounded-full text-red-500 transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+              
+              {/* Hover Preview for PiP mode */}
+              <div className="w-48 h-28 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-top-left pointer-events-none">
+                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="w-64 h-36 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl relative">
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              <div className="absolute top-2 right-2 flex items-center gap-2">
+                <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse font-bold">LIVE</span>
+                <button 
+                  onClick={stopSharing}
+                  className="bg-black/60 hover:bg-black/80 p-1.5 rounded-full text-white transition-colors"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
