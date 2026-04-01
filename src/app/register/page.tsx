@@ -141,13 +141,9 @@ function RegisterForm() {
                   setError('O cadastro com Google falhou.')
                 }}
                 useOneTap={false}
-                type="standard"
                 theme="filled_black"
-                shape="rectangular"
-                size="large"
-                width="344"
-                logo_alignment="center"
-                text="continue_with"
+                shape="pill"
+                width="352"
               />
             </div>
 
