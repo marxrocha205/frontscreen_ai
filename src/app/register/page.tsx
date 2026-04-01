@@ -11,6 +11,7 @@ import { useState, Suspense, useEffect } from 'react'
 import { config } from '@/lib/config'
 import Cookies from 'js-cookie'
 import { GoogleLogin } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
 
 function RegisterForm() {
   const { t } = useI18n()
@@ -44,7 +45,16 @@ function RegisterForm() {
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict'
         })
-        login('')
+        
+        let userEmail = ''
+        try {
+          const decoded: any = jwtDecode(credentialResponse.credential)
+          userEmail = decoded.email || ''
+        } catch (e) {
+          console.error("Falha ao ler o email do token", e)
+        }
+
+        login(userEmail)
         window.location.href = '/app'
       } else {
         const errData = await res.json().catch(() => ({}))

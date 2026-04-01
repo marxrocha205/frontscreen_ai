@@ -11,6 +11,7 @@ import { useState } from 'react'
 import Cookies from 'js-cookie'
 import { config } from '@/lib/config'
 import { GoogleLogin } from '@react-oauth/google'
+import { jwtDecode } from 'jwt-decode'
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -41,7 +42,16 @@ export default function LoginPage() {
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'strict'
         })
-        login('')
+        
+        let userEmail = ''
+        try {
+          const decoded: any = jwtDecode(credentialResponse.credential)
+          userEmail = decoded.email || ''
+        } catch (e) {
+          console.error("Falha ao ler o email do token", e)
+        }
+
+        login(userEmail)
         window.location.href = '/app'
       } else {
         const errData = await res.json().catch(() => ({}))
