@@ -18,9 +18,8 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAdminRoute = pathname.startsWith('/admin')
-  const isAppRoute = pathname.startsWith('/app')
 
-  if (!token && (isAdminRoute || isAppRoute)) {
+  if (!token && isAdminRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
