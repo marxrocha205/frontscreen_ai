@@ -22,7 +22,7 @@ export function stopAllAudio() {
 }
 
 export function useWebsocket() {
-  const { messages, isStreaming, addMessage, setIsStreaming, setCredits } = useChatStore()
+  const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage } = useChatStore()
   const wsRef = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
 
@@ -104,7 +104,12 @@ export function useWebsocket() {
 
         case 'error':
           setIsStreaming(false)
-          addMessage({ id: Date.now().toString(), role: 'system', content: `⚠️ Aviso: ${data.message}` })
+          if (data.message && data.message.includes('Créditos insuficientes')) {
+            setUpgradeDialogMessage(data.message)
+            setIsUpgradeDialogOpen(true)
+          } else {
+            addMessage({ id: Date.now().toString(), role: 'system', content: `⚠️ Aviso: ${data.message}` })
+          }
           break;
       }
     }

@@ -16,6 +16,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
+import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 
 /**
  * Componente de Interface de Chat.
@@ -31,7 +32,7 @@ export function ChatInterface() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage } = useChatStore()
   const { isLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -175,10 +176,13 @@ export function ChatInterface() {
                 window.speechSynthesis.speak(utterance)
               }
             }
+          } else if (data.status === 'error' && data.message && data.message.includes('Créditos insuficientes')) {
+            setUpgradeDialogMessage(data.message)
+            setIsUpgradeDialogOpen(true)
+          }
 
-            if (data.remaining_credits !== undefined) {
-              setCredits(data.remaining_credits)
-            }
+          if (data.remaining_credits !== undefined) {
+            setCredits(data.remaining_credits)
           }
         } catch (error) {
           console.error('Erro ao enviar arquivo via REST:', error)
@@ -198,6 +202,7 @@ export function ChatInterface() {
   return (
     <div className="flex flex-col h-full w-full relative pt-4 pb-0 overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
+      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
       <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
         <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />

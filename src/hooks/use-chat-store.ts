@@ -24,6 +24,11 @@ interface ChatState {
   selectedModel: string
   floatingState: FloatingState
   pipWindow: Window | null
+  isUpgradeDialogOpen: boolean
+  setIsUpgradeDialogOpen: (open: boolean) => void
+  upgradeDialogMessage: string | null
+  setUpgradeDialogMessage: (message: string | null) => void
+
 
   addMessage: (message: Message) => void
   updateLastAssistantMessage: (content: string) => void
@@ -45,6 +50,8 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedModel: AI_MODELS[0].id,
   floatingState: 'none',
   pipWindow: null,
+  isUpgradeDialogOpen: false,
+  upgradeDialogMessage: null,
   isSoundEnabled: false,
 
   addMessage: (message) => set((state) => ({
@@ -91,5 +98,7 @@ export const useChatStore = create<ChatState>((set) => ({
 
   openFloatingMode: (win, type) => set({ floatingState: type, pipWindow: win }),
   closeFloatingMode: () => set({ floatingState: 'none', pipWindow: null }),
+  setIsUpgradeDialogOpen: (open) => set({ isUpgradeDialogOpen: open }),
+  setUpgradeDialogMessage: (message) => set({ upgradeDialogMessage: message }),
   toggleSound: () => set((state) => ({ isSoundEnabled: !state.isSoundEnabled })),
 }))
