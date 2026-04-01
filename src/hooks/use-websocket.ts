@@ -32,11 +32,7 @@ export function useWebsocket() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
     
     if (!token) {
-      console.error("Sem token de autenticação. Redirecionando para o login...")
-      if (typeof window !== 'undefined') {
-          window.location.href = '/login' // Expulsa o utilizador para a tela de login
-      }
-      return
+      return // Sem token: o usuário não está logado, mas pode navegar livremente
     }
 
     const ws = new WebSocket(`${config.wsUrl}/ws/assistente?token=${token}`)
