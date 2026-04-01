@@ -204,12 +204,14 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
-      <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
-        <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
-        <span className="text-sm font-bold text-zinc-200">
-          {(credits !== null) ? `${credits} Créditos` : '-- Créditos'}
-        </span>
-      </div>
+      {isLoggedIn && (
+        <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-4 py-2 flex items-center gap-2 shadow-lg">
+          <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
+          <span className="text-sm font-bold text-zinc-200">
+            {(credits !== null) ? `${credits} Créditos` : '-- Créditos'}
+          </span>
+        </div>
+      )}
 
       {isScreenShared && (
         <div className="absolute top-4 left-4 z-10">
