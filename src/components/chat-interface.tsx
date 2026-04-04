@@ -109,8 +109,9 @@ export function ChatInterface() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (messages.length > 0) {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
+    if (messages.length > 0 && scrollRef.current) {
+      const container = scrollRef.current
+      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
     }
   }, [messages.length])
 
@@ -215,7 +216,7 @@ export function ChatInterface() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full relative pt-4 pb-0 overflow-hidden bg-[#0a0a0a]">
+    <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
@@ -292,29 +293,38 @@ export function ChatInterface() {
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 md:px-24 lg:px-64 pt-16 pb-40 flex flex-col gap-8 custom-scrollbar">
-        {messages.map((m) => (
-          <div key={m.id} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[85%] rounded-2xl px-5 py-4 ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-200'}`}>
-              <div className="prose prose-invert text-sm max-w-none">
-                <ReactMarkdown>{m.content}</ReactMarkdown>
+      <div 
+        ref={scrollRef} 
+        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar"
+        style={{
+          maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
+          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))'
+        }}
+      >
+        <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
+          {messages.map((m, i) => (
+            <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-4 ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
+                <div className="prose prose-invert text-sm max-w-none">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {isStreaming && (
-          <div className="flex justify-start px-5">
-            <div className="flex gap-1">
-              <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-              <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-              <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" />
+          ))}
+          {isStreaming && (
+            <div className="flex justify-start w-full">
+              <div className="flex gap-1">
+                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-20">
-        <div className="bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
+      <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
+        <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
 
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
