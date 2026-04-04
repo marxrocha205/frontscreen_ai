@@ -415,22 +415,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
            </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
-              className="w-56 bg-[#232323] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl overflow-hidden z-[100] pointer-events-auto"
+              className="w-52 bg-zinc-900/95 backdrop-blur-md border-zinc-800 text-zinc-200 p-1 rounded-xl shadow-2xl z-[100] pointer-events-auto"
             >
               {AI_MODELS.map(model => (
                 <DropdownMenuItem
                   key={model.id}
                   onClick={() => setSelectedModel(model.id)}
-                  className="gap-3 py-2.5 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group"
+                  className="flex items-center justify-between gap-3 py-2 px-3 focus:bg-zinc-800/80 focus:text-white cursor-pointer rounded-lg transition-all duration-200 group"
                 >
-                  <div className="flex flex-col flex-1">
-                    <span className="font-medium text-sm">{model.label}</span>
-                    {model.badge && (
-                      <span className="text-[10px] text-indigo-400 font-medium mt-0.5">{model.badge}</span>
-                    )}
-                  </div>
+                  <span className="font-medium text-sm text-zinc-300 group-hover:text-white">{model.label}</span>
                   {selectedModel === model.id && (
-                    <Check className="w-3.5 h-3.5 text-indigo-400 shrink-0" />
+                    <Check className="w-4 h-4 text-indigo-400 shrink-0 animate-in fade-in zoom-in duration-200" />
                   )}
                 </DropdownMenuItem>
               ))}

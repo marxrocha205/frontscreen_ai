@@ -2,10 +2,11 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
+  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2' },
   { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
-  { id: 'gemini-1.5-pro', label: 'Gemini Pro', badge: 'PRO' },
-  { id: 'claude-3-opus', label: 'Claude 3 Opus', badge: 'TOP' },
-  { id: 'gpt-5', label: 'ChatGPT 5', badge: 'NEW', disabled: true }
+  { id: 'gemini-1.5-pro', label: 'Gemini Pro' },
+  { id: 'claude-3-opus', label: 'Claude 3 Opus' },
+  { id: 'gpt-5', label: 'ChatGPT 5' }
 ]
 
 export interface Message {
