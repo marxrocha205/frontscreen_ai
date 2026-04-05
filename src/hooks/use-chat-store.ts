@@ -2,11 +2,11 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2' },
-  { id: 'gemini-1.5-flash', label: 'Gemini Flash' },
-  { id: 'gemini-1.5-pro', label: 'Gemini Pro' },
-  { id: 'claude-3-opus', label: 'Claude 3 Opus' },
-  { id: 'gpt-5', label: 'ChatGPT 5' }
+  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', requiresPro: false },
+  { id: 'gemini-1.5-flash', label: 'Gemini Flash', requiresPro: true },
+  { id: 'gemini-1.5-pro', label: 'Gemini Pro', requiresPro: true },
+  { id: 'claude-3-opus', label: 'Claude 3 Opus', requiresPro: true },
+  { id: 'gpt-5', label: 'ChatGPT 5', requiresPro: true }
 ]
 
 export interface Message {
@@ -22,6 +22,7 @@ interface ChatState {
   messages: Message[]
   isStreaming: boolean
   credits: number | null
+  userPlan: string | null
   selectedModel: string
   floatingState: FloatingState
   pipWindow: Window | null
@@ -48,6 +49,7 @@ export const useChatStore = create<ChatState>((set) => ({
   messages: [],
   isStreaming: false,
   credits: null,
+  userPlan: null,
   selectedModel: AI_MODELS[0].id,
   floatingState: 'none',
   pipWindow: null,
@@ -87,6 +89,9 @@ export const useChatStore = create<ChatState>((set) => ({
         const data = await res.json()
         if (data.remaining_credits !== undefined) {
           set({ credits: data.remaining_credits })
+        }
+        if (data.plan_name !== undefined) {
+          set({ userPlan: data.plan_name })
         }
       }
     } catch (error) {

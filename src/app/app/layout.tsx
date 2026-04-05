@@ -19,19 +19,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
+import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const { isLoggedIn, user, logout } = useAuth()
-  
+
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
   const { conversations, fetchConversations, loadConversation, deleteConversation, renameConversation, activeId, isLoading, createNewConversation } = useConversations()
-  
+
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
-  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState } = useChatStore()
+  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage } = useChatStore()
   const { openChat } = useFloatingChat()
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
-  
+
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
@@ -41,6 +42,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
+
+  const handleModelSelect = (model: typeof AI_MODELS[number]) => {
+    // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
+    const isFreeUser = !userPlan || userPlan.toLowerCase() === 'free'
+    if (model.requiresPro && isFreeUser) {
+      setUpgradeDialogMessage(`O modelo "${model.label}" está disponível apenas nos planos Pro e Premium. Faça upgrade para desbloquear modelos avançados de IA.`)
+      setIsUpgradeDialogOpen(true)
+      return
+    }
+    setSelectedModel(model.id)
+  }
 
   // Dispara a busca do histórico no banco de dados assim que a tela abre
   useEffect(() => {
@@ -55,7 +67,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         setSidebarOpen(false)
       }
     }
-    
+
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -88,7 +100,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     startSharing()
   }
 
-  const filteredConversations = conversations.filter(c => 
+  const filteredConversations = conversations.filter(c =>
     c.title.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
@@ -138,14 +150,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
               <DropdownMenuItem asChild>
                 <SettingsDialog
-                trigger = {
-                <div className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                  <SettingsIcon className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
-                  <span className="font-medium">Settings</span>
-                </div>
-                }
+                  trigger={
+                    <div className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                      <SettingsIcon className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
+                      <span className="font-medium">Settings</span>
+                    </div>
+                  }
                 />
-             </DropdownMenuItem>
+              </DropdownMenuItem>
 
               <DropdownMenuSeparator className="bg-zinc-800/50 my-1.5 mx-1" />
 
@@ -159,42 +171,38 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       )}
 
       {sidebarOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      <div 
-        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'left-[204px]' : 'left-4'
-        }`}
+      <div
+        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${sidebarOpen ? 'left-[204px]' : 'left-4'
+          }`}
       >
         <Button
           variant="ghost"
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${
-            sidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
-          }`}
+          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
+            }`}
           title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          <div className={`flex items-center justify-center transition-all duration-300 ${
-            sidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
-          }`}>
-             <Image
-                src="/logobranco-semfundo.png"
-                alt="Screen AI Logo"
-                width={180}
-                height={40}
-                className="h-8 md:h-9 w-auto object-contain"
-                priority
-              />
+          <div className={`flex items-center justify-center transition-all duration-300 ${sidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
+            }`}>
+            <Image
+              src="/logobranco-semfundo.png"
+              alt="Screen AI Logo"
+              width={180}
+              height={40}
+              className="h-8 md:h-9 w-auto object-contain"
+              priority
+            />
           </div>
-          <div className={`flex items-center justify-center transition-all duration-300 ${
-            sidebarOpen 
-              ? 'opacity-100 rotate-0' 
+          <div className={`flex items-center justify-center transition-all duration-300 ${sidebarOpen
+              ? 'opacity-100 rotate-0'
               : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
-          }`}>
+            }`}>
             {sidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
           </div>
         </Button>
@@ -217,7 +225,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           </div>
           <div className="w-10 h-10 pointer-events-none" />
         </div>
-        
+
         <div className="px-3 pb-3 flex flex-col gap-2">
           <Button
             variant="ghost"
@@ -251,25 +259,23 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <Button
             variant="ghost"
             onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
-            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
-              isScreenShared 
-                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20' 
+            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
+                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
                 : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-            }`}
+              }`}
           >
             <MonitorUp className="w-4 h-4" />
             <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
           </Button>
-          
+
           {/* Botão de Destacar Chat (PiP / Popup) */}
           <Button
             variant="ghost"
             onClick={() => handleAuthAction(openChat)}
-            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${
-              floatingState !== 'none'
+            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
                 ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
                 : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-            }`}
+              }`}
           >
             <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
             <span className="text-sm font-medium">
@@ -285,25 +291,24 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <div className="px-3 py-2 mb-1">
             <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Suas conversas</span>
           </div>
-          
+
           <div className="space-y-[2px]">
             {isLoading ? (
-               <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">A carregar...</div>
+              <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">A carregar...</div>
             ) : filteredConversations.length === 0 ? (
-               <div className="text-zinc-600 text-[13px] px-3 mt-2">
-                 {searchQuery ? 'Nenhuma conversa encontrada.' : 'Nenhuma conversa ainda.'}
-               </div>
+              <div className="text-zinc-600 text-[13px] px-3 mt-2">
+                {searchQuery ? 'Nenhuma conversa encontrada.' : 'Nenhuma conversa ainda.'}
+              </div>
             ) : (
               filteredConversations.map((item) => (
                 <div key={item.id} className="w-full relative flex items-center group">
                   <button
                     onClick={() => loadConversation(item.id)}
-                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${
-                      activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
-                    }`}
+                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
+                      }`}
                   >
                     <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-                    
+
                     {editingId === item.id ? (
                       <Input
                         autoFocus
@@ -352,8 +357,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   Entre para receber respostas com base em chats salvos, além de criar imagens e carregar arquivos.
                 </p>
               </div>
-              <Button 
-                onClick={() => router.push('/login')} 
+              <Button
+                onClick={() => router.push('/login')}
                 className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
               >
                 Entrar
@@ -371,7 +376,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           ) : (
             <Button
               variant="ghost"
-              onClick={() => handleAuthAction(() => {})}
+              onClick={() => handleAuthAction(() => { })}
               className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
             >
               <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
@@ -412,7 +417,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 {currentModel?.label}
                 <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
               </Button>
-           </DropdownMenuTrigger>
+            </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
               className="w-52 bg-zinc-900/95 backdrop-blur-md border-zinc-800 text-zinc-200 p-1 rounded-xl shadow-2xl z-[100] pointer-events-auto"
@@ -420,10 +425,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               {AI_MODELS.map(model => (
                 <DropdownMenuItem
                   key={model.id}
-                  onClick={() => setSelectedModel(model.id)}
+                  onClick={() => handleModelSelect(model)}
                   className="flex items-center justify-between gap-3 py-2 px-3 focus:bg-zinc-800/80 focus:text-white cursor-pointer rounded-lg transition-all duration-200 group"
                 >
-                  <span className="font-medium text-sm text-zinc-300 group-hover:text-white">{model.label}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm text-zinc-300 group-hover:text-white">{model.label}</span>
+
+                  </div>
                   {selectedModel === model.id && (
                     <Check className="w-4 h-4 text-indigo-400 shrink-0 animate-in fade-in zoom-in duration-200" />
                   )}
@@ -458,6 +466,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
+      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
     </div>
   )
 }

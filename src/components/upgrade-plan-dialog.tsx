@@ -3,16 +3,20 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
-import { Zap } from 'lucide-react'
+import { Zap, Lock } from 'lucide-react'
 
 interface UpgradePlanDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   message: string | null
+  title?: string
 }
 
-export function UpgradePlanDialog({ open, onOpenChange, message }: UpgradePlanDialogProps) {
+export function UpgradePlanDialog({ open, onOpenChange, message, title }: UpgradePlanDialogProps) {
   const router = useRouter()
+
+  // Detecta se é um bloqueio de modelo (não de créditos) pela mensagem
+  const isModelLock = message?.includes('disponível apenas nos planos')
 
   const handleUpgrade = () => {
     onOpenChange(false)
@@ -23,11 +27,14 @@ export function UpgradePlanDialog({ open, onOpenChange, message }: UpgradePlanDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-[#1f1f1f] border-zinc-800 text-zinc-100 p-6 rounded-2xl shadow-2xl">
         <DialogHeader className="flex flex-col items-center gap-4 mb-2">
-          <div className="bg-yellow-500/10 p-3 rounded-full">
-            <Zap className="w-8 h-8 text-yellow-500" />
+          <div className={`p-3 rounded-full ${isModelLock ? 'bg-indigo-500/10' : 'bg-yellow-500/10'}`}>
+            {isModelLock
+              ? <Lock className="w-8 h-8 text-indigo-400" />
+              : <Zap className="w-8 h-8 text-yellow-500" />
+            }
           </div>
           <DialogTitle className="text-2xl font-bold tracking-tight text-center">
-            Créditos Insuficientes
+            {title || (isModelLock ? 'Recurso Exclusivo' : 'Créditos Insuficientes')}
           </DialogTitle>
           <DialogDescription className="text-zinc-400 text-center text-base leading-relaxed">
             {message || "Você não possui créditos suficientes para realizar esta ação no momento."}
