@@ -402,7 +402,7 @@ export function ChatInterface() {
                 <img 
                   src="/icon.png" 
                   alt="Carregando" 
-                  className="w-4 h-4 object-contain opacity-80 animate-pulse" 
+                  className="w-6 h-6 object-contain opacity-80 animate-pulse" 
                 />
               </div>
             </div>
