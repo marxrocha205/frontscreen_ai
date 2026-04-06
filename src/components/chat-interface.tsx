@@ -305,9 +305,52 @@ export function ChatInterface() {
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => (
             <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`shadow-sm max-w-[85%] rounded-2xl px-5 py-4 ${m.role === 'user' ? 'bg-zinc-800/80 border border-zinc-700/50 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
-                <div className="prose prose-invert prose-zinc max-w-none text-[15px] leading-relaxed prose-p:leading-relaxed prose-pre:bg-[#121212] prose-pre:border prose-pre:border-zinc-800/50 prose-a:text-indigo-400 prose-headings:font-bold prose-headings:text-zinc-100 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-4 ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
+                <div className="text-[15px] max-w-none w-full break-words">
+                  <ReactMarkdown
+                    components={{
+                      // Parágrafos com espaçamento embaixo
+                      p: ({ children }) => <p className="mb-4 leading-relaxed last:mb-0">{children}</p>,
+                      // Listas com bolinhas e espaçamento
+                      ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2 leading-relaxed">{children}</ul>,
+                      // Listas numeradas
+                      ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2 leading-relaxed">{children}</ol>,
+                      // Itens da lista
+                      li: ({ children }) => <li className="pl-1">{children}</li>,
+                      // Títulos
+                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100">{children}</h1>,
+                      h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
+                      h3: ({ children }) => <h3 className="text-lg font-bold mb-3 mt-4 text-zinc-100">{children}</h3>,
+                      // Negrito mais brilhante
+                      strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                      // Blocos de Código (Code)
+                      code: ({ inline, className, children, ...props }: any) => {
+                        const match = /language-(\w+)/.exec(className || '')
+                        return !inline ? (
+                          // Bloco de código grande (Prettier)
+                          <div className="relative my-4 rounded-xl overflow-hidden bg-[#1e1e1e] border border-zinc-800">
+                            {match && (
+                              <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/50 border-b border-zinc-800 text-xs text-zinc-400">
+                                <span>{match[1]}</span>
+                              </div>
+                            )}
+                            <div className="p-4 overflow-x-auto text-sm font-mono leading-relaxed">
+                              <code className={className} {...props}>
+                                {children}
+                              </code>
+                            </div>
+                          </div>
+                        ) : (
+                          // Código inline (no meio do texto)
+                          <code className="bg-zinc-800/60 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px]" {...props}>
+                            {children}
+                          </code>
+                        )
+                      }
+                    }}
+                  >
+                    {m.content}
+                  </ReactMarkdown>
                 </div>
               </div>
             </div>
