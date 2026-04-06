@@ -15,6 +15,7 @@ import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -304,9 +305,9 @@ export function ChatInterface() {
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => (
             <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl px-4 py-4 ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
-                <div className="prose prose-invert text-sm max-w-none">
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
+              <div className={`shadow-sm max-w-[85%] rounded-2xl px-5 py-4 ${m.role === 'user' ? 'bg-zinc-800/80 border border-zinc-700/50 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
+                <div className="prose prose-invert prose-zinc max-w-none text-[15px] leading-relaxed prose-p:leading-relaxed prose-pre:bg-[#121212] prose-pre:border prose-pre:border-zinc-800/50 prose-a:text-indigo-400 prose-headings:font-bold prose-headings:text-zinc-100 prose-h1:text-2xl prose-h2:text-xl prose-h3:text-lg">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.content}</ReactMarkdown>
                 </div>
               </div>
             </div>

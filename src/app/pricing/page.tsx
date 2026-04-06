@@ -1,12 +1,21 @@
 "use client"
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
-import { Check, Zap, Star, Crown, MonitorPlay, ArrowUpRight } from 'lucide-react'
+import { Check, Zap, Star, Crown, MonitorPlay, ArrowUpRight, Loader2, Copy } from 'lucide-react'
 import Link from 'next/link'
+import { config } from '@/lib/config'
+
+// Importando componentes de UI que você já possui
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 const plans = [
   {
+    id: 1,
     name: 'Free',
     tagline: 'Para experimentar e começar',
     price: 'R$0',
@@ -27,6 +36,7 @@ const plans = [
     ],
   },
   {
+    id: 2,
     name: 'Pro',
     tagline: 'Para uso profissional diário',
     price: 'R$49',
@@ -49,6 +59,7 @@ const plans = [
     ],
   },
   {
+    id: 3,
     name: 'Premium',
     tagline: 'Para usuários intensivos',
     price: 'R$129',
@@ -74,9 +85,79 @@ export default function PricingPage() {
   const router = useRouter()
   const { isLoggedIn } = useAuth()
 
+  // Estados do Checkout
+  const [selectedPlan, setSelectedPlan] = useState<{id: number, name: string} | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [formData, setFormData] = useState({ name: '', document: '', phone: '' })
+  const [pixData, setPixData] = useState<{ qrcode: string, copyPaste: string } | null>(null)
+
+  // Função disparada ao clicar no botão de "Assinar"
+  const handlePlanClick = (plan: typeof plans[0]) => {
+    if (!isLoggedIn) {
+      router.push('/login')
+      return
+    }
+    if (plan.id === 1) {
+      router.push('/app')
+    } else {
+      setSelectedPlan({ id: plan.id, name: plan.name })
+      setPixData(null) // Reseta o PIX anterior, se houver
+    }
+  }
+
+  // Função que chama a nossa API FastAPI para gerar o PIX
+  const handleCheckoutSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!selectedPlan) return
+
+    setIsLoading(true)
+    try {
+      const token = localStorage.getItem('access_token')
+      
+      const response = await fetch(`${config.apiUrl}/api/payments/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // INJEÇÃO DO TOKEN AQUI
+        },
+        body: JSON.stringify({
+          plan_id: selectedPlan.id,
+          full_name: formData.name,
+          document: formData.document.replace(/\D/g, ''), // Limpa máscara do CPF
+          phone: formData.phone.replace(/\D/g, '') // Limpa máscara do Telefone
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // Sucesso! Atualiza a tela com os dados do PIX
+        setPixData({
+          qrcode: data.pix_qrcode_url,
+          copyPaste: data.pix_copy_paste
+        })
+      } else {
+        alert(data.detail || 'Erro ao gerar pagamento.')
+      }
+    } catch (error) {
+      console.error(error)
+      alert('Erro de conexão com o servidor.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Função para copiar o código PIX para a área de transferência
+  const copyToClipboard = () => {
+    if (pixData?.copyPaste) {
+      navigator.clipboard.writeText(pixData.copyPaste)
+      alert("Código PIX copiado!")
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[#111] text-zinc-100 flex flex-col">
-      {/* Header */}
+      {/* Header (Mantido do seu código original) */}
       <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/50">
         <Link href="/app" className="flex items-center gap-2.5 text-zinc-100 hover:text-white transition-colors">
           <MonitorPlay className="w-5 h-5 text-zinc-400" />
@@ -142,9 +223,9 @@ export default function PricingPage() {
                 <span className="text-zinc-500 text-sm mb-1">{plan.period}</span>
               </div>
 
-              {/* CTA */}
+              {/* CTA BUTTON */}
               <button
-                onClick={() => router.push(isLoggedIn ? '/app' : '/login')}
+                onClick={() => handlePlanClick(plan)}
                 className={`w-full h-11 rounded-xl font-medium text-sm flex items-center justify-center gap-1.5 transition-all ${plan.highlight
                   ? 'bg-indigo-600 text-white hover:bg-indigo-500'
                   : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'
@@ -183,15 +264,104 @@ export default function PricingPage() {
         </div>
       </div>
 
-      {/* FAQ/Footer note */}
-      <div className="text-center pb-16 px-4">
-        <p className="text-xs text-zinc-600">
-          Os preços são exibidos em Reais (BRL). Você pode cancelar a qualquer momento.{' '}
-          <Link href="/app" className="text-zinc-500 hover:text-zinc-400 underline underline-offset-2 transition-colors">
-            Voltar ao App
-          </Link>
-        </p>
-      </div>
+      {/* ================================================================
+        MODAL DE CHECKOUT PIX (NOVIDADE)
+        ================================================================
+      */}
+      <Dialog open={!!selectedPlan} onOpenChange={(open) => !open && setSelectedPlan(null)}>
+        <DialogContent className="sm:max-w-md bg-[#1f1f1f] border-zinc-800 text-zinc-100 p-6 rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Assinar {selectedPlan?.name}</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {pixData 
+                ? "Escaneie o QR Code abaixo para ativar seu plano instantaneamente." 
+                : "Preencha seus dados para gerar o pagamento via PIX."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!pixData ? (
+            // PASSO 1: FORMULÁRIO DE DADOS
+            <form onSubmit={handleCheckoutSubmit} className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-zinc-300">Nome Completo</Label>
+                <Input 
+                  id="name" 
+                  required 
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  className="bg-[#111] border-zinc-800 text-white placeholder:text-zinc-600" 
+                  placeholder="Seu nome"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="document" className="text-zinc-300">CPF</Label>
+                <Input 
+                  id="document" 
+                  required 
+                  value={formData.document}
+                  onChange={(e) => setFormData({...formData, document: e.target.value})}
+                  className="bg-[#111] border-zinc-800 text-white placeholder:text-zinc-600" 
+                  placeholder="000.000.000-00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-zinc-300">Telefone / WhatsApp</Label>
+                <Input 
+                  id="phone" 
+                  required 
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  className="bg-[#111] border-zinc-800 text-white placeholder:text-zinc-600" 
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                disabled={isLoading}
+                className="w-full mt-2 bg-indigo-600 hover:bg-indigo-500 text-white"
+              >
+                {isLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Zap className="w-4 h-4 mr-2" />}
+                {isLoading ? "Gerando PIX..." : "Gerar PIX"}
+              </Button>
+            </form>
+          ) : (
+            // PASSO 2: TELA DO PIX GERADO
+            <div className="flex flex-col items-center justify-center space-y-6 mt-4">
+              <div className="bg-white p-4 rounded-xl">
+                {/* QR Code gerado pela AlphaPay */}
+               <img 
+  src={pixData.qrcode} 
+  alt="QR Code PIX" 
+  width={200} 
+  height={200} 
+  className="rounded-lg object-contain bg-white"
+/>
+              </div>
+              
+              <div className="w-full space-y-2">
+                <Label className="text-zinc-300">Código Copia e Cola</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    readOnly 
+                    value={pixData.copyPaste} 
+                    className="bg-[#111] border-zinc-800 text-zinc-400 font-mono text-xs" 
+                  />
+                  <Button onClick={copyToClipboard} variant="outline" size="icon" className="shrink-0 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 hover:text-white">
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="w-full p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+                <p className="text-sm text-indigo-200 text-center">
+                  Após o pagamento, seu plano será ativado automaticamente. Feche esta janela e aguarde alguns segundos.
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
