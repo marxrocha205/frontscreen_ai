@@ -59,7 +59,7 @@ export function UsersTab() {
     try {
       const token = localStorage.getItem('access_token')
       
-      const response = await fetch(`${config.apiUrl}/admin/users/${userId}/plan`, {
+      const response = await fetch(`${config.apiUrl}/api/admin/users/${userId}/plan`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
