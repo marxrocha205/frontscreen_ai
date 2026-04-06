@@ -305,44 +305,78 @@ export function ChatInterface() {
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => (
             <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl px-4 py-4 ${m.role === 'user' ? 'bg-zinc-900 border border-zinc-800 text-zinc-100' : 'text-zinc-200 -ml-2'}`}>
-                <div className="text-[15px] max-w-none w-full break-words">
+              <div className={`max-w-[85%] rounded-2xl px-5 py-4 shadow-sm ${m.role === 'user' ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-300'}`}>
+                <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
                   <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
                     components={{
-                      // Parágrafos com espaçamento embaixo
-                      p: ({ children }) => <p className="mb-4 leading-relaxed last:mb-0">{children}</p>,
-                      // Listas com bolinhas e espaçamento
-                      ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2 leading-relaxed">{children}</ul>,
-                      // Listas numeradas
-                      ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2 leading-relaxed">{children}</ol>,
-                      // Itens da lista
-                      li: ({ children }) => <li className="pl-1">{children}</li>,
-                      // Títulos
-                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100">{children}</h1>,
+                      // Parágrafos base
+                      p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                      
+                      // Links clicáveis bonitos
+                      a: ({ children, href }) => (
+                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">
+                          {children}
+                        </a>
+                      ),
+
+                      // Listas refinadas
+                      ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                      ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                      li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
+                      
+                      // Títulos com hierarquia clara
+                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
                       h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-bold mb-3 mt-4 text-zinc-100">{children}</h3>,
-                      // Negrito mais brilhante
+                      h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
+                      
+                      // Negrito e Itálico
                       strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
-                      // Blocos de Código (Code)
+                      em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
+
+                      // Citações (Blockquotes) com design elegante
+                      blockquote: ({ children }) => (
+                        <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">
+                          {children}
+                        </blockquote>
+                      ),
+
+                      // Linha Divisória horizontal (quando a IA usa ---)
+                      hr: () => <hr className="my-6 border-zinc-800/80" />,
+
+                      // ==========================================
+                      // TABELAS (Muito comum em respostas da IA)
+                      // ==========================================
+                      table: ({ children }) => (
+                        <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800">
+                          <table className="w-full text-left border-collapse text-sm">{children}</table>
+                        </div>
+                      ),
+                      th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
+                      td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
+
+                      // ==========================================
+                      // BLOCOS DE CÓDIGO
+                      // ==========================================
                       code: ({ inline, className, children, ...props }: any) => {
                         const match = /language-(\w+)/.exec(className || '')
                         return !inline ? (
-                          // Bloco de código grande (Prettier)
-                          <div className="relative my-4 rounded-xl overflow-hidden bg-[#1e1e1e] border border-zinc-800">
+                          // Bloco de código multi-linhas
+                          <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
                             {match && (
-                              <div className="flex items-center justify-between px-4 py-2 bg-zinc-900/50 border-b border-zinc-800 text-xs text-zinc-400">
-                                <span>{match[1]}</span>
+                              <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
                               </div>
                             )}
-                            <div className="p-4 overflow-x-auto text-sm font-mono leading-relaxed">
+                            <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
                               <code className={className} {...props}>
                                 {children}
                               </code>
                             </div>
                           </div>
                         ) : (
-                          // Código inline (no meio do texto)
-                          <code className="bg-zinc-800/60 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px]" {...props}>
+                          // Código Inline (no meio do texto)
+                          <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>
                             {children}
                           </code>
                         )
