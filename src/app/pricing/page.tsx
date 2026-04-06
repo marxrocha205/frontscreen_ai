@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { Check, Zap, Star, Crown, MonitorPlay, ArrowUpRight, Loader2, Copy } from 'lucide-react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { config } from '@/lib/config'
 
 // Importando componentes de UI que você já possui
@@ -331,13 +330,13 @@ export default function PricingPage() {
             <div className="flex flex-col items-center justify-center space-y-6 mt-4">
               <div className="bg-white p-4 rounded-xl">
                 {/* QR Code gerado pela AlphaPay */}
-                <Image 
-                  src={pixData.qrcode} 
-                  alt="QR Code PIX" 
-                  width={200} 
-                  height={200} 
-                  className="rounded-lg"
-                />
+               <img 
+  src={pixData.qrcode} 
+  alt="QR Code PIX" 
+  width={200} 
+  height={200} 
+  className="rounded-lg object-contain bg-white"
+/>
               </div>
               
               <div className="w-full space-y-2">
