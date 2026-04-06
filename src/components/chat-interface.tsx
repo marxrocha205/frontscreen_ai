@@ -390,11 +390,20 @@ export function ChatInterface() {
             </div>
           ))}
           {isStreaming && (
-            <div className="flex justify-start w-full">
-              <div className="flex gap-1">
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                <span className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" />
+            <div className="flex justify-start w-full pl-2 my-2">
+              <div className="relative flex items-center justify-center w-9 h-9">
+                {/* 1. O fundo/trilho do círculo mais escuro e sutil */}
+                <div className="absolute inset-0 rounded-full border-2 border-zinc-800/40"></div>
+                
+                {/* 2. A barra branca giratória (borda superior branca, resto transparente) */}
+                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
+                
+                {/* 3. A logo centralizada (com um leve pulsar para dar vida) */}
+                <img 
+                  src="/icon.png" 
+                  alt="Carregando" 
+                  className="w-4 h-4 object-contain opacity-80 animate-pulse" 
+                />
               </div>
             </div>
           )}
