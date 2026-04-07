@@ -202,7 +202,7 @@ export function UsersTab() {
               <ScanEye className="text-indigo-400 w-6 h-6" /> Raio-X do Cliente
             </DialogTitle>
             <DialogDescription className="text-zinc-400">
-              {userDetails?.user?.email || "Carregando informações..."}
+              {userDetails?.user?.email || "A carregar informações..."}
             </DialogDescription>
           </DialogHeader>
 
@@ -230,7 +230,7 @@ export function UsersTab() {
                 <span className="text-3xl font-bold text-red-300">
                   $ {userDetails.total_ai_cost_usd.toFixed(4)}
                 </span>
-                <span className="text-xs text-red-500/70 mt-1">Custo base (Tokens consumidos)</span>
+                <span className="text-xs text-red-500/70 mt-1">Custo base (Tokens/Ações)</span>
               </div>
 
               {/* Status do Plano */}
@@ -244,7 +244,7 @@ export function UsersTab() {
                 </div>
               </div>
 
-              {/* Breakdown dos Modelos (Gemini vs GPT) */}
+              {/* Breakdown dos Modelos */}
               <div className="bg-[#1a1a1a] border border-zinc-800 p-4 rounded-xl flex flex-col col-span-2">
                 <span className="text-zinc-400 text-sm font-medium mb-3 flex items-center gap-2">
                   <Activity className="w-4 h-4" /> Distribuição de Custos por IA
@@ -257,7 +257,7 @@ export function UsersTab() {
                       <div key={idx} className="flex justify-between items-center bg-zinc-900/50 p-2 rounded-md border border-zinc-800/50">
                         <span className="text-sm font-mono text-zinc-300">{ai.model}</span>
                         <div className="flex items-center gap-4 text-sm">
-                          <span className="text-zinc-500">{ai.tokens.toLocaleString()} tokens</span>
+                          <span className="text-zinc-500">{ai.tokens.toLocaleString()} tokens/ações</span>
                           <span className="text-red-400 font-medium">${ai.cost_usd.toFixed(4)}</span>
                         </div>
                       </div>
