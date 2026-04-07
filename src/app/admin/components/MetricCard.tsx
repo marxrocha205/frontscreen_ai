@@ -15,17 +15,19 @@ interface MetricCardProps {
  */
 export function MetricCard({ title, value, icon, description }: MetricCardProps) {
   return (
-    <Card>
+    // MUDANÇA 1: Fundo mudado para bg-zinc-950 (quase preto) e borda escura
+    <Card className="bg-zinc-950 border-zinc-800 shadow-sm">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-zinc-600">{title}</CardTitle>
+        {/* MUDANÇA 2: Título clareado (de zinc-600 para zinc-300) para legibilidade */}
+        <CardTitle className="text-sm font-medium text-zinc-300">{title}</CardTitle>
         {icon}
       </CardHeader>
       <CardContent>
-        {/* Adicionado fallback visual caso o valor seja undefined */}
-        <div className="text-2xl font-bold text-zinc-900">
+        {/* MUDANÇA 3: Número do KPI em branco brilhante (de zinc-900 para zinc-100) */}
+        <div className="text-2xl font-bold text-zinc-100">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </div>
-        <p className="text-xs text-zinc-500">{description}</p>
+        <p className="text-xs text-zinc-500 mt-1">{description}</p>
       </CardContent>
     </Card>
   )
