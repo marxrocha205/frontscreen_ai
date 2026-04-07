@@ -13,7 +13,7 @@ import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
@@ -131,7 +131,16 @@ export function ChatInterface() {
     }
   }
 
-  const handleSend = async () => {
+  // Array de botões de Ação Rápida
+  const QUICK_ACTIONS = [
+    { icon: FileText, label: "Resumir", prompt: "Por favor, faça um resumo claro e conciso do que está visível na minha tela agora." },
+    { icon: Code, label: "Explicar Código", prompt: "Analise e explique o código que está na minha tela passo a passo." },
+    { icon: Table, label: "Extrair para Tabela", prompt: "Extraia os dados relevantes desta tela e organize-os em uma tabela Markdown clara." },
+    { icon: Languages, label: "Traduzir", prompt: "Traduza o conteúdo principal visível nesta tela para o Português." },
+  ]
+
+  // Função handleSend atualizada para aceitar o texto dos botões
+  const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
       // Interrompe áudio da IA imediatamente ao enviar nova mensagem
       stopAllAudio()
@@ -141,9 +150,11 @@ export function ChatInterface() {
         audioBase64 = await stopRecording()
       }
 
-      if (!inputValue.trim() && !isScreenShared && !audioBase64 && !selectedFile) return
+      // MÁGICA AQUI: Deteta se o envio veio do Input normal ou de um botão de Quick Action
+      const textToSend = typeof overrideText === 'string' ? overrideText : inputValue.trim()
 
-      const currentText = inputValue.trim()
+      if (!textToSend && !isScreenShared && !audioBase64 && !selectedFile) return
+
       setInputValue('')
 
       if (selectedFile) {
@@ -153,7 +164,7 @@ export function ChatInterface() {
         addMessage({
           id: Date.now().toString(),
           role: 'user',
-          content: currentText || `[Arquivo: ${selectedFile.name}]`
+          content: textToSend || `[Arquivo: ${selectedFile.name}]`
         })
 
         setIsStreaming(true)
@@ -162,7 +173,7 @@ export function ChatInterface() {
 
         const formData = new FormData()
         formData.append('token', token)
-        if (currentText) formData.append('text', currentText)
+        if (textToSend) formData.append('text', textToSend)
         formData.append('file', fileToSend)
         if (activeId) formData.append('session_id', activeId)
 
@@ -207,7 +218,7 @@ export function ChatInterface() {
         }
       } else {
         const payload = {
-          text: currentText || undefined,
+          text: textToSend || undefined,
           image_base64: captureScreenFrame(),
           audio_base64: audioBase64
         }
@@ -369,6 +380,22 @@ export function ChatInterface() {
 
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
         <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
+          {/* QUICK ACTIONS FLUTUANTES */}
+        
+        {isScreenShared && (
+          <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
+            {QUICK_ACTIONS.map((action, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSend(action.prompt)}
+                className="flex items-center gap-1.5 bg-[#1e1e1e]/90 hover:bg-[#2a2a2a] backdrop-blur-md border border-zinc-700/50 text-zinc-300 hover:text-zinc-100 text-xs font-medium px-3.5 py-2 rounded-full transition-all shadow-lg"
+              >
+                <action.icon className="w-3.5 h-3.5" />
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
 
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
