@@ -47,7 +47,6 @@ export function useWebsocket() {
       setIsConnected(false)
       if (event.code === 1008) {
         alert("Sessão Encerrada: A sua conta foi aberta noutro dispositivo.")
-        // Opcional: window.location.href = '/login'
       }
     }
 
@@ -55,26 +54,78 @@ export function useWebsocket() {
       const data = JSON.parse(event.data)
 
       switch (data.type) {
-        case 'ai_response':
-          setIsStreaming(false)
+        // =======================================================
+        // 1. MÁGICA DO STREAMING: A IA vai começar a falar
+        // =======================================================
+        case 'stream_start':
+          // Desliga a animação de loading/pensando
+          setIsStreaming(false) 
 
-          // ==========================================
-          // NOVO: MÁGICA DA BARRA LATERAL AQUI!
-          // Se o backend devolveu um session_id e nós não tínhamos um,
-          // significa que uma nova conversa foi criada no banco.
+          // Puxa a sessão e trava a barra lateral (Sidebar) IMEDIATAMENTE
           const { activeId, setActiveId, fetchConversations } = useConversations.getState()
-          
           if (!activeId && data.session_id) {
-            setActiveId(data.session_id) // Trava a tela nesta nova conversa
-            fetchConversations() // Recarrega a barra lateral para ela aparecer lá
+            setActiveId(data.session_id)
+            fetchConversations()
           }
-          // ==========================================
 
-          // 1. Renderiza a resposta de texto
-          addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+          // Cria uma "bolha" de mensagem vazia na tela com um ID temporário
+          addMessage({ id: 'streaming-msg', role: 'assistant', content: '' })
+          break;
+
+        // =======================================================
+        // 2. MÁGICA DO STREAMING: Efeito de Digitação (Chunks)
+        // =======================================================
+        case 'chunk':
+          // Pegamos no estado atual das mensagens na tela
+          const currentMessages = useChatStore.getState().messages;
+          if (currentMessages.length > 0) {
+            const lastMsgIndex = currentMessages.length - 1;
+            const lastMsg = currentMessages[lastMsgIndex];
+            
+            // Se a última bolha for da IA, anexamos o pedacinho (chunk) ao texto dela
+            if (lastMsg.role === 'assistant') {
+              useChatStore.setState({
+                messages: [
+                  ...currentMessages.slice(0, lastMsgIndex),
+                  { ...lastMsg, content: lastMsg.content + data.text }
+                ]
+              });
+            }
+          }
+          break;
+
+        // =======================================================
+        // 3. FINALIZAÇÃO: Áudio e Cobrança
+        // =======================================================
+        case 'ai_response':
+          setIsStreaming(false) // Fallback de segurança
+
+          // Como já preenchemos o texto via 'chunk', apenas atualizamos a bolha com o ID real 
+          // e garantimos que o texto final está 100% perfeito.
+          const msgs = useChatStore.getState().messages;
+          if (msgs.length > 0) {
+            const lastMsgIndex = msgs.length - 1;
+            const lastMsg = msgs[lastMsgIndex];
+            
+            if (lastMsg.role === 'assistant' && lastMsg.id === 'streaming-msg') {
+              useChatStore.setState({
+                messages: [
+                  ...msgs.slice(0, lastMsgIndex),
+                  { ...lastMsg, id: Date.now().toString(), content: data.message }
+                ]
+              });
+            } else {
+              // Se por acaso a IA não mandou 'stream_start' (ex: um erro rápido da API), 
+              // cria a bolha inteira de uma vez.
+              addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+            }
+          } else {
+             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+          }
+
           stopAllAudio()
           
-          // 2. Toca áudio só se o botão de som estiver ativado
+          // Toca áudio só se o botão de som estiver ativado
           const { isSoundEnabled } = useChatStore.getState()
           if (isSoundEnabled) {
             if (data.audio_base64) {
@@ -87,14 +138,13 @@ export function useWebsocket() {
             }
           }
 
-          // 3. Atualiza os créditos na tela (A MÁGICA DA SPRINT 4)
+          // Atualiza os créditos na tela
           if (data.remaining_credits !== undefined) {
             setCredits(data.remaining_credits)
           }
           break;
 
         case 'transcription':
-          // O backend transcreveu o nosso áudio
           addMessage({ id: Date.now().toString(), role: 'user', content: data.message })
           break;
 
@@ -116,26 +166,23 @@ export function useWebsocket() {
       wsRef.current = null
       }
     }
-  }, [addMessage, setIsStreaming, setCredits])
+  }, [addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage])
 
   // Função para enviar o Payload Multimodal
   const sendMessage = useCallback((payload: { text?: string, image_base64?: string, audio_base64?: string }) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       
-      // NOVO: Pega o ID da conversa atual no momento do envio
       const { activeId } = useConversations.getState()
 
-      // Só adiciona a mensagem visualmente se houver texto escrito
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
       }
       
       setIsStreaming(true)
 
-      // NOVO: Injeta o session_id no payload antes de enviar para o Python
       const finalPayload = {
         ...payload,
-        session_id: activeId // Se for null, o Python criará uma conversa nova
+        session_id: activeId 
       }
 
       wsRef.current.send(JSON.stringify(finalPayload))
