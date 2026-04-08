@@ -143,7 +143,7 @@ export function DashboardTab() {
                     {metrics.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                   </Pie>
                   <Tooltip 
-                    formatter={(value: number) => `$${value.toFixed(4)}`}
+                    formatter={(value: any) => `$${Number(value).toFixed(4)}`}
                     contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} 
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
