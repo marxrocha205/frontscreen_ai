@@ -21,6 +21,22 @@ import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 
+const ModelIcon = ({ id }: { id: string }) => {
+  switch (id) {
+    case 'gpt-5':
+    case 'gpt-4':
+      return <Image src="/chatgpt-logo.png" alt="GPT" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0" />;
+    case 'claude-3-opus':
+      return <Image src="/claude-logo.png" alt="Claude" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0" />;
+    case 'gemini-1.5-pro':
+    case 'gemini-1.5-flash':
+      return <Image src="/gemini-logo.png" alt="Gemini" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0" />;
+    case 'screen-ai-1.2':
+    default:
+      return <Image src="/screenai-logo.png" alt="Screen AI" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0" />;
+  }
+}
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t } = useI18n()
   const { isLoggedIn, user, logout } = useAuth()
@@ -422,20 +438,27 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="center"
-              className="w-52 bg-zinc-900/95 backdrop-blur-md border-zinc-800 text-zinc-200 p-1 rounded-xl shadow-2xl z-[100] pointer-events-auto"
+              className="w-[320px] bg-zinc-900/95 backdrop-blur-md border border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100] pointer-events-auto"
             >
               {AI_MODELS.map(model => (
                 <DropdownMenuItem
                   key={model.id}
                   onClick={() => handleModelSelect(model)}
-                  className="flex items-center justify-between gap-3 py-2 px-3 focus:bg-zinc-800/80 focus:text-white cursor-pointer rounded-lg transition-all duration-200 group"
+                  className="flex items-center justify-between gap-3 py-2.5 px-3 focus:bg-zinc-800/80 focus:text-white cursor-pointer rounded-lg transition-all duration-200 group"
                 >
-                  <div className="flex flex-col">
-                    <span className="font-medium text-sm text-zinc-300 group-hover:text-white">{model.label}</span>
-
+                  <div className="flex items-center gap-3 w-full min-w-0">
+                    <ModelIcon id={model.id} />
+                    <div className="flex flex-col justify-center min-w-0 flex-1">
+                      <span className="font-medium text-[14px] text-zinc-200 group-hover:text-white leading-tight">
+                        {model.label}
+                      </span>
+                      <span className="text-[12px] text-zinc-500 truncate leading-tight mt-0.5">
+                        {model.description}
+                      </span>
+                    </div>
                   </div>
                   {selectedModel === model.id && (
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0 animate-in fade-in zoom-in duration-200" />
+                    <Check className="w-4 h-4 text-indigo-400 shrink-0 animate-in fade-in zoom-in duration-200 ml-2" />
                   )}
                 </DropdownMenuItem>
               ))}

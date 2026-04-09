@@ -2,11 +2,11 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', requiresPro: false },
-  { id: 'gemini-1.5-flash', label: 'Gemini Flash', requiresPro: true },
-  { id: 'gemini-1.5-pro', label: 'Gemini Pro', requiresPro: true },
-  { id: 'claude-3-opus', label: 'Claude 3 Opus', requiresPro: true },
-  { id: 'gpt-5', label: 'ChatGPT 5', requiresPro: true }
+  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', requiresPro: false },
+  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Iteração rápida e respostas ágeis', requiresPro: true },
+  { id: 'gemini-1.5-pro', label: 'Gemini 3.1 Pro', description: '1M de contexto — ideal para transcrições longas', requiresPro: true },
+  { id: 'claude-3-opus', label: 'Claude Sonnet 4.6', description: 'Melhor para roteiros, legendas e escrita criativa', requiresPro: true },
+  { id: 'gpt-5', label: 'GPT-5.2 Thinking', description: 'Raciocínio profundo para decisões de edição complexas', requiresPro: true }
 ]
 
 export interface Message {
