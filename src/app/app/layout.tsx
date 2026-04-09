@@ -212,7 +212,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
       >
-        <div className="p-3 flex items-center justify-between h-[80px]">
+        <div className="w-64 flex flex-col h-full">
+          <div className="p-3 flex items-center justify-between h-[80px]">
           <div className={`flex items-center pl-1 transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
             <Image
               src="/logobranco-semfundo.png"
@@ -402,6 +403,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               }
             />
           )}
+        </div>
         </div>
       </div>
 
