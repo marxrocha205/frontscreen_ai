@@ -306,7 +306,7 @@ export function ChatInterface() {
 
       <div
         ref={scrollRef}
-        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar"
+        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar overscroll-contain"
         style={{
           maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))'

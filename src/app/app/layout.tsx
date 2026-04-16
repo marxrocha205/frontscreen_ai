@@ -142,7 +142,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="flex h-screen w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
+    <div className="flex h-[100dvh] w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
       {!isLoggedIn && (
         <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
           <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">

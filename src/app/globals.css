@@ -122,12 +122,20 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
+  html, body {
+    @apply bg-black text-foreground font-sans;
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
+    overscroll-behavior: none;
   }
-  html {
-    @apply font-sans;
-  }
+}
+
+/* Permite scroll somente dentro do container de chat */
+.custom-scrollbar {
+  touch-action: pan-y;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes typing-dot {
