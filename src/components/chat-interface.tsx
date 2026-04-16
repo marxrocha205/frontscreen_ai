@@ -265,27 +265,26 @@ export function ChatInterface() {
       )}
 
       {isScreenShared && (
-        <div 
-          className={`absolute top-4 left-4 z-40 transition-all duration-300 ${
-            floatingState !== 'none' ? 'group' : ''
-          }`}
+        <div
+          className={`absolute top-4 left-4 z-40 transition-all duration-300 ${floatingState !== 'none' ? 'group' : ''
+            }`}
         >
           {floatingState !== 'none' ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-3 py-1.5 backdrop-blur-md shadow-lg cursor-default">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-[10px] font-bold text-red-500 tracking-wider uppercase">Screen Capturing</span>
-                <button 
+                <button
                   onClick={stopSharing}
                   className="ml-1 p-0.5 hover:bg-red-500/20 rounded-full text-red-500 transition-colors"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
-              
+
               {/* Hover Preview for PiP mode */}
               <div className="w-48 h-28 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-top-left pointer-events-none">
-                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               </div>
             </div>
           ) : (
@@ -293,7 +292,7 @@ export function ChatInterface() {
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               <div className="absolute top-2 right-2 flex items-center gap-2">
                 <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse font-bold">LIVE</span>
-                <button 
+                <button
                   onClick={stopSharing}
                   className="bg-black/60 hover:bg-black/80 p-1.5 rounded-full text-white transition-colors"
                 >
@@ -305,8 +304,8 @@ export function ChatInterface() {
         </div>
       )}
 
-      <div 
-        ref={scrollRef} 
+      <div
+        ref={scrollRef}
         className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar"
         style={{
           maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
@@ -323,7 +322,7 @@ export function ChatInterface() {
                     components={{
                       // Parágrafos base
                       p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                      
+
                       // Links clicáveis bonitos
                       a: ({ children, href }) => (
                         <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">
@@ -335,12 +334,12 @@ export function ChatInterface() {
                       ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
                       ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
                       li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
-                      
+
                       // Títulos com hierarquia clara
                       h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
                       h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
                       h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
-                      
+
                       // Negrito e Itálico
                       strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
                       em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
@@ -401,20 +400,11 @@ export function ChatInterface() {
             </div>
           ))}
           {isStreaming && (
-            <div className="flex justify-start w-full pl-2 my-2">
-              <div className="relative flex items-center justify-center w-9 h-9">
-                {/* 1. O fundo/trilho do círculo mais escuro e sutil */}
-                <div className="absolute inset-0 rounded-full border-2 border-zinc-800/40"></div>
-                
-                {/* 2. A barra branca giratória (borda superior branca, resto transparente) */}
-                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
-                
-                {/* 3. A logo centralizada (com um leve pulsar para dar vida) */}
-                <img 
-                  src="/icon.png" 
-                  alt="Carregando" 
-                  className="w-6 h-6 object-contain opacity-80 animate-pulse" 
-                />
+            <div className="flex justify-start w-full px-2 my-2 animate-in fade-in slide-in-from-left-2 duration-300">
+              <div className="bg-zinc-800/40 backdrop-blur-sm border border-zinc-700/30 rounded-2xl px-4 py-3 flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-typing-dot" style={{ animationDelay: '0s' }} />
+                <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-typing-dot" style={{ animationDelay: '0.2s' }} />
+                <div className="w-1.5 h-1.5 bg-zinc-400 rounded-full animate-typing-dot" style={{ animationDelay: '0.4s' }} />
               </div>
             </div>
           )}
@@ -424,21 +414,21 @@ export function ChatInterface() {
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
         <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
           {/* QUICK ACTIONS FLUTUANTES */}
-        
-        {isScreenShared && (
-          <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
-            {QUICK_ACTIONS.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(action.prompt)}
-                className="flex items-center gap-1.5 bg-[#1e1e1e]/90 hover:bg-[#2a2a2a] backdrop-blur-md border border-zinc-700/50 text-zinc-300 hover:text-zinc-100 text-xs font-medium px-3.5 py-2 rounded-full transition-all shadow-lg"
-              >
-                <action.icon className="w-3.5 h-3.5" />
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
+
+          {isScreenShared && (
+            <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
+              {QUICK_ACTIONS.map((action, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSend(action.prompt)}
+                  className="flex items-center gap-1.5 bg-[#1e1e1e]/90 hover:bg-[#2a2a2a] backdrop-blur-md border border-zinc-700/50 text-zinc-300 hover:text-zinc-100 text-xs font-medium px-3.5 py-2 rounded-full transition-all shadow-lg"
+                >
+                  <action.icon className="w-3.5 h-3.5" />
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">

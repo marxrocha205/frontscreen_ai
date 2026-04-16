@@ -58,8 +58,8 @@ export function useWebsocket() {
         // 1. MÁGICA DO STREAMING: A IA vai começar a falar
         // =======================================================
         case 'stream_start':
-          // Desliga a animação de loading/pensando
-          setIsStreaming(false) 
+          // Mantemos a animação de loading/pensando (isStreaming=true) 
+          // até que o primeiro chunk de texto chegue de facto.
 
           // Puxa a sessão e trava a barra lateral (Sidebar) IMEDIATAMENTE
           const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -76,6 +76,8 @@ export function useWebsocket() {
         // 2. MÁGICA DO STREAMING: Efeito de Digitação (Chunks)
         // =======================================================
         case 'chunk':
+          // Oculta os pontinhos de "pensando" assim que o texto começa a aparecer
+          setIsStreaming(false)
           // Pegamos no estado atual das mensagens na tela
           const currentMessages = useChatStore.getState().messages;
           if (currentMessages.length > 0) {
