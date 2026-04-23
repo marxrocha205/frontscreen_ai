@@ -13,7 +13,6 @@ interface UserData {
   plan_id: number
 }
 
-// OS EMAILS REAIS FORNECIDOS POR SI (168 no total)
 const rawEmails = [
   "ana_silva_lx@gmail.com", "bruno-santos@nexora.io", "c.oliveira_mkt@amplifica.mobi", "daniel_souza.br@outlook.com", "elena-ferreira@capitallink.com.br", "f_rodrigues.ops@logifast.com.br", "gabriel_alves@induscron.com.br", "helena-pereira.x@cloudify.net.br", "igor_lima.z@hotmail.com", "julia-gomes@finovate.com", "k.costa_ops@transrota.net", "lucas_ribeiro.lab@criativahub.com.br", "m-martins.fz@ferromak.ind", "nicolas_carvalho.q@gmail.com", "olivia-almeida.rk@byteforge.com", "p_lopes.sys@investcorp.net", "rafael_soares.p@fretex.com", "sofia-fernandes.mx@agenciapixel.net", "thiago_vieira.eng@sidera.com", "u-barbosa.dev@outlook.com", "victor_rocha.fin@altavox.tech", "w_dias.mkt@valora.fin", "xavier-mendes.hq@modalix.log", "yara_nunes.rj@mktflow.com", "zeca-machado.sp@techmanuf.net", "arthur_moura.mg@gmail.com", "beatriz-castro.sc@codexia.dev", "c_cardoso.rs@vertexcapital.com", "davi_borges.ba@viavelox.com.br", "eduarda-smith.pe@brandix.co", "felipe_johnson.ce@obrasil.ind.br", "g-williams.rn@hotmail.com", "heitor_brown.pb@devopsia.com", "isabella-jones.al@capitallink.com.br", "joao_garcia.se@logifast.com.br", "laura-miller.df@amplifica.mobi", "matheus_davis.go@induscron.com.br", "n-rodriguez.mt@gmail.com", "otavio_martinez.ms@nexora.io", "priscila-hernandez.am@finovate.com", "renan92.pa@outlook.com", "samuel.lopez88@transrota.net", "tatiana7.rr@criativahub.com.br", "vinicius.gonzalez2022@ferromak.ind", "yasmin_wilson15@gmail.com", "alice42.ro@cloudify.net.br", "b.anderson99@investcorp.net", "clara.thomas05@fretex.com", "diego.taylor12@agenciapixel.net", "enzo33.ac@sidera.com", "flavia.moore8@hotmail.com", "gustavo.jackson91@altavox.tech", "henrique.martin77@valora.fin", "isadora.lee23@modalix.log", "joaquim.perez44@mktflow.com", "leticia.thompson55@techmanuf.net", "marcelo.white66@gmail.com", "nina.harris7@codexia.dev", "paulo.sanchez8@vertexcapital.com", "renata.clark9@viavelox.com.br", "sergio.ramirez10@brandix.co", "thais.lewis11@obrasil.ind.br", "vitor.robinson12@hotmail.com", "william.walker13@devopsia.com", "alice.young14@capitallink.com.br", "bob.allen15@logifast.com.br", "charlie.king16@amplifica.mobi", "dave.wright17@induscron.com.br", "eve.scott18@gmail.com", "frank.torres19@nexora.io", "grace.nguyen20@finovate.com", "heidi.hill21@transrota.net", "ivan.flores22@criativahub.com.br", "judy.green23@ferromak.ind", "mallory.adams24@gmail.com", "oscar.nelson25@cloudify.net.br", "peggy.baker26@investcorp.net", "sybil.hall27@fretex.com", "trent.rivera28@agenciapixel.net", "victor.campbell29@sidera.com", "walter.mitchell30@outlook.com", "zoe.carter31@altavox.tech", "alexander32.pi@valora.fin", "benjamin33.ma@modalix.log", "catherine34.to@mktflow.com", "daniel.roberts35@techmanuf.net", "emily.smith36@gmail.com", "fernando.johnson37@codexia.dev", "gabriela.williams38@vertexcapital.com", "henrique.brown39@viavelox.com.br", "isabel.jones40@brandix.co", "joao.garcia41@obrasil.ind.br", "katarina.miller42@hotmail.com", "leonardo.davis43@devopsia.com", "marina.rodriguez44@capitallink.com.br", "nicolas.martinez45@logifast.com.br", "olivia.hernandez46@amplifica.mobi", "pedro.lopez47@induscron.com.br", "quintino.gonzalez48@gmail.com", "rafaela.wilson49@nexora.io", "asilva.x@finovate.com", "bruno.eng@transrota.net", "carlos.dev@criativahub.com.br", "dpereira.z@ferromak.ind", "elena.fin@gmail.com", "f.costa.rj@cloudify.net.br", "g.ribeiro.ops@investcorp.net", "helena.mkt@fretex.com", "imartins.x1@agenciapixel.net", "jcarvalho.sys@sidera.com", "k.almeida.hq@outlook.com", "lopes.lucas.q@altavox.tech", "msoares.fz@valora.fin", "nfernandes.rk@modalix.log", "o.barbosa.mx@mktflow.com", "procha.z2@techmanuf.net", "rdias.q1@gmail.com", "smendes.p@codexia.dev", "tmachado.lab@vertexcapital.com", "umoura.sys.br@viavelox.com.br", "vcastro.mkt@brandix.co", "wcardoso.ops.sp@obrasil.ind.br", "xborges.eng@hotmail.com", "ysmith.dev.mg@devopsia.com", "zjohnson.fin@capitallink.com.br", "awilliams.x3@logifast.com.br", "bbrown.rj@amplifica.mobi", "cjones.sp@induscron.com.br", "dgarcia.mg@gmail.com", "emiller.pr@nexora.io", "fdavis.sc@finovate.com", "grodriguez.rs@transrota.net", "hmartinez.ba@criativahub.com.br", "ihernandez.pe@ferromak.ind", "jlopez.ce@gmail.com", "kgonzalez.rn@cloudify.net.br", "lwilson.pb@investcorp.net", "manderson.al@fretex.com", "nthomas.se@agenciapixel.net", "otaylor.df@sidera.com", "pmoore.go@outlook.com", "qjackson.mt@altavox.tech", "rmartin.ms@valora.fin", "slee.am@modalix.log", "tperez.pa@mktflow.com", "uthompson.rr@techmanuf.net", "vwhite.ro@gmail.com", "wharris.ac@codexia.dev", "xsanchez.ap@vertexcapital.com", "yclark.to@viavelox.com.br", "zramirez.ma@brandix.co", "alewis.pi@obrasil.ind.br", "brobinson.eng.rj@hotmail.com", "cwalker.dev.sp@devopsia.com", "dyoung.fin.mg@capitallink.com.br", "eallen.ops.pr@logifast.com.br", "fking.mkt.sc@amplifica.mobi", "gwright.sys.rs@induscron.com.br", "hscott.x4@gmail.com", "itorres.z3@nexora.io", "jnguyen.q2@finovate.com", "khill.p1@transrota.net", "lflores.lab.ba@criativahub.com.br", "mgreen.hq.pe@ferromak.ind", "nadams.fz1@gmail.com", "onelson.rk2@cloudify.net.br", "pbaker.mx1@investcorp.net", "qhall.rj2@fretex.com", "rrivera.sp1@agenciapixel.net", "scampbell.mg2@sidera.com", "tmitchell.pr1@outlook.com", "ucarter.sc2@altavox.tech", "vroberts.rs1@valora.fin", "wsilva.ba2@modalix.log", "xsantos.pe1@mktflow.com", "yoliveira.ce2@techmanuf.net", "zsouza.rn1@gmail.com", "arodrigues.pb2@codexia.dev", "bferreira.al1@vertexcapital.com", "calves.se2@viavelox.com.br", "dpereira.df1@brandix.co", "elima.go2@obrasil.ind.br", "fgomes.mt1@hotmail.com", "gcosta.ms2@devopsia.com", "hribeiro.am1@capitallink.com.br", "imartins.pa2@logifast.com.br", "jcarvalho.rr1@amplifica.mobi", "kalmeida.ro2@induscron.com.br", "llopes.ac1@gmail.com", "msoares.ap2@nexora.io", "nfernandes.to1@finovate.com", "obarbosa.ma2@transrota.net", "procha.pi1@criativahub.com.br", "qdias.eng.br@ferromak.ind", "rmendes.dev.br@gmail.com", "snunes.fin.br@cloudify.net.br", "tmachado.ops.br@investcorp.net", "umoura.mkt.br@fretex.com", "vcastro.sys.br@agenciapixel.net", "wcardoso.x.br@sidera.com"
 ]
@@ -30,12 +29,11 @@ export function UsersTab() {
   const [userDetails, setUserDetails] = useState<any>(null)
 
   useEffect(() => {
-    // Alocação Exata: 9 Plus (3), 22 Pro (2), Resto Free (1)
     const generateUsers = () => {
       return rawEmails.map((email, index) => {
-        let plan = 1 // Free
-        if (index < 9) plan = 3 // Os primeiros 9 são Plus
-        else if (index >= 9 && index < 31) plan = 2 // Os próximos 22 são Pro
+        let plan = 1 
+        if (index < 9) plan = 3 
+        else if (index >= 9 && index < 31) plan = 2 
         
         return {
           id: 1000 + index,
@@ -68,9 +66,6 @@ export function UsersTab() {
     setTimeout(() => {
       const user = users.find(u => u.id === userId)
       
-      // Matemática exata do LTV:
-      // Plano Pro = 1034 / 22 = ~47$
-      // Plano Plus = 873 / 9 = ~97$
       let ltv = 0
       if (user?.plan_id === 2) ltv = 47.00
       if (user?.plan_id === 3) ltv = 97.00
@@ -82,10 +77,10 @@ export function UsersTab() {
           remaining_credits: user?.plan_id !== 1 ? Math.floor(Math.random() * 5000) + 1000 : 100 
         },
         ai_costs: [
-          { model: "OpenAI", tokens: Math.floor(Math.random() * 10000), cost_usd: Math.random() * 1.5 },
-          { model: "ElevenLabs", tokens: Math.floor(Math.random() * 5000), cost_usd: Math.random() * 2 }
+          { model: "OpenAI", tokens: Math.floor(Math.random() * 10000), cost_brl: Math.random() * 8.5 },
+          { model: "ElevenLabs", tokens: Math.floor(Math.random() * 5000), cost_brl: Math.random() * 12.0 }
         ],
-        total_ai_cost_usd: Math.random() * 3.5,
+        total_ai_cost_brl: Math.random() * 20.5,
         lifetime_value_brl: ltv
       })
       setLoadingDetails(false)
@@ -170,8 +165,8 @@ export function UsersTab() {
                 <span className="text-3xl font-bold text-emerald-300">R$ {userDetails.lifetime_value_brl.toFixed(2)}</span>
               </div>
               <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-red-400 font-medium mb-2"><BrainCircuit className="w-5 h-5" /> Custo API IA</div>
-                <span className="text-3xl font-bold text-red-300">$ {userDetails.total_ai_cost_usd.toFixed(4)}</span>
+                <div className="flex items-center gap-2 text-red-400 font-medium mb-2"><BrainCircuit className="w-5 h-5" /> Custo API IA (R$)</div>
+                <span className="text-3xl font-bold text-red-300">R$ {userDetails.total_ai_cost_brl.toFixed(2)}</span>
               </div>
             </div>
           ) : null}
