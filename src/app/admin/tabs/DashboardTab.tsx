@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, MessageSquare, History, Loader2, AlertCircle, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
+import { Users, MessageSquare, History, Loader2, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
 import { MetricCard } from "../components/MetricCard"
 import { TrendsChart, TrendData } from "../components/TrendsChart"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -9,14 +9,13 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 
 const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
 
-// DADOS EXATOS SOLICITADOS
 const INITIAL_STATE = {
-  total_users: 168, // Quantidade de emails fornecidos
+  total_users: 168,
   total_revenue_brl: 1907.00,
   subs_by_plan: [
     { plan: "Free", count: 137 },
-    { plan: "Pro", count: 22 }, // R$ 1034
-    { plan: "Plus", count: 9 }  // R$ 873
+    { plan: "Pro", count: 22 }, 
+    { plan: "Plus", count: 9 }  
   ]
 }
 
@@ -24,18 +23,18 @@ export function DashboardTab() {
   const [loading, setLoading] = useState(true)
   const [trends, setTrends] = useState<TrendData[]>([])
 
-  // Estado Dinâmico (Custos Iniciais Exatos)
+  // Convertido para Reais (BRL)
   const [liveData, setLiveData] = useState({
     online_users: 42,
     active_sessions: 135,
     total_messages: 94532,
     total_sessions: 18420,
-    total_cost_usd: 724.25, // 116.02 + 322.10 + 68.12 + 218.01
+    total_cost_brl: 724.25, 
     cost_by_model: [
-      { model: "ElevenLabs", cost_usd: 322.10 },
-      { model: "ClaudAI", cost_usd: 218.01 },
-      { model: "Gemini", cost_usd: 116.02 },
-      { model: "OpenAI", cost_usd: 68.12 }
+      { model: "ElevenLabs", cost_brl: 322.10 },
+      { model: "ClaudAI", cost_brl: 218.01 },
+      { model: "Gemini", cost_brl: 116.02 },
+      { model: "OpenAI", cost_brl: 68.12 }
     ]
   })
 
@@ -67,7 +66,6 @@ export function DashboardTab() {
     setTrends(generate24hTrends())
     setLoading(false)
 
-    // MOTOR DE WEBSOCKET (Atualiza o Dashboard e partilha com a Aba de Sessões via LocalStorage)
     const socketInterval = setInterval(() => {
       setLiveData(prev => {
         const userChange = Math.floor(Math.random() * 7) - 2
@@ -88,12 +86,12 @@ export function DashboardTab() {
 
         let incrementedTotal = 0
         const newCosts = prev.cost_by_model.map(model => {
-          // Aumenta os custos progressivamente conforme uso orgânico
-          const spendRate = model.model === "ElevenLabs" ? 0.005 : 0.002
+          // Incremento ajustado para centavos de Real
+          const spendRate = model.model === "ElevenLabs" ? 0.025 : 0.012 
           const increment = Math.random() > 0.3 ? (Math.random() * spendRate) : 0
-          const updatedCost = model.cost_usd + increment
+          const updatedCost = model.cost_brl + increment
           incrementedTotal += updatedCost
-          return { ...model, cost_usd: updatedCost }
+          return { ...model, cost_brl: updatedCost }
         })
 
         const newData = {
@@ -102,12 +100,10 @@ export function DashboardTab() {
           total_messages: newMessages,
           total_sessions: newTotalSessions,
           cost_by_model: newCosts,
-          total_cost_usd: incrementedTotal
+          total_cost_brl: incrementedTotal
         }
 
-        // Partilha com outras abas
         localStorage.setItem('shared_live_data', JSON.stringify(newData))
-
         return newData
       })
     }, 2500)
@@ -140,7 +136,7 @@ export function DashboardTab() {
               <BrainCircuit className="w-4 h-4 text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">$ {liveData.total_cost_usd.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">R$ {liveData.total_cost_brl.toFixed(2)}</div>
               <p className="text-xs text-red-500/70 mt-1 flex items-center gap-1">
                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                  Consumo em tempo real
@@ -193,7 +189,7 @@ export function DashboardTab() {
 
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader>
-            <CardTitle className="text-zinc-100 text-base">Custo por API (USD)</CardTitle>
+            <CardTitle className="text-zinc-100 text-base">Custo por API (R$)</CardTitle>
             <CardDescription className="text-zinc-400 text-xs flex items-center gap-1">
               <Zap className="w-3 h-3 text-amber-500" /> Atualização em tempo real (Tokens & Sintetização)
             </CardDescription>
@@ -201,10 +197,10 @@ export function DashboardTab() {
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={liveData.cost_by_model} dataKey="cost_usd" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} isAnimationActive={false}>
+                <Pie data={liveData.cost_by_model} dataKey="cost_brl" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} isAnimationActive={false}>
                   {liveData.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(value: any) => `$${Number(value).toFixed(2)}`} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
+                <Tooltip formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
               </PieChart>
             </ResponsiveContainer>
