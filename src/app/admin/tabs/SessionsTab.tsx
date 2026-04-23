@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Activity, MessageSquare, Plus, Loader2 } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { Activity, MessageSquare, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
@@ -12,7 +12,6 @@ const sampleEmails = [
   "arthur_moura.mg@gmail.com", "davi_borges.ba@viavelox.com.br", "priscila-hernandez.am@finovate.com"
 ]
 
-// LISTA REALISTA E VARIADA DE TÓPICOS
 const sessionTitles = [
   "Erro 403 ao fazer requisição API como resolver", "Como reduzir consumo de memória em Node.js", 
   "Por que meu Docker container para sozinho", "Como escalar microserviços sem aumentar custo", 
@@ -68,37 +67,56 @@ interface SessionData {
 export function SessionsTab() {
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [syncData, setSyncData] = useState({ active_sessions: 0, total_messages: 0 })
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Popula as sessões iniciais
-    const initialSessions = Array.from({ length: 15 }).map((_, i) => ({
+    // 1. Popula as sessões iniciais espalhadas pelo tempo para parecer real
+    const initialSessions = Array.from({ length: 12 }).map((_, i) => ({
       id: Math.random().toString(36).substring(7),
       title: sessionTitles[Math.floor(Math.random() * sessionTitles.length)],
       user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
-      created_at: new Date(Date.now() - Math.random() * 10000000)
+      // Cria sessões com intervalos de minutos/horas para trás
+      created_at: new Date(Date.now() - (Math.random() * 86400000)) // Últimas 24h
     })).sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
     
     setSessions(initialSessions)
 
-    // Sincronia em tempo real
+    // 2. Sincroniza os contadores com o Dashboard a cada 2.5s
     const syncInterval = setInterval(() => {
       const storedData = localStorage.getItem('shared_live_data')
       if (storedData) {
         setSyncData(JSON.parse(storedData))
       }
+    }, 2500)
 
-      // Adiciona uma nova sessão organicamente
-      if (Math.random() > 0.6) {
+    // 3. Algoritmo para adicionar novas sessões de forma espaçada (1 a 5 minutos)
+    const scheduleNextSession = () => {
+      const minTime = 60 * 1000; // 1 minuto (60.000 ms)
+      const maxTime = 5 * 60 * 1000; // 5 minutos (300.000 ms)
+      
+      // Escolhe um tempo aleatório entre 1 e 5 minutos
+      const randomDelay = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+
+      timeoutRef.current = setTimeout(() => {
         setSessions(prev => [{
           id: Math.random().toString(36).substring(7),
           title: sessionTitles[Math.floor(Math.random() * sessionTitles.length)],
           user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
           created_at: new Date()
-        }, ...prev].slice(0, 50))
-      }
-    }, 2500)
+        }, ...prev].slice(0, 50)) // Limita a 50 itens para não pesar a RAM
 
-    return () => clearInterval(syncInterval)
+        // Agenda a próxima iteração recursivamente
+        scheduleNextSession()
+      }, randomDelay)
+    }
+
+    // Inicia o ciclo de novas sessões
+    scheduleNextSession()
+
+    return () => {
+      clearInterval(syncInterval)
+      if (timeoutRef.current) clearTimeout(timeoutRef.current)
+    }
   }, [])
 
   return (
@@ -134,7 +152,7 @@ export function SessionsTab() {
           <CardTitle className="text-zinc-100">Live Log de Sessões</CardTitle>
           <CardDescription className="text-zinc-400 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Monitorização de interações geradas na plataforma neste exato momento.
+            As novas sessões aparecerão organicamente de acordo com o volume de uso (Aprox. a cada 1~5 min).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -160,7 +178,7 @@ export function SessionsTab() {
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">
-                      {session.created_at.toLocaleTimeString('pt-PT')}
+                      {session.created_at.toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </span>
                     <p className="text-[10px] text-zinc-600 mt-1 uppercase font-mono">
                       ID: {session.id.toUpperCase()}
