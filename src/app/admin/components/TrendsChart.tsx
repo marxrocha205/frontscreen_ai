@@ -11,13 +11,9 @@ import {
 } from "recharts"
 
 export interface TrendData {
-  date?: string;       // Opcional para não quebrar a versão de 24h
-  full_date?: string;  // Opcional
-  time?: string;       // Usado na versão de websockets (24 horas)
-  users?: number;
-  sessions: number;
-  messages?: number;
-  revenue?: number;    // <-- ESTA FOI A LINHA QUE CAUSOU O ERRO NA RAILWAY
+  time: string
+  sessions: number
+  messages: number
 }
 
 interface TrendsChartProps {
@@ -30,26 +26,27 @@ export function TrendsChart({ data }: TrendsChartProps) {
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-              <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+            <linearGradient id="colorMessages" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} /> {/* Azul */}
+              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
             </linearGradient>
-            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
+            <linearGradient id="colorSessions" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} /> {/* Esmeralda */}
               <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
             </linearGradient>
           </defs>
           
           <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#27272a" />
           
+          {/* Eixo X agora exibe as Horas */}
           <XAxis 
-            dataKey="date" 
+            dataKey="time" 
             stroke="#a1a1aa" 
             fontSize={12} 
             tickLine={false} 
             axisLine={false} 
             dy={10}
-            minTickGap={20}
+            minTickGap={15}
           />
           <YAxis 
             stroke="#a1a1aa" 
@@ -61,25 +58,26 @@ export function TrendsChart({ data }: TrendsChartProps) {
           <Tooltip 
             contentStyle={{ backgroundColor: '#09090b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }}
             itemStyle={{ color: '#e4e4e7' }}
+            labelStyle={{ color: '#a1a1aa', marginBottom: '4px' }}
           />
           
           <Area 
             type="monotone" 
-            dataKey="sessions" 
-            name="Sessões Ativas"
-            stroke="#8b5cf6" 
+            dataKey="messages" 
+            name="Mensagens Trocadas"
+            stroke="#3b82f6" 
             fillOpacity={1} 
-            fill="url(#colorSessions)" 
-            strokeWidth={2}
+            fill="url(#colorMessages)" 
+            strokeWidth={3}
           />
           <Area 
             type="monotone" 
-            dataKey="revenue" 
-            name="Receita Diária (R$)"
+            dataKey="sessions" 
+            name="Sessões Abertas"
             stroke="#10b981" 
             fillOpacity={1} 
-            fill="url(#colorRevenue)" 
-            strokeWidth={3}
+            fill="url(#colorSessions)" 
+            strokeWidth={2}
           />
         </AreaChart>
       </ResponsiveContainer>
