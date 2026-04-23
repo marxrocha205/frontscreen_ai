@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, MessageSquare, History, Loader2, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
+import { Users, MessageSquare, Loader2, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
 import { MetricCard } from "../components/MetricCard"
 import { TrendsChart, TrendData } from "../components/TrendsChart"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -23,7 +23,6 @@ export function DashboardTab() {
   const [loading, setLoading] = useState(true)
   const [trends, setTrends] = useState<TrendData[]>([])
 
-  // Convertido para Reais (BRL)
   const [liveData, setLiveData] = useState({
     online_users: 42,
     active_sessions: 135,
@@ -86,9 +85,12 @@ export function DashboardTab() {
 
         let incrementedTotal = 0
         const newCosts = prev.cost_by_model.map(model => {
-          // Incremento ajustado para centavos de Real
-          const spendRate = model.model === "ElevenLabs" ? 0.025 : 0.012 
-          const increment = Math.random() > 0.3 ? (Math.random() * spendRate) : 0
+          // VELOCIDADE REDUZIDA: Multiplicadores baixos para simular custo real de tokens (R$)
+          const spendRate = model.model === "ElevenLabs" ? 0.003 : 0.0008 
+          
+          // Probabilidade reduzida: Só sobe em 25% dos ciclos (em vez de estar sempre a subir)
+          const increment = Math.random() > 0.75 ? (Math.random() * spendRate) : 0
+          
           const updatedCost = model.cost_brl + increment
           incrementedTotal += updatedCost
           return { ...model, cost_brl: updatedCost }
