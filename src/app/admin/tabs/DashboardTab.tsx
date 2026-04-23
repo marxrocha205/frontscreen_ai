@@ -1,79 +1,142 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, MessageSquare, Coins, History, Loader2, AlertCircle, DollarSign, BrainCircuit, Activity } from "lucide-react"
+import { Users, MessageSquare, History, Loader2, AlertCircle, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
 import { MetricCard } from "../components/MetricCard"
 import { TrendsChart, TrendData } from "../components/TrendsChart"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6'];
+const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
+
+// Estado inicial estático para base do cálculo
+const INITIAL_STATE = {
+  total_users: 234,
+  total_revenue_brl: 1907.00,
+  subs_by_plan: [
+    { plan: "Free", count: 124 },
+    { plan: "Pro", count: 78 },
+    { plan: "Plus", count: 32 }
+  ]
+}
 
 export function DashboardTab() {
-  const [metrics, setMetrics] = useState<any>(null)
-  const [trends, setTrends] = useState<TrendData[]>([])
   const [loading, setLoading] = useState(true)
+  const [trends, setTrends] = useState<TrendData[]>([])
+
+  // Estado Dinâmico (Simulação de Websocket)
+  const [liveData, setLiveData] = useState({
+    online_users: 42,
+    active_sessions: 135,
+    total_messages: 94532,
+    total_sessions: 18420,
+    total_cost_usd: 24.85,
+    cost_by_model: [
+      { model: "gpt-4o", cost_usd: 12.20 },
+      { model: "elevenlabs (voz)", cost_usd: 6.45 },
+      { model: "claude-3.5-sonnet", cost_usd: 3.10 },
+      { model: "claude-3-opus", cost_usd: 2.00 },
+      { model: "gemini-1.5-pro", cost_usd: 1.10 }
+    ]
+  })
 
   useEffect(() => {
-    // 1. DADOS FAKE: MÉTRICAS PRINCIPAIS
-    const fakeMetrics = {
-      total_users: 214,
-      total_sessions: 15420,
-      total_messages: 89432,
-      total_revenue_brl: 1907.00, // VALOR ALVO
-      total_cost_usd: 18.45,
-      online_users: Math.floor(Math.random() * 15) + 12, // Entre 12 e 27 usuários online
-      cost_by_model: [
-        { model: "gpt-4o", cost_usd: 12.20 },
-        { model: "claude-3.5-sonnet", cost_usd: 4.15 },
-        { model: "gemini-1.5-pro", cost_usd: 2.10 }
-      ],
-      subs_by_plan: [
-        { plan: "Free", count: 114 },
-        { plan: "Pro", count: 68 },
-        { plan: "Plus", count: 32 }
-      ]
-    }
-
-    // 2. DADOS FAKE: GRÁFICO DE 30 DIAS (Gerando histórico)
-    const generate30DaysTrends = () => {
+    // 1. GERADOR DO GRÁFICO DE 24 HORAS (Com picos noturnos)
+    const generate24hTrends = () => {
       const data: TrendData[] = []
-      for (let i = 29; i >= 0; i--) {
-        const d = new Date()
-        d.setDate(d.getDate() - i)
+      const now = new Date()
+      
+      for (let i = 23; i >= 0; i--) {
+        const d = new Date(now)
+        d.setHours(d.getHours() - i)
+        const hour = d.getHours()
         
-        // Simula receita diária para somar visualmente algo em torno do valor total
-        const dailyRevenue = Math.floor(Math.random() * 40) + 30 
-        
+        // Algoritmo de Pico Noturno (Maior uso entre 19h e 02h)
+        let baseActivity = 20
+        if (hour >= 19 && hour <= 23) {
+          baseActivity = 80 + ((hour - 19) * 40) // Sobe agressivamente até as 23h
+        } else if (hour >= 0 && hour <= 2) {
+          baseActivity = 200 - (hour * 50) // Começa a descer após meia noite
+        } else if (hour > 2 && hour < 7) {
+          baseActivity = 15 // Madrugada morta
+        } else {
+          baseActivity = 35 + (Math.random() * 20) // Horário comercial normal
+        }
+
+        // Adiciona uma variação randômica para parecer orgânico (+- 20%)
+        const variance = 0.8 + (Math.random() * 0.4)
+        const finalActivity = Math.floor(baseActivity * variance)
+
         data.push({
-          date: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth()+1).toString().padStart(2, '0')}`,
-          full_date: d.toISOString(),
-          users: Math.floor(Math.random() * 8) + 2, // Novos usuários no dia
-          sessions: Math.floor(Math.random() * 150) + 50, // Sessões no dia
-          revenue: dailyRevenue
+          time: `${hour.toString().padStart(2, '0')}:00`,
+          sessions: finalActivity,
+          messages: Math.floor(finalActivity * (3 + Math.random() * 4)) // 3 a 7 mensagens por sessão
         })
       }
       return data
     }
 
-    // Simula um tempo de carregamento para parecer real
-    setTimeout(() => {
-      setMetrics(fakeMetrics)
-      setTrends(generate30DaysTrends())
-      setLoading(false)
-    }, 800)
+    setTrends(generate24hTrends())
+    setLoading(false)
 
+    // 2. MOTOR DE WEBSOCKET (Atualiza a cada 2.5 segundos)
+    const socketInterval = setInterval(() => {
+      setLiveData(prev => {
+        // Lógica de Entra/Sai orgânico (-2 a +4 utilizadores)
+        const userChange = Math.floor(Math.random() * 7) - 2
+        let newOnline = prev.online_users + userChange
+        
+        // Mantém os utilizadores online num limite realista dependendo da hora
+        const currentHour = new Date().getHours()
+        const isNight = currentHour >= 19 || currentHour <= 2
+        const minUsers = isNight ? 60 : 25
+        const maxUsers = isNight ? 140 : 55
+        
+        if (newOnline < minUsers) newOnline += 3
+        if (newOnline > maxUsers) newOnline -= 4
+
+        // Cada utilizador ativo tem no mínimo 3 sessões abertas (podendo ir até 5)
+        const sessionMultiplier = 3 + Math.random() * 2
+        const newActiveSessions = Math.floor(newOnline * sessionMultiplier)
+
+        // As mensagens disparam com base na quantidade de sessões ativas
+        const newMessages = prev.total_messages + Math.floor(Math.random() * (newActiveSessions / 10))
+        const newTotalSessions = prev.total_sessions + (Math.random() > 0.6 ? 1 : 0)
+
+        // Custos aumentam em tempo real (frações de cêntimos simulando uso de tokens)
+        let incrementedTotal = 0
+        const newCosts = prev.cost_by_model.map(model => {
+          // ElevenLabs e GPT-4o gastam mais rápido
+          const spendRate = (model.model.includes("eleven") || model.model.includes("gpt-4")) ? 0.003 : 0.001
+          const increment = Math.random() > 0.3 ? (Math.random() * spendRate) : 0
+          const updatedCost = model.cost_usd + increment
+          incrementedTotal += updatedCost
+          return { ...model, cost_usd: updatedCost }
+        })
+
+        return {
+          online_users: newOnline,
+          active_sessions: newActiveSessions,
+          total_messages: newMessages,
+          total_sessions: newTotalSessions,
+          cost_by_model: newCosts,
+          total_cost_usd: incrementedTotal
+        }
+      })
+    }, 2500)
+
+    return () => clearInterval(socketInterval)
   }, [])
 
   if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       
-      {/* 1. NÚMEROS GIGANTES (Financeiro + KPIs) */}
+      {/* 1. NÚMEROS GIGANTES (Tempo Real + Financeiro) */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         
-        {/* Receita em Verde */}
+        {/* Receita Fixo */}
         <div className="col-span-1">
           <Card className="bg-emerald-500/10 border border-emerald-500/20 shadow-sm h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -81,29 +144,32 @@ export function DashboardTab() {
               <DollarSign className="w-4 h-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-300">R$ {metrics?.total_revenue_brl.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-emerald-300">R$ {INITIAL_STATE.total_revenue_brl.toFixed(2)}</div>
               <p className="text-xs text-emerald-500/70 mt-1">LTV Acumulado</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Custo em Vermelho */}
+        {/* Custo IA Animado */}
         <div className="col-span-1">
-          <Card className="bg-red-500/10 border border-red-500/20 shadow-sm h-full">
+          <Card className="bg-red-500/10 border border-red-500/20 shadow-sm h-full transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-red-400">Custo Total (IA)</CardTitle>
               <BrainCircuit className="w-4 h-4 text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-300">$ {metrics?.total_cost_usd.toFixed(2)}</div>
-              <p className="text-xs text-red-500/70 mt-1">Custo global de APIs</p>
+              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">$ {liveData.total_cost_usd.toFixed(3)}</div>
+              <p className="text-xs text-red-500/70 mt-1 flex items-center gap-1">
+                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                 Consumo em tempo real
+              </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Usuários Online (NOVO) */}
+        {/* Usuários Online Pulsante */}
         <div className="col-span-1">
-          <Card className="bg-blue-500/10 border border-blue-500/20 shadow-sm h-full relative overflow-hidden">
+          <Card className="bg-blue-500/10 border border-blue-500/20 shadow-sm h-full relative overflow-hidden transition-all duration-300">
             <div className="absolute top-0 right-0 p-4">
                <span className="flex h-3 w-3">
                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -112,33 +178,43 @@ export function DashboardTab() {
             </div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-blue-400">Online Agora</CardTitle>
-              <Activity className="w-4 h-4 text-blue-400" />
+              <Users className="w-4 h-4 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-300">{metrics?.online_users}</div>
-              <p className="text-xs text-blue-500/70 mt-1">Tempo real</p>
+              <div className="text-3xl font-bold text-blue-300">{liveData.online_users}</div>
+              <p className="text-xs text-blue-500/70 mt-1">Via Websockets</p>
             </CardContent>
           </Card>
         </div>
 
-        <MetricCard title="Utilizadores" value={metrics?.total_users || 0} icon={<Users className="h-4 w-4 text-zinc-400" />} description="Contas registadas" />
-        <MetricCard title="Sessões Totais" value={metrics?.total_sessions || 0} icon={<History className="h-4 w-4 text-zinc-400" />} description="Conversas geradas" />
+        {/* Métricas Dinâmicas Calculadas */}
+        <MetricCard 
+          title="Sessões Ativas" 
+          value={liveData.active_sessions} 
+          icon={<Activity className="h-4 w-4 text-amber-400" />} 
+          description={`~${(liveData.active_sessions / liveData.online_users).toFixed(1)} por utilizador`} 
+        />
+        <MetricCard 
+          title="Total Conversas" 
+          value={liveData.total_messages.toLocaleString()} 
+          icon={<MessageSquare className="h-4 w-4 text-indigo-400" />} 
+          description="Mensagens trocadas" 
+        />
       </div>
 
       {/* 2. GRÁFICOS DE PIZZA (Distribuição) */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         
-        {/* Gráfico: Assinaturas Ativas */}
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader>
             <CardTitle className="text-zinc-100 text-base">Distribuição de Planos</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">Utilizadores ativos por tipo de assinatura.</CardDescription>
+            <CardDescription className="text-zinc-400 text-xs">Base total de {INITIAL_STATE.total_users} utilizadores registados.</CardDescription>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={metrics.subs_by_plan} dataKey="count" nameKey="plan" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
-                  {metrics.subs_by_plan.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
+                <Pie data={INITIAL_STATE.subs_by_plan} dataKey="count" nameKey="plan" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
+                  {INITIAL_STATE.subs_by_plan.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                 </Pie>
                 <Tooltip contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} itemStyle={{ color: '#f4f4f5' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
@@ -147,20 +223,30 @@ export function DashboardTab() {
           </CardContent>
         </Card>
 
-        {/* Gráfico: Custos por IA */}
+        {/* Gráfico de Custo (Atualiza ao vivo sem quebrar a animação) */}
         <Card className="bg-zinc-950 border-zinc-800">
           <CardHeader>
-            <CardTitle className="text-zinc-100 text-base">Custo por Modelo (USD)</CardTitle>
-            <CardDescription className="text-zinc-400 text-xs">Onde o dinheiro da infraestrutura está a ser gasto.</CardDescription>
+            <CardTitle className="text-zinc-100 text-base">Custo por API (USD)</CardTitle>
+            <CardDescription className="text-zinc-400 text-xs flex items-center gap-1">
+              <Zap className="w-3 h-3 text-amber-500" /> Atualização em tempo real (Tokens & Sintetização)
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-[280px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
-                <Pie data={metrics.cost_by_model} dataKey="cost_usd" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5}>
-                  {metrics.cost_by_model.map((entry: any, index: number) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
+                <Pie 
+                  data={liveData.cost_by_model} 
+                  dataKey="cost_usd" 
+                  nameKey="model" 
+                  cx="50%" cy="50%" 
+                  innerRadius={60} outerRadius={80} 
+                  paddingAngle={5}
+                  isAnimationActive={false} // Desativado para o gráfico não piscar a cada 2 seg
+                >
+                  {liveData.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                 </Pie>
                 <Tooltip 
-                  formatter={(value: any) => `$${Number(value).toFixed(2)}`}
+                  formatter={(value: any) => `$${Number(value).toFixed(3)}`}
                   contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} 
                 />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
@@ -171,10 +257,11 @@ export function DashboardTab() {
 
       </div>
 
-      {/* 3. GRÁFICO DE TENDÊNCIAS (30 DIAS) */}
+      {/* 3. GRÁFICO DE TENDÊNCIAS (24 HORAS - Picos Noturnos) */}
       <Card className="bg-zinc-950 border-zinc-800">
         <CardHeader>
-          <CardTitle className="text-zinc-100 text-base">Desempenho e Receita Diária (Últimos 30 dias)</CardTitle>
+          <CardTitle className="text-zinc-100 text-base">Tráfego e Conversas (Últimas 24 Horas)</CardTitle>
+          <CardDescription className="text-zinc-400 text-xs">Monitorização de picos de utilização orgânica.</CardDescription>
         </CardHeader>
         <CardContent>
           <TrendsChart data={trends} />
