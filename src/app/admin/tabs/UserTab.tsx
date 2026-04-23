@@ -1,7 +1,17 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Loader2, AlertCircle, Power, ScanEye, DollarSign, BrainCircuit, Activity } from "lucide-react"
+import { 
+  Loader2, 
+  AlertCircle, 
+  Power, 
+  ScanEye, 
+  DollarSign, 
+  BrainCircuit, 
+  Activity,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 
@@ -14,20 +24,26 @@ interface UserData {
   plan_id?: number
 }
 
-// Nomes comuns para simular emails
 const firstNames = ["joao", "maria", "pedro", "lucas", "ana", "marcos", "julia", "carlos", "fernanda", "rafael", "bruna", "tiago", "camila", "felipe", "amanda"]
 const domains = ["gmail.com", "hotmail.com", "outlook.com", "yahoo.com.br", "empresa.com.br"]
+
+// Constante para definir o limite por página, facilitando manutenção futura
+const ITEMS_PER_PAGE = 10
 
 export function UsersTab() {
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Estados de Paginação
+  const [currentPage, setCurrentPage] = useState(1)
+
+  // Estados do Modal Raio-X
   const [isDetailsOpen, setIsDetailsOpen] = useState(false)
   const [loadingDetails, setLoadingDetails] = useState(false)
   const [userDetails, setUserDetails] = useState<any>(null)
 
   useEffect(() => {
-    // GERA 214 USUÁRIOS FAKE DE FORMA REALISTA
+    // Geração dos 214 utilizadores fake
     const generateFakeUsers = () => {
       const fakeUsers: UserData[] = []
       
@@ -36,20 +52,19 @@ export function UsersTab() {
         const domain = domains[Math.floor(Math.random() * domains.length)]
         const randomNum = Math.floor(Math.random() * 999)
         
-        // Distribuição de planos: ~60% Free(1), ~25% Pro(2), ~15% Plus(3)
         const rand = Math.random()
         const plan = rand < 0.6 ? 1 : rand < 0.85 ? 2 : 3
 
         fakeUsers.push({
           id: 1000 + i,
           email: i === 0 ? "admin@screenai.com" : `${name}${randomNum}@${domain}`,
-          is_active: Math.random() > 0.05, // 95% estão ativos
-          is_admin: i === 0, // Apenas o primeiro é admin
+          is_active: Math.random() > 0.05,
+          is_admin: i === 0,
           created_at: new Date(Date.now() - Math.random() * 10000000000).toISOString(),
           plan_id: plan
         })
       }
-      return fakeUsers.sort((a, b) => b.id - a.id) // Mais recentes primeiro
+      return fakeUsers.sort((a, b) => b.id - a.id)
     }
 
     setTimeout(() => {
@@ -58,11 +73,26 @@ export function UsersTab() {
     }, 600)
   }, [])
 
+  // --- LÓGICA DE PAGINAÇÃO ---
+  // 1. Calcula o total de páginas (Arredonda para cima: 214 / 10 = 22 páginas)
+  const totalPages = Math.ceil(users.length / ITEMS_PER_PAGE)
+  
+  // 2. Calcula o índice inicial e final para o slice()
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
+  const endIndex = startIndex + ITEMS_PER_PAGE
+  
+  // 3. Extrai apenas os utilizadores da página atual
+  const currentUsers = users.slice(startIndex, endIndex)
+
+  // Funções de navegação
+  const goToNextPage = () => setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+  const goToPrevPage = () => setCurrentPage((prev) => Math.max(prev - 1, 1))
+  // ---------------------------
+
   const handleOpenDetails = (userId: number) => {
     setIsDetailsOpen(true)
     setLoadingDetails(true)
     
-    // Raio-X Mockado
     setTimeout(() => {
       const user = users.find(u => u.id === userId)
       const isPaid = user?.plan_id !== 1
@@ -88,21 +118,21 @@ export function UsersTab() {
 
   return (
     <>
-      <Card className="bg-zinc-950 border-zinc-800">
+      <Card className="bg-zinc-950 border-zinc-800 flex flex-col h-full">
         <CardHeader>
           <CardTitle className="text-zinc-100 flex items-center justify-between">
             Gestão de Utilizadores
             <span className="text-xs bg-indigo-500/20 text-indigo-400 px-3 py-1 rounded-full font-normal border border-indigo-500/20">
-              {users.length} usuários totais
+              {users.length} utilizadores totais
             </span>
           </CardTitle>
           <CardDescription className="text-zinc-400">Visualize e gira os utilizadores registados na plataforma.</CardDescription>
         </CardHeader>
-        <CardContent>
-          {/* Scroll Area para a tabela não quebrar a página com 200 itens */}
-          <div className="rounded-md border border-zinc-800 overflow-hidden max-h-[600px] overflow-y-auto custom-scrollbar">
-            <table className="w-full text-sm text-left relative">
-              <thead className="bg-zinc-900 text-zinc-300 sticky top-0 z-10 shadow-md">
+        
+        <CardContent className="flex flex-col flex-1">
+          <div className="rounded-md border border-zinc-800 overflow-hidden flex-1">
+            <table className="w-full text-sm text-left">
+              <thead className="bg-zinc-900 text-zinc-300">
                 <tr>
                   <th className="p-4 font-medium">ID</th>
                   <th className="p-4 font-medium">Email</th>
@@ -113,7 +143,8 @@ export function UsersTab() {
                 </tr>
               </thead>
               <tbody>
-                {users.map((user) => (
+                {/* Renderizamos apenas os 'currentUsers' (10 por página) */}
+                {currentUsers.map((user) => (
                   <tr key={user.id} className="border-t border-zinc-800 hover:bg-zinc-800/40 transition-colors">
                     <td className="p-4 text-zinc-400">{user.id}</td>
                     <td className="p-4 font-medium text-zinc-100">{user.email}</td>
@@ -123,7 +154,7 @@ export function UsersTab() {
                     <td className="p-4">
                       <select 
                         value={user.plan_id || 1} 
-                        onChange={() => {}} // Dummy onChange
+                        onChange={() => {}}
                         className="bg-zinc-800 border border-zinc-700 text-zinc-200 text-xs rounded-md p-1.5 outline-none hover:bg-zinc-700 transition-colors cursor-pointer"
                       >
                         <option value={1}>Free</option>
@@ -153,10 +184,41 @@ export function UsersTab() {
               </tbody>
             </table>
           </div>
+
+          {/* CONTROLOS DE PAGINAÇÃO */}
+          <div className="flex items-center justify-between mt-4 text-sm text-zinc-400">
+            <div>
+              Mostrando <span className="font-medium text-zinc-200">{startIndex + 1}</span> a <span className="font-medium text-zinc-200">{Math.min(endIndex, users.length)}</span> de <span className="font-medium text-zinc-200">{users.length}</span> utilizadores
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={goToPrevPage} 
+                disabled={currentPage === 1}
+                className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Página Anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              
+              <span className="px-4 py-2 text-zinc-300 font-medium">
+                {currentPage} / {totalPages}
+              </span>
+
+              <button 
+                onClick={goToNextPage} 
+                disabled={currentPage === totalPages}
+                className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Próxima Página"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* MODAL RAIO-X FAKE */}
+      {/* MODAL RAIO-X FAKE MANTIDO */}
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
         <DialogContent className="max-w-2xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl">
           <DialogHeader>
