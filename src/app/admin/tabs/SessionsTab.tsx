@@ -5,7 +5,6 @@ import { Activity, MessageSquare, Plus, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
-// Alguns emails da sua lista para popular as sessões dinâmicas
 const sampleEmails = [
   "daniel_souza.br@outlook.com", "elena-ferreira@capitallink.com.br", "f_rodrigues.ops@logifast.com.br",
   "gabriel_alves@induscron.com.br", "julia-gomes@finovate.com", "lucas_ribeiro.lab@criativahub.com.br",
@@ -13,7 +12,51 @@ const sampleEmails = [
   "arthur_moura.mg@gmail.com", "davi_borges.ba@viavelox.com.br", "priscila-hernandez.am@finovate.com"
 ]
 
-const sessionTitles = ["Análise de Dados Q3", "Tradução de Contrato", "Geração de Voz Comercial", "Sintetização de Texto", "Dúvidas sobre API", "Criação de Copy para Ads", "Revisão de Código"]
+// LISTA REALISTA E VARIADA DE TÓPICOS
+const sessionTitles = [
+  "Erro 403 ao fazer requisição API como resolver", "Como reduzir consumo de memória em Node.js", 
+  "Por que meu Docker container para sozinho", "Como escalar microserviços sem aumentar custo", 
+  "Erro CORS no frontend React como corrigir", "Como proteger API pública contra ataques", 
+  "Como melhorar performance de query lenta SQL", "Como usar IA para automatizar tarefas no backend", 
+  "Por que meu site não aparece no Google", "Como fazer deploy barato de aplicação em produção", 
+  "Problemas comuns ao usar Redis em produção", "Como evitar race condition em sistemas distribuídos", 
+  "Como lidar com filas grandes no RabbitMQ", "Erro timeout em requisição HTTP como resolver", 
+  "Como versionar API sem quebrar clientes", "Como monitorar logs de microserviços", 
+  "Por que minha aplicação está lenta em produção e rápida local", "Como evitar vazamento de memória em Python", 
+  "Como implementar autenticação segura JWT", "Problemas comuns ao usar Kubernetes em produção",
+  "Como fazer renda extra trabalhando de casa", "Por que meu dinheiro não rende mesmo guardando", 
+  "Como sair das dívidas ganhando pouco", "Vale a pena investir em criptomoedas em 2026", 
+  "Como começar a investir com pouco dinheiro", "Por que meu score de crédito está baixo", 
+  "Como organizar finanças pessoais do zero", "Como conseguir clientes sendo freelancer iniciante", 
+  "Quais profissões estão em alta atualmente", "Como ganhar dinheiro na internet de forma real", 
+  "Como cobrar preço justo pelos meus serviços", "Como montar um negócio com pouco investimento", 
+  "Por que meu negócio não dá lucro", "Como vender mais usando redes sociais", "Como validar uma ideia de startup",
+  "Como parar de procrastinar de verdade", "Por que me sinto cansado o tempo todo", 
+  "Como lidar com ansiedade no dia a dia", "Como melhorar foco e concentração", 
+  "Como sair do vício em redes sociais", "Como dormir melhor naturalmente", 
+  "Como criar disciplina e rotina", "Por que não tenho motivação para nada", 
+  "Como controlar pensamentos negativos", "Como melhorar autoestima rapidamente",
+  "Máquina de lavar não centrifuga o que fazer", "Geladeira não está gelando direito solução", 
+  "Como tirar cheiro ruim do ralo do banheiro", "Chuveiro queimando resistência toda hora", 
+  "Como economizar energia elétrica em casa", "Como tirar mofo da parede de forma definitiva", 
+  "Internet Wi-Fi cai toda hora como resolver", "Como eliminar baratas e formigas rápido", 
+  "Como consertar vazamento de água na parede", "Por que a conta de luz veio tão alta", 
+  "Como limpar caixa d’água corretamente", "Como melhorar sinal de Wi-Fi em casa grande",
+  "Celular travando muito como resolver", "Como liberar espaço no celular sem apagar tudo", 
+  "Aplicativo fechando sozinho o que fazer", "Como recuperar conta hackeada", 
+  "Por que meu notebook está lento", "Como melhorar bateria do celular", 
+  "Como saber se meu celular foi invadido", "Como proteger dados pessoais na internet", 
+  "Como acelerar internet no celular", "Como recuperar arquivos apagados",
+  "Como puxar assunto sem parecer estranho", "Como saber se a pessoa está interessada em mim", 
+  "Como reconquistar alguém", "Por que as pessoas se afastam de mim", 
+  "Como melhorar comunicação no relacionamento", "Como lidar com término de relacionamento", 
+  "Como fazer amigos depois de adulto", "Como parar de depender emocionalmente", "Como identificar relacionamento tóxico",
+  "Por que sentimos déjà vu", "O que acontece se ficar sem dormir", 
+  "Como funciona inteligência artificial na prática", "Por que o céu muda de cor", 
+  "Como o algoritmo do TikTok funciona", "Por que sentimos ansiedade sem motivo", 
+  "Como o cérebro toma decisões", "Por que sonhos parecem reais", 
+  "Como funciona o metaverso", "Como ganhar dinheiro com IA"
+]
 
 interface SessionData {
   id: string
@@ -24,8 +67,6 @@ interface SessionData {
 
 export function SessionsTab() {
   const [sessions, setSessions] = useState<SessionData[]>([])
-  
-  // Estado sincronizado com o Dashboard
   const [syncData, setSyncData] = useState({ active_sessions: 0, total_messages: 0 })
 
   useEffect(() => {
@@ -39,21 +80,21 @@ export function SessionsTab() {
     
     setSessions(initialSessions)
 
-    // Intervalo para ler dados do Dashboard (Sincronia em tempo real)
+    // Sincronia em tempo real
     const syncInterval = setInterval(() => {
       const storedData = localStorage.getItem('shared_live_data')
       if (storedData) {
         setSyncData(JSON.parse(storedData))
       }
 
-      // Adiciona uma nova sessão organicamente (simulando atividade)
+      // Adiciona uma nova sessão organicamente
       if (Math.random() > 0.6) {
         setSessions(prev => [{
           id: Math.random().toString(36).substring(7),
           title: sessionTitles[Math.floor(Math.random() * sessionTitles.length)],
           user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
           created_at: new Date()
-        }, ...prev].slice(0, 50)) // Mantém o limite de 50 no log
+        }, ...prev].slice(0, 50))
       }
     }, 2500)
 
@@ -62,7 +103,6 @@ export function SessionsTab() {
 
   return (
     <div className="space-y-6">
-      {/* Cards Sincronizados com o Dashboard */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="bg-zinc-950 border-zinc-800">
           <CardContent className="p-6 flex items-center justify-between">
@@ -89,7 +129,6 @@ export function SessionsTab() {
         </Card>
       </div>
 
-      {/* Log de Sessões Animado */}
       <Card className="bg-zinc-950 border-zinc-800">
         <CardHeader>
           <CardTitle className="text-zinc-100">Live Log de Sessões</CardTitle>
@@ -101,17 +140,17 @@ export function SessionsTab() {
         <CardContent>
           <ScrollArea className="h-[450px] pr-4 custom-scrollbar">
             <div className="space-y-3">
-              {sessions.map((session, index) => (
+              {sessions.map((session) => (
                 <div 
                   key={session.id} 
                   className="flex items-center justify-between border border-zinc-800/50 bg-zinc-900/40 p-3 rounded-lg hover:bg-zinc-800/60 transition-colors animate-in slide-in-from-top-2 fade-in duration-300"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                    <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
                       <MessageSquare className="h-4 w-4 text-zinc-400" />
                     </div>
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium text-zinc-200">
+                    <div className="space-y-0.5 max-w-[400px]">
+                      <p className="text-sm font-medium text-zinc-200 truncate">
                         {session.title}
                       </p>
                       <p className="text-xs text-zinc-500">
@@ -119,7 +158,7 @@ export function SessionsTab() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right shrink-0">
                     <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">
                       {session.created_at.toLocaleTimeString('pt-PT')}
                     </span>
