@@ -11,11 +11,13 @@ import {
 } from "recharts"
 
 export interface TrendData {
-  date: string
-  full_date: string
-  users: number
-  sessions: number
-  revenue?: number // Adicionado para a receita diária
+  date?: string;       // Opcional para não quebrar a versão de 24h
+  full_date?: string;  // Opcional
+  time?: string;       // Usado na versão de websockets (24 horas)
+  users?: number;
+  sessions: number;
+  messages?: number;
+  revenue?: number;    // <-- ESTA FOI A LINHA QUE CAUSOU O ERRO NA RAILWAY
 }
 
 interface TrendsChartProps {
