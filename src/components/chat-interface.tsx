@@ -123,7 +123,7 @@ export function ChatInterface() {
       const container = scrollRef.current
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
     }
-  }, [messages.length, isStreaming]) // Adicionado isStreaming para forçar o scroll quando o botão aparece
+  }, [messages.length, isStreaming])
 
   const requireAuth = (action: () => void) => {
     if (!isLoggedIn) setShowLoginPrompt(true)
@@ -228,13 +228,17 @@ export function ChatInterface() {
     })
   }
 
-  // Verifica se a IA já enviou texto visível real (ignorando espaços ou quebras de linha em branco)
+  // LÓGICA DE LOADING ROBUSTA: Ignora blocos de raciocínio invisíveis como <think>...</think>
   const lastMessage = messages[messages.length - 1]
+  const hasVisibleContent = lastMessage && lastMessage.role === 'assistant' 
+    ? lastMessage.content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim().length > 0
+    : false;
+
   const isWaitingForFirstChunk = isStreaming && (
     !lastMessage || 
     lastMessage.role === 'user' || 
-    (lastMessage.role === 'assistant' && lastMessage.content.trim().length === 0)
-  )
+    (lastMessage.role === 'assistant' && !hasVisibleContent)
+  );
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
@@ -305,9 +309,10 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
-            // Regra: Esconde a mensagem do assistente caso esteja vazia (previne bugs visuais de padding vazio no frontend)
-            if (m.role === 'assistant' && m.content.trim().length === 0) {
-              return null;
+            // Esconde a mensagem da IA se ela ainda estiver só "pensando" ou vazia
+            if (m.role === 'assistant') {
+              const isVisible = m.content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim().length > 0;
+              if (!isVisible) return null;
             }
 
             return (
