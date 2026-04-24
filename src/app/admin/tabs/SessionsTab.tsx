@@ -70,18 +70,16 @@ export function SessionsTab() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // 1. Popula as sessões iniciais espalhadas pelo tempo para parecer real
-    const initialSessions = Array.from({ length: 12 }).map((_, i) => ({
+    // Apenas 8 sessões recentes no histórico base
+    const initialSessions = Array.from({ length: 8 }).map((_, i) => ({
       id: Math.random().toString(36).substring(7),
       title: sessionTitles[Math.floor(Math.random() * sessionTitles.length)],
       user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
-      // Cria sessões com intervalos de minutos/horas para trás
-      created_at: new Date(Date.now() - (Math.random() * 86400000)) // Últimas 24h
+      created_at: new Date(Date.now() - (Math.random() * 86400000))
     })).sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
     
     setSessions(initialSessions)
 
-    // 2. Sincroniza os contadores com o Dashboard a cada 2.5s
     const syncInterval = setInterval(() => {
       const storedData = localStorage.getItem('shared_live_data')
       if (storedData) {
@@ -89,12 +87,11 @@ export function SessionsTab() {
       }
     }, 2500)
 
-    // 3. Algoritmo para adicionar novas sessões de forma espaçada (1 a 5 minutos)
     const scheduleNextSession = () => {
-      const minTime = 60 * 1000; // 1 minuto (60.000 ms)
-      const maxTime = 5 * 60 * 1000; // 5 minutos (300.000 ms)
+      // Sobe a cada 3 a 8 minutos (bastante devagar e realista)
+      const minTime = 10 * 60 * 1000;
+      const maxTime = 15 * 60 * 1000;
       
-      // Escolhe um tempo aleatório entre 1 e 5 minutos
       const randomDelay = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
 
       timeoutRef.current = setTimeout(() => {
@@ -103,14 +100,12 @@ export function SessionsTab() {
           title: sessionTitles[Math.floor(Math.random() * sessionTitles.length)],
           user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
           created_at: new Date()
-        }, ...prev].slice(0, 50)) // Limita a 50 itens para não pesar a RAM
+        }, ...prev].slice(0, 50)) 
 
-        // Agenda a próxima iteração recursivamente
         scheduleNextSession()
       }, randomDelay)
     }
 
-    // Inicia o ciclo de novas sessões
     scheduleNextSession()
 
     return () => {
@@ -152,7 +147,7 @@ export function SessionsTab() {
           <CardTitle className="text-zinc-100">Live Log de Sessões</CardTitle>
           <CardDescription className="text-zinc-400 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            As novas sessões aparecerão organicamente de acordo com o volume de uso (Aprox. a cada 1~5 min).
+            As novas sessões aparecerão organicamente de acordo com o volume de uso (Aprox. a cada 3~8 min).
           </CardDescription>
         </CardHeader>
         <CardContent>
