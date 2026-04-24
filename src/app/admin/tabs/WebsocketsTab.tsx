@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Radio, Activity, Wifi, TerminalSquare, AlertTriangle } from "lucide-react"
+import { Radio, Activity, Wifi, TerminalSquare, AlertTriangle, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
