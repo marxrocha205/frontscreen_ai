@@ -24,8 +24,8 @@ export function DashboardTab() {
   const [trends, setTrends] = useState<TrendData[]>([])
 
   const [liveData, setLiveData] = useState({
-    online_users: 42,
-    active_sessions: 135,
+    online_users: 11, // Inicializado perto dos 10
+    active_sessions: 18,
     total_messages: 94532,
     total_sessions: 18420,
     total_cost_brl: 724.25, 
@@ -46,17 +46,18 @@ export function DashboardTab() {
         d.setHours(d.getHours() - i)
         const hour = d.getHours()
         
-        let baseActivity = 20
-        if (hour >= 19 && hour <= 23) baseActivity = 80 + ((hour - 19) * 40)
-        else if (hour >= 0 && hour <= 2) baseActivity = 200 - (hour * 50)
-        else if (hour > 2 && hour < 7) baseActivity = 15
-        else baseActivity = 35 + (Math.random() * 20)
+        // Picos noturnos ajustados para tráfego muito mais modesto
+        let baseActivity = 5
+        if (hour >= 19 && hour <= 23) baseActivity = 15 + ((hour - 19) * 5)
+        else if (hour >= 0 && hour <= 2) baseActivity = 35 - (hour * 10)
+        else if (hour > 2 && hour < 7) baseActivity = 3
+        else baseActivity = 8 + (Math.random() * 4)
 
         const finalActivity = Math.floor(baseActivity * (0.8 + (Math.random() * 0.4)))
         data.push({
           time: `${hour.toString().padStart(2, '0')}:00`,
           sessions: finalActivity,
-          messages: Math.floor(finalActivity * (3 + Math.random() * 4))
+          messages: Math.floor(finalActivity * (2 + Math.random() * 3))
         })
       }
       return data
@@ -67,29 +68,34 @@ export function DashboardTab() {
 
     const socketInterval = setInterval(() => {
       setLiveData(prev => {
-        const userChange = Math.floor(Math.random() * 7) - 2
+        // Flutuação muito menor e sutil (-1 a +1)
+        const userChange = Math.floor(Math.random() * 3) - 1
         let newOnline = prev.online_users + userChange
         
         const currentHour = new Date().getHours()
         const isNight = currentHour >= 19 || currentHour <= 2
-        const minUsers = isNight ? 60 : 25
-        const maxUsers = isNight ? 140 : 55
         
-        if (newOnline < minUsers) newOnline += 3
-        if (newOnline > maxUsers) newOnline -= 4
+        // LIMITES APERTADOS: Mantém rigorosamente próximo de ~10
+        const minUsers = isNight ? 12 : 6
+        const maxUsers = isNight ? 22 : 14
+        
+        if (newOnline < minUsers) newOnline += 1
+        if (newOnline > maxUsers) newOnline -= 1
 
-        const sessionMultiplier = 3 + Math.random() * 2
+        // Multiplicador de sessões reduzido (cada pessoa tem 1 a 2 abas abertas)
+        const sessionMultiplier = 1.2 + Math.random()
         const newActiveSessions = Math.floor(newOnline * sessionMultiplier)
-        const newMessages = prev.total_messages + Math.floor(Math.random() * (newActiveSessions / 10))
-        const newTotalSessions = prev.total_sessions + (Math.random() > 0.6 ? 1 : 0)
+        
+        // Mensagens quase não sobem (chance muito baixa)
+        const newMessages = prev.total_messages + (Math.random() > 0.8 ? 1 : 0)
+        const newTotalSessions = prev.total_sessions + (Math.random() > 0.9 ? 1 : 0)
 
         let incrementedTotal = 0
         const newCosts = prev.cost_by_model.map(model => {
-          // VELOCIDADE REDUZIDA: Multiplicadores baixos para simular custo real de tokens (R$)
-          const spendRate = model.model === "ElevenLabs" ? 0.003 : 0.0008 
-          
-          // Probabilidade reduzida: Só sobe em 25% dos ciclos (em vez de estar sempre a subir)
-          const increment = Math.random() > 0.75 ? (Math.random() * spendRate) : 0
+          // VELOCIDADE DE CUSTO SUPER LENTA
+          const spendRate = model.model === "ElevenLabs" ? 0.001 : 0.0003 
+          // Chance de aumentar é de apenas 15% por ciclo (antes era 70%)
+          const increment = Math.random() > 0.85 ? (Math.random() * spendRate) : 0
           
           const updatedCost = model.cost_brl + increment
           incrementedTotal += updatedCost
