@@ -11,7 +11,6 @@ import { useConversations } from '@/hooks/use-conversations'
 import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
@@ -26,7 +25,9 @@ export function ChatInterface() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null) // Referência para a caixa de texto expansível
 
   // Estados para Edição de Mensagem
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
@@ -156,7 +157,11 @@ export function ChatInterface() {
 
       if (!textToSend && !isScreenShared && !audioBase64 && !selectedFile) return
 
+      // Limpa a caixa de texto e reseta a altura para o tamanho original
       setInputValue('')
+      if (textareaRef.current) {
+        textareaRef.current.style.height = 'auto'
+      }
 
       if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -233,16 +238,9 @@ export function ChatInterface() {
   // ==========================================
   const lastMessage = messages[messages.length - 1]
   
-  // Verifica se a mensagem tem Letras ou Números REAIS
   const hasVisibleContent = (content: string) => {
     if (!content) return false;
-    
-    // 1. Remove pensamentos ocultos (ex: <think>...</think>)
     const clean = content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '');
-    
-    // 2. Procura por pelo menos UMA letra ou número (inclui acentos portugueses). 
-    // Isso evita que formatações vazias como "**", "```", ou quebras de linha "\n" 
-    // enganem o sistema e façam o loading sumir antes da hora.
     return /[a-zA-Z0-9\u00C0-\u024F]/.test(clean); 
   };
 
@@ -321,7 +319,6 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
-            // Se a IA ainda estiver a pensar em segredo (tags ocultas) ou enviar Markdown vazio, não renderizamos a bolha vazia
             if (m.role === 'assistant' && isStreaming && i === messages.length - 1) {
               if (!hasVisibleContent(m.content)) return null;
             }
@@ -334,8 +331,12 @@ export function ChatInterface() {
                   <div className="bg-zinc-800 p-4 rounded-2xl w-full max-w-[85%] shadow-sm border border-zinc-700 animate-in fade-in">
                     <textarea
                       value={editContent}
-                      onChange={(e) => setEditContent(e.target.value)}
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-zinc-100 text-[15px] focus:outline-none focus:border-zinc-500 resize-none min-h-[100px] custom-scrollbar"
+                      onChange={(e) => {
+                        setEditContent(e.target.value)
+                        e.target.style.height = 'auto'
+                        e.target.style.height = `${Math.min(e.target.scrollHeight, 300)}px`
+                      }}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-zinc-100 text-[15px] focus:outline-none focus:border-zinc-500 resize-none min-h-[100px] max-h-[300px] overflow-y-auto custom-scrollbar"
                     />
                     <div className="flex justify-end gap-2 mt-3">
                       <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)} className="text-zinc-400 hover:text-zinc-200">
@@ -418,7 +419,6 @@ export function ChatInterface() {
           {isStreaming && (
             <div className="flex flex-col items-start w-full pl-2 my-2 gap-3">
               
-              {/* Só exibe o círculo animado e a frase enquanto o texto visível real não chega */}
               {isWaitingForFirstChunk && (
                 <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm animate-in fade-in zoom-in-95 duration-300">
                   <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
@@ -436,7 +436,6 @@ export function ChatInterface() {
                 </div>
               )}
 
-              {/* Botão de Cancelamento / Stop (Visível durante toda a geração da resposta) */}
               <button 
                 onClick={() => sendCancel()} 
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm animate-in fade-in"
@@ -481,39 +480,55 @@ export function ChatInterface() {
             </div>
           )}
 
-          <div className="flex items-center gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
+          {/* CAIXA DE TEXTO MULTI-LINHA (AUTO-RESIZE) */}
+          <div className="flex items-end gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                <DropdownMenuItem onClick={isScreenShared ? stopSharing : handleStartSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                  <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
-                  <span className="font-medium text-[14px]">
-                    {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
-                  </span>
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group mt-1">
-                  <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
-                  <span className="font-medium text-[14px]">{t('app.send_file')}</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="pb-0.5">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
+                    <Plus className="w-5 h-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
+                  <DropdownMenuItem onClick={isScreenShared ? stopSharing : handleStartSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                    <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
+                    <span className="font-medium text-[14px]">
+                      {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
+                    </span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group mt-1">
+                    <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
+                    <span className="font-medium text-[14px]">{t('app.send_file')}</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
 
             <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
 
-            <Input
+            <textarea
+              ref={textareaRef}
               value={inputValue}
-              onChange={e => setInputValue(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleSend()}
+              onChange={e => {
+                setInputValue(e.target.value);
+                e.target.style.height = 'auto'; // Reseta a altura
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Cresce até ao limite de 200px
+              }}
+              onKeyDown={e => {
+                // Se pressionar Enter (SEM o Shift), envia a mensagem.
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder={t('app.send_message')}
-              className="flex-1 bg-transparent border-none focus-visible:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px]"
+              rows={1}
+              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-2.5 max-h-[200px] overflow-y-auto custom-scrollbar"
+              style={{ minHeight: '40px' }}
             />
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 pb-0.5">
               {floatingState !== 'none' && (
                 <Button
                   size="icon"
