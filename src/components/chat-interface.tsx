@@ -123,7 +123,7 @@ export function ChatInterface() {
       const container = scrollRef.current
       container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
     }
-  }, [messages.length])
+  }, [messages.length, isStreaming]) // Adicionado isStreaming para forçar o scroll quando o botão aparece
 
   const requireAuth = (action: () => void) => {
     if (!isLoggedIn) setShowLoginPrompt(true)
@@ -228,9 +228,13 @@ export function ChatInterface() {
     })
   }
 
-  // Verifica se estamos à espera da primeira "palavra" da inteligência artificial
+  // Verifica se a IA já enviou texto visível real (ignorando espaços ou quebras de linha em branco)
   const lastMessage = messages[messages.length - 1]
-  const isWaitingForFirstChunk = isStreaming && (!lastMessage || lastMessage.role === 'user' || (lastMessage.role === 'assistant' && !lastMessage.content))
+  const isWaitingForFirstChunk = isStreaming && (
+    !lastMessage || 
+    lastMessage.role === 'user' || 
+    (lastMessage.role === 'assistant' && lastMessage.content.trim().length === 0)
+  )
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
@@ -300,100 +304,107 @@ export function ChatInterface() {
         }}
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
-          {messages.map((m, i) => (
-            <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
-              {m.role === 'user' && editingMessageId === m.id ? (
-                // UI MODO EDIÇÃO DA MENSAGEM DO USUÁRIO
-                <div className="bg-zinc-800 p-4 rounded-2xl w-full max-w-[85%] shadow-sm border border-zinc-700 animate-in fade-in">
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => setEditContent(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-zinc-100 text-[15px] focus:outline-none focus:border-zinc-500 resize-none min-h-[100px] custom-scrollbar"
-                  />
-                  <div className="flex justify-end gap-2 mt-3">
-                    <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)} className="text-zinc-400 hover:text-zinc-200">
-                      Cancelar
-                    </Button>
-                    <Button size="sm" onClick={() => {
-                      setEditingMessageId(null);
-                      handleSend(editContent);
-                    }} className="bg-zinc-200 text-zinc-900 hover:bg-white font-medium">
-                      Atualizar e Enviar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                // UI NORMAL DA MENSAGEM
-                <div className={`group relative max-w-[85%] rounded-2xl px-5 py-4 shadow-sm flex items-start gap-2 ${m.role === 'user' ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-300'}`}>
-                  
-                  {/* BOTÃO DE EDITAR (Aparece no Hover) */}
-                  {m.role === 'user' && (
-                    <button
-                      onClick={() => {
-                        setEditingMessageId(m.id);
-                        setEditContent(m.content);
-                      }}
-                      className="absolute -left-12 top-3 p-2 bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-zinc-700 shadow-sm"
-                      title="Editar mensagem"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                  )}
+          {messages.map((m, i) => {
+            // Regra: Esconde a mensagem do assistente caso esteja vazia (previne bugs visuais de padding vazio no frontend)
+            if (m.role === 'assistant' && m.content.trim().length === 0) {
+              return null;
+            }
 
-                  <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                        a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
-                        ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
-                        ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                        li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
-                        h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
-                        h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
-                        h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
-                        strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
-                        em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
-                        blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
-                        hr: () => <hr className="my-6 border-zinc-800/80" />,
-                        table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
-                        th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
-                        td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-                        code: ({ inline, className, children, ...props }: any) => {
-                          const match = /language-(\w+)/.exec(className || '')
-                          return !inline ? (
-                            <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                              {match && (
-                                <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                  <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
-                                </div>
-                              )}
-                              <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
-                                <code className={className} {...props}>{children}</code>
-                              </div>
-                            </div>
-                          ) : (
-                            <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
-                          )
-                        }
-                      }}
-                    >
-                      {m.content}
-                    </ReactMarkdown>
+            return (
+              <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                
+                {m.role === 'user' && editingMessageId === m.id ? (
+                  // UI MODO EDIÇÃO DA MENSAGEM DO USUÁRIO
+                  <div className="bg-zinc-800 p-4 rounded-2xl w-full max-w-[85%] shadow-sm border border-zinc-700 animate-in fade-in">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => setEditContent(e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-zinc-100 text-[15px] focus:outline-none focus:border-zinc-500 resize-none min-h-[100px] custom-scrollbar"
+                    />
+                    <div className="flex justify-end gap-2 mt-3">
+                      <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)} className="text-zinc-400 hover:text-zinc-200">
+                        Cancelar
+                      </Button>
+                      <Button size="sm" onClick={() => {
+                        setEditingMessageId(null);
+                        handleSend(editContent);
+                      }} className="bg-zinc-200 text-zinc-900 hover:bg-white font-medium">
+                        Atualizar e Enviar
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-          ))}
+                ) : (
+                  // UI NORMAL DA MENSAGEM
+                  <div className={`group relative max-w-[85%] rounded-2xl px-5 py-4 shadow-sm flex items-start gap-2 ${m.role === 'user' ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-300'}`}>
+                    
+                    {/* BOTÃO DE EDITAR (Aparece no Hover) */}
+                    {m.role === 'user' && (
+                      <button
+                        onClick={() => {
+                          setEditingMessageId(m.id);
+                          setEditContent(m.content);
+                        }}
+                        className="absolute -left-12 top-3 p-2 bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-zinc-700 shadow-sm"
+                        title="Editar mensagem"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
+
+                    <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                          a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
+                          ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                          li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
+                          h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
+                          h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
+                          h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
+                          strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                          em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
+                          blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
+                          hr: () => <hr className="my-6 border-zinc-800/80" />,
+                          table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
+                          th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
+                          td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
+                          code: ({ inline, className, children, ...props }: any) => {
+                            const match = /language-(\w+)/.exec(className || '')
+                            return !inline ? (
+                              <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
+                                {match && (
+                                  <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                  </div>
+                                )}
+                                <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
+                                  <code className={className} {...props}>{children}</code>
+                                </div>
+                              </div>
+                            ) : (
+                              <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
+                            )
+                          }
+                        }}
+                      >
+                        {m.content}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
 
           {/* INDICADOR DE CARREGAMENTO & BOTÃO PARAR */}
           {isStreaming && (
             <div className="flex flex-col items-start w-full pl-2 my-2 gap-3 animate-in fade-in duration-300">
               
-              {/* Só exibe o círculo animado e a frase enquanto o texto não começa a renderizar */}
+              {/* Só exibe o círculo animado e a frase enquanto o texto visível real não chega */}
               {isWaitingForFirstChunk && (
-                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm">
+                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm transition-all">
                   <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
                     <div className="absolute inset-0 rounded-full border-2 border-zinc-600/30"></div>
                     <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
@@ -409,7 +420,7 @@ export function ChatInterface() {
                 </div>
               )}
 
-              {/* Botão de Cancelamento / Stop (Continua visível mesmo enquanto a resposta digita) */}
+              {/* Botão de Cancelamento / Stop (Visível durante toda a geração da resposta) */}
               <button 
                 onClick={() => sendCancel()} 
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm"
