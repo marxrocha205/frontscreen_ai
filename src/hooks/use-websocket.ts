@@ -58,8 +58,9 @@ export function useWebsocket() {
         // 1. MÁGICA DO STREAMING: A IA vai começar a falar
         // =======================================================
         case 'stream_start':
-          // Desliga a animação de loading/pensando
-          setIsStreaming(false) 
+          // CORREÇÃO CRÍTICA: NÃO desligamos o setIsStreaming(false) aqui!
+          // O estado isStreaming deve continuar TRUE para a UI de Loading continuar a piscar
+          // enquanto aguardamos o primeiro "chunk" de texto real vindo da API da IA.
 
           // Puxa a sessão e trava a barra lateral (Sidebar) IMEDIATAMENTE
           const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -98,7 +99,8 @@ export function useWebsocket() {
         // 3. FINALIZAÇÃO: Áudio e Cobrança
         // =======================================================
         case 'ai_response':
-          setIsStreaming(false) // Fallback de segurança
+          // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
+          setIsStreaming(false) 
 
           // Como já preenchemos o texto via 'chunk', apenas atualizamos a bolha com o ID real 
           // e garantimos que o texto final está 100% perfeito.
@@ -149,7 +151,7 @@ export function useWebsocket() {
           break;
 
         case 'error':
-          setIsStreaming(false)
+          setIsStreaming(false) // Desliga o loading em caso de erro também
           if (data.message && data.message.includes('Créditos insuficientes')) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
@@ -178,6 +180,7 @@ export function useWebsocket() {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
       }
       
+      // AQUI LIGAMOS O LOADING PELA PRIMEIRA VEZ
       setIsStreaming(true)
 
       const finalPayload = {
