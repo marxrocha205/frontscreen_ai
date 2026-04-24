@@ -229,19 +229,21 @@ export function ChatInterface() {
   }
 
   // ==========================================
-  // LÓGICA BLINDADA DE LOADING (Evita "piscar" e sumir)
+  // LÓGICA BLINDADA DE LOADING (Evita "piscar" e sumir por causa do Markdown)
   // ==========================================
   const lastMessage = messages[messages.length - 1]
   
-  // Verifica se a mensagem tem pelo menos 2 caracteres visíveis ignorando tags HTML, espaços e blocos <think>
+  // Verifica se a mensagem tem Letras ou Números REAIS
   const hasVisibleContent = (content: string) => {
     if (!content) return false;
-    const clean = content
-      .replace(/<think>[\s\S]*?(<\/think>|$)/gi, '') // Remove pensamentos ocultos da IA
-      .replace(/<[^>]*>?/gm, '') // Remove tags HTML incompletas
-      .replace(/\s/g, ''); // Remove espaços em branco e quebras de linha
     
-    return clean.length >= 2; // Exige texto real para esconder o Loading
+    // 1. Remove pensamentos ocultos (ex: <think>...</think>)
+    const clean = content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '');
+    
+    // 2. Procura por pelo menos UMA letra ou número (inclui acentos portugueses). 
+    // Isso evita que formatações vazias como "**", "```", ou quebras de linha "\n" 
+    // enganem o sistema e façam o loading sumir antes da hora.
+    return /[a-zA-Z0-9\u00C0-\u024F]/.test(clean); 
   };
 
   const isWaitingForFirstChunk = isStreaming && (
@@ -319,7 +321,7 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
-            // Se a IA ainda estiver a pensar em segredo (tags ocultas), não renderizamos a bolha vazia
+            // Se a IA ainda estiver a pensar em segredo (tags ocultas) ou enviar Markdown vazio, não renderizamos a bolha vazia
             if (m.role === 'assistant' && isStreaming && i === messages.length - 1) {
               if (!hasVisibleContent(m.content)) return null;
             }
