@@ -13,19 +13,13 @@ import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
-/**
- * Componente de Interface de Chat.
- * Contém as mensagens, o campo de input, o botão de microfone e todos os controles do chat.
- * Pode ser renderizado na página principal ou "teletransportado" via createPortal
- * para uma janela PiP ou Popup flutuante.
- */
 export function ChatInterface() {
   const { t } = useI18n()
   const [inputValue, setInputValue] = useState('')
@@ -33,6 +27,20 @@ export function ChatInterface() {
   const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Estados para Edição de Mensagem
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
+  const [editContent, setEditContent] = useState("")
+
+  // Frases de Loading dinâmicas
+  const loadingPhrases = [
+    "Entendendo o prompt...",
+    "Analisando o contexto...",
+    "Processando informações...",
+    "Gerando resposta...",
+    "Quase pronto..."
+  ]
+  const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
   const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage } = useChatStore()
@@ -43,6 +51,18 @@ export function ChatInterface() {
       fetchCredits()
     }
   }, [isLoggedIn])
+
+  // Efeito para ciclar as frases de loading a cada 2.5s enquanto carrega
+  useEffect(() => {
+    if (isStreaming) {
+      const interval = setInterval(() => {
+        setPhraseIndex((prev) => (prev + 1) % loadingPhrases.length)
+      }, 2500)
+      return () => clearInterval(interval)
+    } else {
+      setPhraseIndex(0) // Reseta quando terminar
+    }
+  }, [isStreaming])
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
@@ -79,17 +99,12 @@ export function ChatInterface() {
     startSharing()
   }
 
-  // Se o painel voltar ao normal ou o usuário acionar gravação manual, forçamos o VAD a desligar
   useEffect(() => {
-    if (floatingState === 'none' && isContinuousMicOn) {
-      toggleContinuousMic() // Desliga
-    }
+    if (floatingState === 'none' && isContinuousMicOn) toggleContinuousMic()
   }, [floatingState, isContinuousMicOn, toggleContinuousMic])
 
   useEffect(() => {
-    if (isVoiceActive && isContinuousMicOn) {
-      toggleContinuousMic() // Desliga o contínuo ao forçar manual
-    }
+    if (isVoiceActive && isContinuousMicOn) toggleContinuousMic()
   }, [isVoiceActive, isContinuousMicOn, toggleContinuousMic])
 
   useEffect(() => {
@@ -98,12 +113,6 @@ export function ChatInterface() {
       videoRef.current.play().catch(e => {
         if (e.name !== 'AbortError') console.error("Error playing video:", e)
       })
-    }
-  }, [stream])
-
-  useEffect(() => {
-    if (videoRef.current && stream) {
-      videoRef.current.srcObject = stream
     }
   }, [stream])
 
@@ -121,17 +130,12 @@ export function ChatInterface() {
     else action()
   }
 
-  // captureScreenFrame agora é importado de use-screen-share.ts
-  // Ele usa um vídeo oculto global que sempre vive no documento principal,
-  // garantindo captura funcional tanto na tela principal quanto no PiP.
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0])
     }
   }
 
-  // Array de botões de Ação Rápida
   const QUICK_ACTIONS = [
     { icon: FileText, label: "Resumir", prompt: "Por favor, faça um resumo claro e conciso do que está visível na minha tela agora." },
     { icon: Code, label: "Explicar Código", prompt: "Analise e explique o código que está na minha tela passo a passo." },
@@ -139,10 +143,8 @@ export function ChatInterface() {
     { icon: Languages, label: "Traduzir", prompt: "Traduza o conteúdo principal visível nesta tela para o Português." },
   ]
 
-  // Função handleSend atualizada para aceitar o texto dos botões
   const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
-      // Interrompe áudio da IA imediatamente ao enviar nova mensagem
       stopAllAudio()
 
       let audioBase64 = undefined
@@ -150,7 +152,6 @@ export function ChatInterface() {
         audioBase64 = await stopRecording()
       }
 
-      // MÁGICA AQUI: Deteta se o envio veio do Input normal ou de um botão de Quick Action
       const textToSend = typeof overrideText === 'string' ? overrideText : inputValue.trim()
 
       if (!textToSend && !isScreenShared && !audioBase64 && !selectedFile) return
@@ -245,10 +246,7 @@ export function ChatInterface() {
               O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
             </DialogDescription>
           </DialogHeader>
-          <Button
-            onClick={() => setShowMobileWarning(false)}
-            className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
-          >
+          <Button onClick={() => setShowMobileWarning(false)} className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium">
             Entendi
           </Button>
         </DialogContent>
@@ -265,25 +263,14 @@ export function ChatInterface() {
       )}
 
       {isScreenShared && (
-        <div 
-          className={`absolute top-4 left-4 z-40 transition-all duration-300 ${
-            floatingState !== 'none' ? 'group' : ''
-          }`}
-        >
+        <div className={`absolute top-4 left-4 z-40 transition-all duration-300 ${floatingState !== 'none' ? 'group' : ''}`}>
           {floatingState !== 'none' ? (
             <div className="flex flex-col gap-2">
               <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/30 rounded-full px-3 py-1.5 backdrop-blur-md shadow-lg cursor-default">
                 <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                 <span className="text-[10px] font-bold text-red-500 tracking-wider uppercase">Screen Capturing</span>
-                <button 
-                  onClick={stopSharing}
-                  className="ml-1 p-0.5 hover:bg-red-500/20 rounded-full text-red-500 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <button onClick={stopSharing} className="ml-1 p-0.5 hover:bg-red-500/20 rounded-full text-red-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
               </div>
-              
-              {/* Hover Preview for PiP mode */}
               <div className="w-48 h-28 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-top-left pointer-events-none">
                  <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               </div>
@@ -293,12 +280,7 @@ export function ChatInterface() {
               <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               <div className="absolute top-2 right-2 flex items-center gap-2">
                 <span className="bg-red-500 text-[10px] px-2 py-0.5 rounded-full text-white animate-pulse font-bold">LIVE</span>
-                <button 
-                  onClick={stopSharing}
-                  className="bg-black/60 hover:bg-black/80 p-1.5 rounded-full text-white transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
+                <button onClick={stopSharing} className="bg-black/60 hover:bg-black/80 p-1.5 rounded-full text-white transition-colors"><X className="w-3.5 h-3.5" /></button>
               </div>
             </div>
           )}
@@ -316,106 +298,121 @@ export function ChatInterface() {
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => (
             <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-2xl px-5 py-4 shadow-sm ${m.role === 'user' ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-300'}`}>
-                <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      // Parágrafos base
-                      p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                      
-                      // Links clicáveis bonitos
-                      a: ({ children, href }) => (
-                        <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">
-                          {children}
-                        </a>
-                      ),
-
-                      // Listas refinadas
-                      ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
-                      ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                      li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
-                      
-                      // Títulos com hierarquia clara
-                      h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
-                      h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
-                      h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
-                      
-                      // Negrito e Itálico
-                      strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
-                      em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
-
-                      // Citações (Blockquotes) com design elegante
-                      blockquote: ({ children }) => (
-                        <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">
-                          {children}
-                        </blockquote>
-                      ),
-
-                      // Linha Divisória horizontal (quando a IA usa ---)
-                      hr: () => <hr className="my-6 border-zinc-800/80" />,
-
-                      // ==========================================
-                      // TABELAS (Muito comum em respostas da IA)
-                      // ==========================================
-                      table: ({ children }) => (
-                        <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800">
-                          <table className="w-full text-left border-collapse text-sm">{children}</table>
-                        </div>
-                      ),
-                      th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
-                      td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-
-                      // ==========================================
-                      // BLOCOS DE CÓDIGO
-                      // ==========================================
-                      code: ({ inline, className, children, ...props }: any) => {
-                        const match = /language-(\w+)/.exec(className || '')
-                        return !inline ? (
-                          // Bloco de código multi-linhas
-                          <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                            {match && (
-                              <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
-                              </div>
-                            )}
-                            <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
-                              <code className={className} {...props}>
-                                {children}
-                              </code>
-                            </div>
-                          </div>
-                        ) : (
-                          // Código Inline (no meio do texto)
-                          <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>
-                            {children}
-                          </code>
-                        )
-                      }
-                    }}
-                  >
-                    {m.content}
-                  </ReactMarkdown>
+              
+              {m.role === 'user' && editingMessageId === m.id ? (
+                // UI MODO EDIÇÃO DA MENSAGEM DO USUÁRIO
+                <div className="bg-zinc-800 p-4 rounded-2xl w-full max-w-[85%] shadow-sm border border-zinc-700 animate-in fade-in">
+                  <textarea
+                    value={editContent}
+                    onChange={(e) => setEditContent(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-3 text-zinc-100 text-[15px] focus:outline-none focus:border-zinc-500 resize-none min-h-[100px] custom-scrollbar"
+                  />
+                  <div className="flex justify-end gap-2 mt-3">
+                    <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)} className="text-zinc-400 hover:text-zinc-200">
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={() => {
+                      setEditingMessageId(null);
+                      handleSend(editContent);
+                    }} className="bg-zinc-200 text-zinc-900 hover:bg-white font-medium">
+                      Atualizar e Enviar
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                // UI NORMAL DA MENSAGEM
+                <div className={`group relative max-w-[85%] rounded-2xl px-5 py-4 shadow-sm flex items-start gap-2 ${m.role === 'user' ? 'bg-zinc-800 text-zinc-100 rounded-tr-sm' : 'bg-transparent text-zinc-300'}`}>
+                  
+                  {/* BOTÃO DE EDITAR (Aparece no Hover) */}
+                  {m.role === 'user' && (
+                    <button
+                      onClick={() => {
+                        setEditingMessageId(m.id);
+                        setEditContent(m.content);
+                      }}
+                      className="absolute -left-12 top-3 p-2 bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-zinc-700 shadow-sm"
+                      title="Editar mensagem"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  )}
+
+                  <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                        a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
+                        ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                        ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                        li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
+                        h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
+                        h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
+                        h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
+                        strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                        em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
+                        blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
+                        hr: () => <hr className="my-6 border-zinc-800/80" />,
+                        table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
+                        th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
+                        td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
+                        code: ({ inline, className, children, ...props }: any) => {
+                          const match = /language-(\w+)/.exec(className || '')
+                          return !inline ? (
+                            <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
+                              {match && (
+                                <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                  <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                </div>
+                              )}
+                              <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
+                                <code className={className} {...props}>{children}</code>
+                              </div>
+                            </div>
+                          ) : (
+                            <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
+                          )
+                        }
+                      }}
+                    >
+                      {m.content}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
+
+          {/* INDICADOR DE CARREGAMENTO & BOTÃO PARAR */}
           {isStreaming && (
-            <div className="flex justify-start w-full pl-2 my-2">
-              <div className="relative flex items-center justify-center w-9 h-9">
-                {/* 1. O fundo/trilho do círculo mais escuro e sutil */}
-                <div className="absolute inset-0 rounded-full border-2 border-zinc-800/40"></div>
+            <div className="flex flex-col items-start w-full pl-2 my-2 gap-3 animate-in fade-in duration-300">
+              <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm">
                 
-                {/* 2. A barra branca giratória (borda superior branca, resto transparente) */}
-                <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
+                {/* Roda Giratória + Logo da ScreenAI (Icon) */}
+                <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                  <div className="absolute inset-0 rounded-full border-2 border-zinc-600/30"></div>
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
+                  <img 
+                    src="/icon.png" 
+                    alt="Carregando" 
+                    className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse" 
+                  />
+                </div>
                 
-                {/* 3. A logo centralizada (com um leve pulsar para dar vida) */}
-                <img 
-                  src="/icon.png" 
-                  alt="Carregando" 
-                  className="w-6 h-6 object-contain opacity-80 animate-pulse" 
-                />
+                {/* Texto Alternado (Entendendo o prompt...) */}
+                <span className="text-sm font-medium text-zinc-400 min-w-[160px]">
+                  {loadingPhrases[phraseIndex]}
+                </span>
               </div>
+
+              {/* Botão de Cancelamento / Stop */}
+              <button 
+                onClick={() => sendCancel()} 
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm"
+              >
+                <Square className="w-3.5 h-3.5 fill-current" />
+                Parar resposta
+              </button>
             </div>
           )}
         </div>
@@ -423,7 +420,6 @@ export function ChatInterface() {
 
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
         <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-          {/* QUICK ACTIONS FLUTUANTES */}
         
         {isScreenShared && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
