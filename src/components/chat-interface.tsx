@@ -34,10 +34,10 @@ export function ChatInterface() {
 
   // Frases de Loading dinâmicas
   const loadingPhrases = [
-    "Entendendo o prompt...",
-    "Analisando o contexto...",
-    "Processando informações...",
-    "Gerando resposta...",
+    "A entender o prompt...",
+    "A analisar o contexto...",
+    "A processar informações...",
+    "A gerar resposta...",
     "Quase pronto..."
   ]
   const [phraseIndex, setPhraseIndex] = useState(0)
@@ -228,16 +228,26 @@ export function ChatInterface() {
     })
   }
 
-  // LÓGICA DE LOADING ROBUSTA: Ignora blocos de raciocínio invisíveis como <think>...</think>
+  // ==========================================
+  // LÓGICA BLINDADA DE LOADING (Evita "piscar" e sumir)
+  // ==========================================
   const lastMessage = messages[messages.length - 1]
-  const hasVisibleContent = lastMessage && lastMessage.role === 'assistant' 
-    ? lastMessage.content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim().length > 0
-    : false;
+  
+  // Verifica se a mensagem tem pelo menos 2 caracteres visíveis ignorando tags HTML, espaços e blocos <think>
+  const hasVisibleContent = (content: string) => {
+    if (!content) return false;
+    const clean = content
+      .replace(/<think>[\s\S]*?(<\/think>|$)/gi, '') // Remove pensamentos ocultos da IA
+      .replace(/<[^>]*>?/gm, '') // Remove tags HTML incompletas
+      .replace(/\s/g, ''); // Remove espaços em branco e quebras de linha
+    
+    return clean.length >= 2; // Exige texto real para esconder o Loading
+  };
 
   const isWaitingForFirstChunk = isStreaming && (
     !lastMessage || 
     lastMessage.role === 'user' || 
-    (lastMessage.role === 'assistant' && !hasVisibleContent)
+    (lastMessage.role === 'assistant' && !hasVisibleContent(lastMessage.content))
   );
 
   return (
@@ -309,10 +319,9 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
-            // Esconde a mensagem da IA se ela ainda estiver só "pensando" ou vazia
-            if (m.role === 'assistant') {
-              const isVisible = m.content.replace(/<think>[\s\S]*?(<\/think>|$)/gi, '').trim().length > 0;
-              if (!isVisible) return null;
+            // Se a IA ainda estiver a pensar em segredo (tags ocultas), não renderizamos a bolha vazia
+            if (m.role === 'assistant' && isStreaming && i === messages.length - 1) {
+              if (!hasVisibleContent(m.content)) return null;
             }
 
             return (
@@ -405,21 +414,21 @@ export function ChatInterface() {
 
           {/* INDICADOR DE CARREGAMENTO & BOTÃO PARAR */}
           {isStreaming && (
-            <div className="flex flex-col items-start w-full pl-2 my-2 gap-3 animate-in fade-in duration-300">
+            <div className="flex flex-col items-start w-full pl-2 my-2 gap-3">
               
               {/* Só exibe o círculo animado e a frase enquanto o texto visível real não chega */}
               {isWaitingForFirstChunk && (
-                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm transition-all">
+                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm animate-in fade-in zoom-in-95 duration-300">
                   <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
-                    <div className="absolute inset-0 rounded-full border-2 border-zinc-600/30"></div>
-                    <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
+                    <div className="absolute inset-0 rounded-full border-[2px] border-zinc-600/30"></div>
+                    <div className="absolute inset-0 rounded-full border-[2px] border-transparent border-t-zinc-200 animate-[spin_0.8s_linear_infinite]"></div>
                     <img 
                       src="/icon.png" 
-                      alt="Carregando" 
+                      alt="A carregar" 
                       className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse" 
                     />
                   </div>
-                  <span className="text-sm font-medium text-zinc-400 min-w-[160px]">
+                  <span className="text-sm font-medium text-zinc-300 min-w-[160px] animate-pulse">
                     {loadingPhrases[phraseIndex]}
                   </span>
                 </div>
@@ -428,7 +437,7 @@ export function ChatInterface() {
               {/* Botão de Cancelamento / Stop (Visível durante toda a geração da resposta) */}
               <button 
                 onClick={() => sendCancel()} 
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm animate-in fade-in"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
                 Parar resposta
