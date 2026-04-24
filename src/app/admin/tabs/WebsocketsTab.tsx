@@ -1,4 +1,5 @@
 "use client"
+
 import { useEffect, useState, useRef } from "react"
 import { Radio, Activity, Wifi, TerminalSquare, AlertTriangle } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -12,7 +13,7 @@ interface SocketEvent {
   latency: number
 }
 
-const eventTypes = ["CONNECT", "DISCONNECT", "MSG_RECV", "MSG_RECV", "AUDIO_CHUNK", "AUDIO_CHUNK"]
+const eventTypes = ["CONNECT", "DISCONNECT", "MSG_RECV", "MSG_RECV", "AUDIO_CHUNK", "SYSTEM"]
 
 export function WebsocketsTab() {
   const [events, setEvents] = useState<SocketEvent[]>([])
@@ -21,16 +22,13 @@ export function WebsocketsTab() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Sincronização passiva com o Dashboard a cada 2s
     const syncInterval = setInterval(() => {
       const storedData = localStorage.getItem('shared_live_data')
       if (storedData) setSyncData(JSON.parse(storedData))
       
-      // Flutuação orgânica da latência global (Ping)
       setLatency(prev => Math.max(12, Math.min(120, prev + (Math.random() * 20 - 10))))
     }, 2000)
 
-    // Motor de Geração de Logs de Rede
     const generateNetworkTraffic = () => {
       const randType = eventTypes[Math.floor(Math.random() * eventTypes.length)] as any
       const mockIp = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
@@ -43,15 +41,14 @@ export function WebsocketsTab() {
         latency: Math.floor(Math.random() * 80) + 10
       }
 
-      setEvents(prev => [newEvent, ...prev].slice(0, 40)) // Mantém o DOM leve (apenas 40 linhas no terminal)
+      setEvents(prev => [newEvent, ...prev].slice(0, 40)) 
 
-      // Se há mais utilizadores, a velocidade do log aumenta
       const storedData = localStorage.getItem('shared_live_data')
-      const currentUsers = storedData ? JSON.parse(storedData).online_users : 30
+      const currentUsers = storedData ? JSON.parse(storedData).online_users : 10
       
-      // Calcula o próximo disparo (entre 300ms a 1800ms)
-      const baseDelay = 1500 - (currentUsers * 5)
-      const nextTick = Math.max(300, baseDelay + (Math.random() * 500))
+      // Delay MUITO mais longo. Para 10 utilizadores, demora entre 2 a 4 segundos por log.
+      const baseDelay = 3500 - (currentUsers * 25)
+      const nextTick = Math.max(1200, baseDelay + (Math.random() * 1500))
 
       timeoutRef.current = setTimeout(generateNetworkTraffic, nextTick)
     }
@@ -64,7 +61,6 @@ export function WebsocketsTab() {
     }
   }, [])
 
-  // Função utilitária para colorir os eventos no terminal
   const getEventColor = (type: string) => {
     switch (type) {
       case 'CONNECT': return 'text-emerald-400'
@@ -77,7 +73,6 @@ export function WebsocketsTab() {
 
   return (
     <div className="space-y-6">
-      {/* HEADER DE ESTADO DE REDE */}
       <div className="grid gap-4 md:grid-cols-3">
         <Card className="bg-zinc-950 border-zinc-800">
           <CardContent className="p-6 flex items-center justify-between">
@@ -118,7 +113,6 @@ export function WebsocketsTab() {
         </Card>
       </div>
 
-      {/* TERMINAL CLI */}
       <Card className="bg-[#0a0a0a] border-zinc-800 shadow-xl overflow-hidden">
         <CardHeader className="border-b border-zinc-800/50 bg-[#0f0f11] py-3">
           <CardTitle className="text-zinc-100 flex items-center gap-2 text-sm font-mono">
@@ -155,7 +149,6 @@ export function WebsocketsTab() {
         </CardContent>
       </Card>
       
-      {/* AVISO INFERIOR */}
       <div className="flex items-center gap-2 text-xs text-amber-500/80 bg-amber-500/10 border border-amber-500/20 p-3 rounded-lg">
         <AlertTriangle className="w-4 h-4" />
         <p>A taxa de atualização do terminal é dinamicamente gerida pelo volume de utilizadores online ({syncData.online_users} atualmente).</p>
