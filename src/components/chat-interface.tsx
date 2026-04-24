@@ -228,6 +228,10 @@ export function ChatInterface() {
     })
   }
 
+  // Verifica se estamos à espera da primeira "palavra" da inteligência artificial
+  const lastMessage = messages[messages.length - 1]
+  const isWaitingForFirstChunk = isStreaming && (!lastMessage || lastMessage.role === 'user' || (lastMessage.role === 'assistant' && !lastMessage.content))
+
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
@@ -386,26 +390,26 @@ export function ChatInterface() {
           {/* INDICADOR DE CARREGAMENTO & BOTÃO PARAR */}
           {isStreaming && (
             <div className="flex flex-col items-start w-full pl-2 my-2 gap-3 animate-in fade-in duration-300">
-              <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm">
-                
-                {/* Roda Giratória + Logo da ScreenAI (Icon) */}
-                <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
-                  <div className="absolute inset-0 rounded-full border-2 border-zinc-600/30"></div>
-                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
-                  <img 
-                    src="/icon.png" 
-                    alt="Carregando" 
-                    className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse" 
-                  />
+              
+              {/* Só exibe o círculo animado e a frase enquanto o texto não começa a renderizar */}
+              {isWaitingForFirstChunk && (
+                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm">
+                  <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                    <div className="absolute inset-0 rounded-full border-2 border-zinc-600/30"></div>
+                    <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-zinc-200 animate-[spin_1s_linear_infinite]"></div>
+                    <img 
+                      src="/icon.png" 
+                      alt="Carregando" 
+                      className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse" 
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-zinc-400 min-w-[160px]">
+                    {loadingPhrases[phraseIndex]}
+                  </span>
                 </div>
-                
-                {/* Texto Alternado (Entendendo o prompt...) */}
-                <span className="text-sm font-medium text-zinc-400 min-w-[160px]">
-                  {loadingPhrases[phraseIndex]}
-                </span>
-              </div>
+              )}
 
-              {/* Botão de Cancelamento / Stop */}
+              {/* Botão de Cancelamento / Stop (Continua visível mesmo enquanto a resposta digita) */}
               <button 
                 onClick={() => sendCancel()} 
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm"
