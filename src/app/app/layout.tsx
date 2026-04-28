@@ -23,6 +23,8 @@ import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 
 const ModelIcon = ({ id }: { id: string }) => {
   switch (id) {
+    case 'auto':
+      return <Sparkles className="w-5 h-5 text-indigo-400 flex-shrink-0" />;
     case 'gpt-5':
     case 'gpt-4':
       return <Image src="/chatgpt-logo.png" alt="GPT" width={20} height={20} className="w-5 h-5 object-contain flex-shrink-0" />;
@@ -212,6 +214,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               width={180}
               height={40}
               className="h-8 md:h-9 w-auto object-contain"
+              style={{ height: 'auto' }}
               priority
             />
           </div>
@@ -237,6 +240,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               width={180}
               height={56}
               className="h-10 md:h-12 lg:h-14 w-auto object-contain"
+              style={{ height: 'auto' }}
               priority
             />
           </div>
@@ -424,7 +428,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10">
+        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10 gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedModel('auto')}
+            className={`pointer-events-auto flex items-center gap-1.5 h-8 px-3 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all ${
+              selectedModel === 'auto' 
+                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' 
+                : 'bg-zinc-900/50 text-zinc-500 border border-zinc-800/50 hover:text-zinc-300'
+            }`}
+          >
+            <Sparkles className={`w-3 h-3 ${selectedModel === 'auto' ? 'animate-pulse' : ''}`} />
+            Auto
+          </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

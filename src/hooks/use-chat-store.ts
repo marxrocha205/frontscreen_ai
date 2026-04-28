@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
+  { id: 'auto', label: 'Auto', description: 'Escolha automática do melhor modelo para cada tarefa', requiresPro: false },
   { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', requiresPro: false },
   { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Iteração rápida e respostas ágeis', requiresPro: true },
   { id: 'gemini-1.5-pro', label: 'Gemini 3.1 Pro', description: '1M de contexto — ideal para transcrições longas', requiresPro: true },
