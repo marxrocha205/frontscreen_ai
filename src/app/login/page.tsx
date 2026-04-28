@@ -113,7 +113,7 @@ export default function LoginPage() {
     <div className="flex h-screen w-full items-center justify-center bg-zinc-950">
       <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4">
         <div className="flex justify-center mb-2">
-          <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-16 w-auto object-contain drop-shadow-md" />
+          <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-10 w-auto object-contain drop-shadow-md" />
         </div>
         
         <div className="text-center space-y-2 mb-2">
