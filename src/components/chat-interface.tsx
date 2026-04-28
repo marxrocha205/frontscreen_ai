@@ -294,7 +294,7 @@ export function ChatInterface() {
                 <button onClick={stopSharing} className="ml-1 p-0.5 hover:bg-red-500/20 rounded-full text-red-500 transition-colors"><X className="w-3.5 h-3.5" /></button>
               </div>
               <div className="w-48 h-28 bg-black rounded-xl overflow-hidden border border-zinc-800 shadow-2xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all duration-300 origin-top-left pointer-events-none">
-                 <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+                <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
               </div>
             </div>
           ) : (
@@ -309,9 +309,9 @@ export function ChatInterface() {
         </div>
       )}
 
-      <div 
-        ref={scrollRef} 
-        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar"
+      <div
+        ref={scrollRef}
+        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar overscroll-contain"
         style={{
           maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
           WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))'
@@ -450,7 +450,6 @@ export function ChatInterface() {
 
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
         <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-        
         {isScreenShared && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
             {QUICK_ACTIONS.map((action, idx) => (

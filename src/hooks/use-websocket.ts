@@ -77,6 +77,8 @@ export function useWebsocket() {
         // 2. MÁGICA DO STREAMING: Efeito de Digitação (Chunks)
         // =======================================================
         case 'chunk':
+          // Oculta os pontinhos de "pensando" assim que o texto começa a aparecer
+          setIsStreaming(false)
           // Pegamos no estado atual das mensagens na tela
           const currentMessages = useChatStore.getState().messages;
           if (currentMessages.length > 0) {

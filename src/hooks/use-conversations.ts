@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { useAuth } from './use-auth'
 import { config } from '@/lib/config'
 import { useChatStore } from './use-chat-store'
 import { stopAllAudio } from './use-websocket'
@@ -47,7 +48,13 @@ export const useConversations = create<ConversationsState>((set, get) => ({
         const data = await res.json()
         set({ conversations: data })
       } else {
-        console.error("Falha ao buscar conversas:", await res.text())
+        const errorText = await res.text()
+        console.error("Falha ao buscar conversas:", errorText)
+        if (res.status === 401 || errorText.includes("Token expirado")) {
+          // Se o token expirou, desloga o usuário para forçar novo login
+          const { logout } = useAuth.getState()
+          logout()
+        }
       }
     } catch (error) {
       console.error("Erro de rede ao buscar conversas:", error)
@@ -70,7 +77,6 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       const res = await fetch(`${config.apiUrl}/api/chat/sessions/${id}/messages`, {
         headers: { 'Authorization': `Bearer ${token}` }
       })
-      
       if (res.ok) {
         const messages = await res.json()
         
@@ -81,6 +87,12 @@ export const useConversations = create<ConversationsState>((set, get) => ({
             content: msg.content
           })
         })
+      } else {
+        const errorText = await res.text()
+        console.error("Erro ao carregar mensagens:", errorText)
+        if (res.status === 401 || errorText.includes("Token expirado")) {
+          useAuth.getState().logout()
+        }
       }
     } catch (error) {
       console.error("Erro ao carregar mensagens antigas:", error)
@@ -111,7 +123,11 @@ export const useConversations = create<ConversationsState>((set, get) => ({
           stopAllAudio()
         }
       } else {
-        console.error("Erro ao excluir conversa:", await res.text())
+        const errorText = await res.text()
+        console.error("Erro ao excluir conversa:", errorText)
+        if (res.status === 401 || errorText.includes("Token expirado")) {
+          useAuth.getState().logout()
+        }
       }
     } catch (error) {
       console.error("Erro de rede ao excluir conversa:", error)
@@ -137,7 +153,11 @@ export const useConversations = create<ConversationsState>((set, get) => ({
           conversations: state.conversations.map((c) => c.id === id ? { ...c, title: newTitle } : c)
         }))
       } else {
-        console.error("Erro ao renomear conversa:", await res.text())
+        const errorText = await res.text()
+        console.error("Erro ao renomear conversa:", errorText)
+        if (res.status === 401 || errorText.includes("Token expirado")) {
+          useAuth.getState().logout()
+        }
       }
     } catch (error) {
       console.error("Erro de rede ao renomear conversa:", error)
