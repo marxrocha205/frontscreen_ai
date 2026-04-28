@@ -213,8 +213,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               alt="Screen AI Logo"
               width={180}
               height={40}
-              className="h-8 md:h-9 w-auto object-contain"
-              style={{ height: 'auto' }}
+              className="h-5 md:h-6 w-auto object-contain"
               priority
             />
           </div>
@@ -239,8 +238,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               alt="Screen AI Logo"
               width={180}
               height={56}
-              className="h-10 md:h-12 lg:h-14 w-auto object-contain"
-              style={{ height: 'auto' }}
+              className="h-7 md:h-8 lg:h-9 w-auto object-contain"
               priority
             />
           </div>
