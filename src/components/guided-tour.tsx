@@ -111,6 +111,19 @@ export function GuidedTour() {
   const [cardStyles, setCardStyles] = useState<React.CSSProperties>({})
 
   useEffect(() => {
+    // Permite resetar o tour via URL para testes (ex: /app?resetTour=true)
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('resetTour') === 'true' && user?.email) {
+      localStorage.removeItem(`screenai-tour-seen-${user.email}`)
+      // Remove o parâmetro da URL sem recarregar a página
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+      setIsOpen(true)
+      setCurrentStep(0)
+    }
+  }, [user?.email])
+
+  useEffect(() => {
     // Só mostra o tutorial se estiver logado
     if (isLoggedIn && user?.email) {
       const tourKey = `screenai-tour-seen-${user.email}`
