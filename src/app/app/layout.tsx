@@ -20,6 +20,7 @@ import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
+import { GuidedTour } from '@/components/guided-tour'
 
 const ModelIcon = ({ id }: { id: string }) => {
   switch (id) {
@@ -47,14 +48,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { conversations, fetchConversations, loadConversation, deleteConversation, renameConversation, activeId, isLoading, createNewConversation } = useConversations()
 
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
-  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage } = useChatStore()
+  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, isSidebarOpen, setIsSidebarOpen } = useChatStore()
   const { openChat } = useFloatingChat()
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
 
   const router = useRouter()
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
-  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -80,9 +80,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
-        setSidebarOpen(true)
+        setIsSidebarOpen(true)
       } else {
-        setSidebarOpen(false)
+        setIsSidebarOpen(false)
       }
     }
 
@@ -145,6 +145,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-[100dvh] w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
+      <GuidedTour />
       {!isLoggedIn && (
         <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
           <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
@@ -188,25 +189,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {sidebarOpen && (
+      {isSidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
-          onClick={() => setSidebarOpen(false)}
+          onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       <div
-        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${sidebarOpen ? 'left-[204px]' : 'left-4'
+        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-[204px]' : 'left-4'
           }`}
       >
         <Button
           variant="ghost"
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${sidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
             }`}
-          title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
         >
-          <div className={`flex items-center justify-center transition-all duration-300 ${sidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
+          <div className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
             }`}>
             <Image
               src="/logobranco-semfundo.png"
@@ -217,22 +218,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               priority
             />
           </div>
-          <div className={`flex items-center justify-center transition-all duration-300 ${sidebarOpen
+          <div id="tour-sidebar-toggle" className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen
               ? 'opacity-100 rotate-0'
               : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
             }`}>
-            {sidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
+            {isSidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
           </div>
         </Button>
       </div>
 
       <div
-        className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${sidebarOpen ? 'w-64' : 'w-0 border-r-0'
+        className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${isSidebarOpen ? 'w-64' : 'w-0 border-r-0'
           }`}
       >
         <div className="w-64 flex flex-col h-full">
           <div className="p-3 flex items-center justify-between h-[80px]">
-          <div className={`flex items-center pl-1 transition-opacity duration-200 ${sidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+          <div className={`flex items-center pl-1 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
             <Image
               src="/logobranco-semfundo.png"
               alt="Screen AI Logo"
@@ -246,22 +247,24 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="px-3 pb-3 flex flex-col gap-2">
-          <Button
-            variant="ghost"
-            onClick={() => handleAuthAction(handleNewChat)}
-            className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
-          >
-            <Plus className="w-4 h-4 text-zinc-400" />
-            <span className="text-sm font-medium">{t('app.new_chat')}</span>
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => handleAuthAction(() => setIsSearchOpen(!isSearchOpen))}
-            className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
-          >
-            <Search className="w-4 h-4" />
-            <span className="text-sm font-medium">{t('app.search_chat')}</span>
-          </Button>
+            <Button
+              id="tour-new-chat"
+              variant="ghost"
+              onClick={() => handleAuthAction(handleNewChat)}
+              className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
+            >
+              <Plus className="w-4 h-4 text-zinc-400" />
+              <span className="text-sm font-medium">{t('app.new_chat')}</span>
+            </Button>
+            <Button
+              id="tour-search-chat"
+              variant="ghost"
+              onClick={() => handleAuthAction(() => setIsSearchOpen(!isSearchOpen))}
+              className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+            >
+              <Search className="w-4 h-4" />
+              <span className="text-sm font-medium">{t('app.search_chat')}</span>
+            </Button>
 
           {isSearchOpen && (
             <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
@@ -275,34 +278,36 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
-            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
-                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-              }`}
-          >
-            <MonitorUp className="w-4 h-4" />
-            <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
-          </Button>
+            <Button
+              id="tour-screen-share"
+              variant="ghost"
+              onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
+              className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
+                  ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+                  : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                }`}
+            >
+              <MonitorUp className="w-4 h-4" />
+              <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
+            </Button>
 
           {/* Botão de Destacar Chat (PiP / Popup) */}
-          <Button
-            variant="ghost"
-            onClick={() => handleAuthAction(openChat)}
-            className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
-                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
-                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-              }`}
-          >
-            <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
-            <span className="text-sm font-medium">
-              {floatingState === 'none' && 'Destacar Chat (PiP)'}
-              {floatingState === 'pip' && 'Restaurar (PiP Nativo)'}
-              {floatingState === 'popup' && 'Restaurar (Popup)'}
-            </span>
-          </Button>
+            <Button
+              id="tour-pip-chat"
+              variant="ghost"
+              onClick={() => handleAuthAction(openChat)}
+              className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
+                  ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                  : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                }`}
+            >
+              <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
+              <span className="text-sm font-medium">
+                {floatingState === 'none' && 'Destacar Chat (PiP)'}
+                {floatingState === 'pip' && 'Restaurar (PiP Nativo)'}
+                {floatingState === 'popup' && 'Restaurar (Popup)'}
+              </span>
+            </Button>
 
         </div>
 
@@ -387,13 +392,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
           {isLoggedIn ? (
             <SettingsDialog trigger={
-              <Button variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+              <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
                 <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
                 <span className="text-sm">{t('app.settings')}</span>
               </Button>
             } />
           ) : (
             <Button
+              id="tour-settings"
               variant="ghost"
               onClick={() => handleAuthAction(() => { })}
               className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
@@ -428,21 +434,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
         <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10 gap-2">
           <Button
+            id="tour-auto"
             variant="ghost"
             onClick={() => setSelectedModel('auto')}
-            className={`pointer-events-auto flex items-center gap-1.5 h-8 px-3 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all ${
+            className={`pointer-events-auto flex items-center h-8 px-4 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all ${
               selectedModel === 'auto' 
                 ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' 
                 : 'bg-zinc-900/50 text-zinc-500 border border-zinc-800/50 hover:text-zinc-300'
             }`}
           >
-            <Sparkles className={`w-3 h-3 ${selectedModel === 'auto' ? 'animate-pulse' : ''}`} />
             Auto
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
+                id="tour-model-selector"
                 variant="ghost"
                 className="pointer-events-auto flex items-center gap-1.5 h-10 px-3 md:px-4 rounded-xl text-zinc-200 hover:bg-zinc-800/60 font-semibold text-sm transition-all"
               >
