@@ -275,7 +275,7 @@ export function ChatInterface() {
       </Dialog>
 
       {isLoggedIn && (
-        <div className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-3 md:px-4 h-10 flex items-center gap-1.5 shadow-lg">
+        <div id="tour-credits" className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-3 md:px-4 h-10 flex items-center gap-1.5 shadow-lg">
           <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
           <span className="text-sm font-bold text-zinc-200 flex items-center gap-1">
             <span>{(credits !== null) ? credits : '--'}</span>
@@ -449,7 +449,7 @@ export function ChatInterface() {
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
-        <div className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
+        <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
         {isScreenShared && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
             {QUICK_ACTIONS.map((action, idx) => (
@@ -485,7 +485,7 @@ export function ChatInterface() {
             <div className="pb-0.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
+                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -530,6 +530,7 @@ export function ChatInterface() {
             <div className="flex items-center gap-1.5 pb-0.5">
               {floatingState !== 'none' && (
                 <Button
+                  id="tour-continuous-mic"
                   size="icon"
                   onClick={toggleContinuousMic}
                   title={isContinuousMicOn ? "Desativar Microfone Contínuo" : "Microfone Sempre Ligado"}
@@ -538,10 +539,11 @@ export function ChatInterface() {
                   <AudioLines className={`w-5 h-5 ${isUserSpeaking ? 'animate-pulse scale-110' : ''}`} />
                 </Button>
               )}
-              <Button size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
+              <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
               </Button>
               <Button
+                id="tour-audio-toggle"
                 size="icon"
                 onClick={toggleSound}
                 title={isSoundEnabled ? 'Silenciar IA' : 'Ativar voz da IA'}

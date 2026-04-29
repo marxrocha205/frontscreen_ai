@@ -44,6 +44,8 @@ interface ChatState {
   closeFloatingMode: () => void
   isSoundEnabled: boolean
   toggleSound: () => void
+  isSidebarOpen: boolean
+  setIsSidebarOpen: (open: boolean) => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -57,6 +59,7 @@ export const useChatStore = create<ChatState>((set) => ({
   isUpgradeDialogOpen: false,
   upgradeDialogMessage: null,
   isSoundEnabled: false,
+  isSidebarOpen: false,
 
   addMessage: (message) => set((state) => ({
     messages: [...state.messages, message]
@@ -108,4 +111,5 @@ export const useChatStore = create<ChatState>((set) => ({
   setIsUpgradeDialogOpen: (open) => set({ isUpgradeDialogOpen: open }),
   setUpgradeDialogMessage: (message) => set({ upgradeDialogMessage: message }),
   toggleSound: () => set((state) => ({ isSoundEnabled: !state.isSoundEnabled })),
+  setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
 }))
