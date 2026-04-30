@@ -364,10 +364,12 @@ export function ChatInterface() {
 
       <div
         ref={scrollRef}
-        className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar overscroll-contain"
+        className={`absolute inset-0 overflow-y-auto pt-20 custom-scrollbar overscroll-contain ${
+          (isScreenShared || floatingState !== 'none') ? 'pb-56' : 'pb-40'
+        }`}
         style={{
-          maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))'
+          maskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))'
         }}
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
@@ -503,7 +505,7 @@ export function ChatInterface() {
 
       <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
         <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-        {isScreenShared && (
+        {(isScreenShared || floatingState !== 'none') && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
             {QUICK_ACTIONS.map((action, idx) => (
               <button
@@ -576,7 +578,7 @@ export function ChatInterface() {
               }}
               placeholder={t('app.send_message')}
               rows={1}
-              className="flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-2.5 max-h-[200px] overflow-y-auto custom-scrollbar"
+              className="placeholder-ellipsis flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-2.5 max-h-[200px] overflow-y-auto custom-scrollbar"
               style={{ minHeight: '40px' }}
             />
 
