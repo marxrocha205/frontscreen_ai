@@ -45,7 +45,7 @@ export function ChatInterface() {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
   const { isLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -272,12 +272,68 @@ export function ChatInterface() {
       </Dialog>
 
       {isLoggedIn && (
-        <div id="tour-credits" className="absolute top-4 right-4 z-50 bg-[#1e1e1e]/80 backdrop-blur-md border border-zinc-800 rounded-full px-3 md:px-4 h-10 flex items-center gap-1.5 shadow-lg">
-          <Zap className={`w-4 h-4 ${(credits !== null && credits < 20) ? 'text-red-500 animate-pulse' : 'text-yellow-500'}`} />
-          <span className="text-sm font-bold text-zinc-200 flex items-center gap-1">
-            <span>{(credits !== null) ? credits : '--'}</span>
-            <span className="hidden sm:inline">Créditos</span>
-          </span>
+        <div id="tour-credits" className="absolute top-4 right-4 z-50 group">
+          {/* Badge principal */}
+          <div className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-default transition-colors duration-200 ${
+            (credits !== null && credits < 20)
+              ? 'border-red-500/40 hover:border-red-500/60'
+              : 'border-zinc-800 hover:border-zinc-700'
+          }`}>
+            <span className={`text-sm font-bold ${
+              (credits !== null && credits < 20) ? 'text-red-400' : 'text-zinc-200'
+            }`}>
+              {credits !== null ? credits.toLocaleString('pt-BR') : '--'}
+            </span>
+            <span className="text-xs text-zinc-500 hidden sm:inline font-medium">créditos</span>
+            {credits !== null && credits < 20 && (
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            )}
+          </div>
+
+          {/* Tooltip card */}
+          <div className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Seu Plano</span>
+              <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+                {userPlan || 'Free'}
+              </span>
+            </div>
+
+            <div className="mb-3">
+              <div className="flex items-end justify-between mb-1.5">
+                <span className="text-xs text-zinc-500">Créditos disponíveis</span>
+                <span className={`text-xl font-bold tabular-nums ${
+                  credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
+                }`}>
+                  {credits !== null ? credits.toLocaleString('pt-BR') : '--'}
+                </span>
+              </div>
+              {/* Barra de progresso */}
+              {credits !== null && (
+                <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
+                    }`}
+                    style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
+                  />
+                </div>
+              )}
+            </div>
+
+            {credits !== null && credits < 20 && (
+              <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                Seus créditos estão quase esgotados. Faça upgrade para continuar usando a IA.
+              </p>
+            )}
+
+            <a
+              href="/pricing"
+              className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
+            >
+              Ver planos e preços
+            </a>
+          </div>
         </div>
       )}
 
