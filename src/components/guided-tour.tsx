@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { X, ChevronRight, ChevronLeft, Zap, Sparkles, MessageSquare, MonitorUp, PictureInPicture2, Mic, AudioLines, Volume2, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
+import { config } from '@/lib/config'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
 
@@ -103,7 +104,7 @@ const TOUR_STEPS: TourStep[] = [
 
 export function GuidedTour() {
   const { isLoggedIn, user } = useAuth()
-  const { isSidebarOpen, setIsSidebarOpen } = useChatStore()
+  const { isSidebarOpen, setIsSidebarOpen, hasSeenTour, setHasSeenTour, fetchCredits } = useChatStore()
   const [isOpen, setIsOpen] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
   const [showSkipConfirm, setShowSkipConfirm] = useState(false)
@@ -114,29 +115,34 @@ export function GuidedTour() {
     // Permite resetar o tour via URL para testes (ex: /app?resetTour=true)
     const params = new URLSearchParams(window.location.search)
     if (params.get('resetTour') === 'true' && user?.email) {
-      localStorage.removeItem(`screenai-tour-seen-${user.email}`)
+      setHasSeenTour(false)
       // Remove o parâmetro da URL sem recarregar a página
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
       setIsOpen(true)
       setCurrentStep(0)
     }
-  }, [user?.email])
+  }, [user?.email, setHasSeenTour])
 
   useEffect(() => {
-    // Só mostra o tutorial se estiver logado
+    if (isLoggedIn && user?.email && hasSeenTour === null) {
+      fetchCredits()
+    }
+  }, [isLoggedIn, user?.email, hasSeenTour, fetchCredits])
+
+  useEffect(() => {
+    // Só mostra o tutorial se estiver logado e se a API retornou que ele ainda não viu
     if (isLoggedIn && user?.email) {
-      const tourKey = `screenai-tour-seen-${user.email}`
-      const hasSeenTour = localStorage.getItem(tourKey)
-      
-      if (!hasSeenTour) {
+      if (hasSeenTour === false) {
         setIsOpen(true)
+      } else if (hasSeenTour === true) {
+        setIsOpen(false)
       }
     } else {
       // Se deslogar, garante que o tour fecha
       setIsOpen(false)
     }
-  }, [isLoggedIn, user?.email])
+  }, [isLoggedIn, user?.email, hasSeenTour])
 
   const updateSpotlight = useCallback(() => {
     if (!isOpen) return
@@ -250,9 +256,25 @@ export function GuidedTour() {
     }
   }
 
-  const completeTour = () => {
+  const completeTour = async () => {
     if (user?.email) {
-      localStorage.setItem(`screenai-tour-seen-${user.email}`, 'true')
+      setHasSeenTour(true)
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
+      
+      if (token) {
+        try {
+          await fetch(`${config.apiUrl}/users/me/tour`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ has_seen_tour: true })
+          })
+        } catch (error) {
+          console.error("Erro ao salvar o status do tour no backend", error)
+        }
+      }
     }
     setIsSidebarOpen(false)
     setIsOpen(false)
