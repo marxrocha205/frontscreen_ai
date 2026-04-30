@@ -152,3 +152,10 @@
 .animate-typing-dot {
   animation: typing-dot 1.4s infinite ease-in-out;
 }
+
+/* Trunca o placeholder do textarea com elipsis quando não couber */
+.placeholder-ellipsis::placeholder {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
