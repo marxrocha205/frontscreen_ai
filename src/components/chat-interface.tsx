@@ -366,8 +366,8 @@ export function ChatInterface() {
         ref={scrollRef}
         className="absolute inset-0 overflow-y-auto pt-20 pb-40 custom-scrollbar overscroll-contain"
         style={{
-          maskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))',
-          WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black calc(100% - 100px), transparent calc(100% - 60px))'
+          maskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))',
+          WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))'
         }}
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
