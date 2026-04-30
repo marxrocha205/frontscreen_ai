@@ -9,6 +9,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { useConversations } from '@/hooks/use-conversations'
 import { config } from '@/lib/config'
+import { isMobileDevice } from '@/lib/utils'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -87,10 +88,6 @@ export function ChatInterface() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
 
-  const isMobileDevice = () => {
-    if (typeof window === 'undefined') return false
-    return window.innerWidth < 768 || navigator.maxTouchPoints > 0
-  }
 
   const handleStartSharing = () => {
     if (isMobileDevice()) {
