@@ -21,6 +21,7 @@ import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { GuidedTour } from '@/components/guided-tour'
+import { isMobileDevice } from '@/lib/utils'
 
 const ModelIcon = ({ id }: { id: string }) => {
   switch (id) {
@@ -105,10 +106,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     }
   }
 
-  const isMobileDevice = () => {
-    if (typeof window === 'undefined') return false
-    return window.innerWidth < 768 || navigator.maxTouchPoints > 0
-  }
 
   const handleStartSharing = () => {
     if (isMobileDevice()) {
