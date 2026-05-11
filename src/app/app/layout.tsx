@@ -429,29 +429,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10 gap-2">
-          <Button
-            id="tour-auto"
-            variant="ghost"
-            onClick={() => setSelectedModel('auto')}
-            className={`pointer-events-auto flex items-center h-8 px-4 rounded-full font-bold text-[11px] uppercase tracking-wider transition-all ${
-              selectedModel === 'auto' 
-                ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30' 
-                : 'bg-zinc-900/50 text-zinc-500 border border-zinc-800/50 hover:text-zinc-300'
-            }`}
-          >
-            Auto
-          </Button>
+        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10">
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 id="tour-model-selector"
                 variant="ghost"
-                className="pointer-events-auto flex items-center gap-1.5 h-10 px-3 md:px-4 rounded-xl text-zinc-200 hover:bg-zinc-800/60 font-semibold text-sm transition-all"
+                className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-xl text-zinc-200 hover:bg-zinc-800/60 transition-all"
               >
-                {currentModel?.label}
-                <ChevronDown className="w-3.5 h-3.5 text-zinc-400" />
+                <ModelIcon id={selectedModel} />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
