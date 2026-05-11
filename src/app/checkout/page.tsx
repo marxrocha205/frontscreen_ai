@@ -371,28 +371,73 @@ function CheckoutContent() {
             {/* Subscribe button */}
             <button
               onClick={paymentMethod === 'pix' ? handlePixSubmit : undefined}
-              disabled={isLoading}
+              disabled={isLoading || !!pixData}
               style={{
                 marginTop: 20,
                 width: '100%',
                 height: 48,
-                background: '#5c5cfc',
+                background: pixData ? '#10b981' : '#5c5cfc',
                 border: 'none',
                 borderRadius: 9999,
                 color: '#fff',
                 fontSize: 16,
                 fontWeight: 600,
-                cursor: isLoading ? 'wait' : 'pointer',
+                cursor: isLoading ? 'wait' : (pixData ? 'default' : 'pointer'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={e => { if (!isLoading) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
+              onMouseEnter={e => { if (!isLoading && !pixData) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
+              onMouseLeave={e => { if (!pixData) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : 'Subscribe'}
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? 'Aguardando Pagamento...' : 'Subscribe')}
             </button>
+
+            {/* Pix QR Code Display */}
+            {pixData && (
+              <div style={{
+                marginTop: 24,
+                padding: 20,
+                background: '#2a2a2a',
+                borderRadius: 12,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 16,
+                border: '1px solid #32BCAD33'
+              }}>
+                <div style={{ background: '#fff', padding: 12, borderRadius: 8 }}>
+                  <Image src={pixData.qrcode} alt="Pix QR Code" width={200} height={200} />
+                </div>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(pixData.copyPaste)
+                    alert('Código Pix copiado!')
+                  }}
+                  style={{
+                    width: '100%',
+                    padding: '10px',
+                    background: 'transparent',
+                    border: '1px solid #4b5563',
+                    borderRadius: 8,
+                    color: '#fff',
+                    fontSize: 13,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8
+                  }}
+                >
+                  <Paperclip size={14} />
+                  Copiar Código Pix
+                </button>
+                <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', margin: 0 }}>
+                  Após o pagamento, sua conta será ativada automaticamente em instantes.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Footer disclaimer */}
