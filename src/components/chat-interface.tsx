@@ -17,6 +17,7 @@ import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
+import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
@@ -84,6 +85,21 @@ export function ChatInterface() {
   }, [sendMessage])
 
   const { isActive: isContinuousMicOn, isUserSpeaking, toggleContinuousMic } = useContinuousVoice(handleSpeechStart, handleSpeechEnd)
+
+  const { 
+    isActive: isGeminiLiveActive, 
+    isConnected: isGeminiLiveConnected, 
+    startSession: startGeminiLive, 
+    stopSession: stopGeminiLive 
+  } = useGeminiLive()
+
+  const toggleGeminiLive = useCallback(() => {
+    if (isGeminiLiveActive) {
+      stopGeminiLive()
+    } else {
+      startGeminiLive()
+    }
+  }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
 
   const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
@@ -587,11 +603,11 @@ export function ChatInterface() {
                 <Button
                   id="tour-continuous-mic"
                   size="icon"
-                  onClick={toggleContinuousMic}
-                  title={isContinuousMicOn ? "Desativar Microfone Contínuo" : "Microfone Sempre Ligado"}
-                  className={`rounded-full w-10 h-10 transition-all ${isContinuousMicOn ? 'bg-indigo-500 text-white shadow-[0_0_15px_rgba(99,102,241,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
+                  onClick={toggleGeminiLive}
+                  title={isGeminiLiveActive ? "Encerrar Gemini Live" : "Iniciar Gemini Live (Voz + Visão)"}
+                  className={`rounded-full w-10 h-10 transition-all ${isGeminiLiveActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
                 >
-                  <AudioLines className={`w-5 h-5 ${isUserSpeaking ? 'animate-pulse scale-110' : ''}`} />
+                  <AudioLines className={`w-5 h-5 ${isGeminiLiveActive ? 'animate-pulse scale-110' : ''}`} />
                 </Button>
               )}
               <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
