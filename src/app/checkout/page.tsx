@@ -12,24 +12,24 @@ import { config } from '@/lib/config'
 const plans = [
   {
     id: 2,
-    name: 'Go plan',
-    price: 39.99,
+    name: 'Plano PRO',
+    price: 47.00,
     features: [
-      { text: 'Smarter, faster responses with GPT-5', Icon: Zap,        color: '#3b82f6' },
-      { text: 'More messages & uploads',              Icon: Paperclip,   color: '#3b82f6' },
-      { text: 'Create more images, faster',           Icon: ImageIcon,   color: '#818cf8' },
-      { text: 'Extra memory & context',               Icon: Brain,       color: '#818cf8' },
+      { text: 'Respostas mais inteligentes e rápidas', Icon: Zap,        color: '#3b82f6' },
+      { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip,   color: '#3b82f6' },
+      { text: 'Acesso a ScreenAI, Gemini e GPT-5',    Icon: ImageIcon,   color: '#818cf8' },
+      { text: 'Histórico completo entre sessões',     Icon: Brain,       color: '#818cf8' },
     ],
   },
   {
     id: 3,
-    name: 'Pro plan',
+    name: 'Plano PREMIUM',
     price: 97.00,
     features: [
-      { text: 'Smarter, faster responses with GPT-5', Icon: Zap,        color: '#3b82f6' },
-      { text: 'More messages & uploads',              Icon: Paperclip,   color: '#3b82f6' },
-      { text: 'Create more images, faster',           Icon: ImageIcon,   color: '#818cf8' },
-      { text: 'Extra memory & context',               Icon: Brain,       color: '#818cf8' },
+      { text: 'Tudo do PRO e muito mais',             Icon: Zap,        color: '#3b82f6' },
+      { text: 'Janela de contexto gigante',           Icon: Paperclip,   color: '#3b82f6' },
+      { text: 'Multi-IA Simultânea (Claude/GPT/Gemini)', Icon: ImageIcon,   color: '#818cf8' },
+      { text: 'Suporte técnico prioritário 24h',       Icon: Brain,       color: '#818cf8' },
     ],
   },
 ]
@@ -172,13 +172,13 @@ function CheckoutContent() {
               <ChevronLeft size={22} />
             </button>
             <h1 style={{ margin: 0, fontSize: 28, fontWeight: 600, letterSpacing: '-0.5px' }}>
-              Configure your plan
+              Configure seu plano
             </h1>
           </div>
 
           {/* Payment method label */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#e5e7eb' }}>Payment method</span>
+            <span style={{ fontSize: 14, fontWeight: 500, color: '#e5e7eb' }}>Método de pagamento</span>
 
             {/* Tabs */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -198,7 +198,7 @@ function CheckoutContent() {
                 }}
               >
                 <CreditCard size={16} />
-                Card
+                Cartão
               </button>
 
               {/* Pix tab */}
@@ -228,7 +228,7 @@ function CheckoutContent() {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
-                    placeholder="Card number"
+                    placeholder="Número do cartão"
                     style={inputStyle}
                   />
                   <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}>
@@ -240,13 +240,13 @@ function CheckoutContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <input
                     type="text"
-                    placeholder="Expiration date"
+                    placeholder="Data de expiração"
                     style={inputStyle}
                   />
                   <div style={{ position: 'relative' }}>
                     <input
                       type="text"
-                      placeholder="Security code"
+                      placeholder="Código CVV"
                       maxLength={4}
                       inputMode="numeric"
                       style={inputStyle}
@@ -272,7 +272,7 @@ function CheckoutContent() {
                 />
                 <input
                   type="text"
-                  placeholder="Full name"
+                  placeholder="Nome completo"
                   value={pixForm.name}
                   onChange={e => setPixForm({ ...pixForm, name: e.target.value })}
                   style={inputStyle}
@@ -299,16 +299,16 @@ function CheckoutContent() {
                     </svg>
                   </div>
                   <p style={{ margin: 0, fontSize: 13, color: '#9ca3af', lineHeight: 1.5 }}>
-                    You will be shown a QR code to scan to complete your purchase.
+                    Você verá um código QR para escanear e concluir sua compra.
                   </p>
                 </div>
 
                 {/* IOF notice */}
                 <p style={{ margin: 0, fontSize: 12, color: '#6b7280', lineHeight: 1.6, paddingTop: 4 }}>
-                  This is an international purchase and may include a 3.5% IOF fee. By
-                  proceeding, you acknowledge and accept{' '}
+                  Esta é uma compra internacional e pode incluir uma taxa de IOF de 3,5%. Ao
+                  prosseguir, você reconhece e aceita os{' '}
                   <Link href="#" style={{ color: '#6b7280', textDecoration: 'underline' }}>
-                    Ebanx&apos;s terms and conditions
+                    termos e condições do Ebanx
                   </Link>
                   .
                 </p>
@@ -336,7 +336,7 @@ function CheckoutContent() {
 
             {/* Top features label */}
             <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
-              Top features
+              O que está incluído
             </p>
 
             {/* Features list */}
@@ -355,15 +355,15 @@ function CheckoutContent() {
             {/* Price breakdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
-                <span>Monthly subscription</span>
+                <span>Assinatura mensal</span>
                 <span style={{ color: '#d1d5db' }}>R${selectedPlan.price.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
-                <span>Estimated tax</span>
-                <span style={{ color: '#d1d5db' }}>R$0.00</span>
+                <span>Impostos estimados</span>
+                <span style={{ color: '#d1d5db' }}>R$0,00</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 6 }}>
-                <span>Due today</span>
+                <span>Total hoje</span>
                 <span>R${selectedPlan.price.toFixed(2)}</span>
               </div>
             </div>
@@ -391,7 +391,7 @@ function CheckoutContent() {
               onMouseEnter={e => { if (!isLoading && !pixData) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
               onMouseLeave={e => { if (!pixData) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? 'Aguardando Pagamento...' : 'Subscribe')}
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? 'Aguardando Pagamento...' : 'Assinar agora')}
             </button>
 
             {/* Pix QR Code Display */}
@@ -448,15 +448,15 @@ function CheckoutContent() {
             lineHeight: 1.7,
             padding: '0 2px',
           }}>
-            Renews monthly until cancelled. R${selectedPlan.price.toFixed(2)}/month will be charged.{' '}
-            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Cancel anytime</Link>{' '}
-            in Settings. By subscribing, you agree to our{' '}
-            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Terms of Use</Link>{' '}
-            and{' '}
-            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Service Credit Terms</Link>
-            , have read our{' '}
-            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Privacy Policy</Link>
-            , and authorize ScreenAI to store and charge your payment method.
+            Renova mensalmente até ser cancelado. R${selectedPlan.price.toFixed(2)}/mês serão cobrados.{' '}
+            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Cancele a qualquer momento</Link>{' '}
+            nas Configurações. Ao assinar, você concorda com nossos{' '}
+            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Termos de Uso</Link>{' '}
+            e{' '}
+            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Termos de Crédito de Serviço</Link>
+            , leu nossa{' '}
+            <Link href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Política de Privacidade</Link>
+            , e autoriza a ScreenAI a armazenar e cobrar seu método de pagamento.
           </p>
         </div>
       </main>

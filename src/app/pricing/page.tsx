@@ -9,20 +9,6 @@ import Image from 'next/image'
 
 const plans = [
   {
-    id: 1,
-    name: 'Free',
-    tagline: 'Para quem quer experimentar o poder da IA na tela',
-    price: 'R$0/mês',
-    cta: 'Começar Grátis',
-    features: [
-      'Análise de tela em tempo real (Limitada).',
-      '100 Tokens diários (Ideal para tarefas rápidas).',
-      'Assistente de voz em tempo real',
-      'Suporte a texto e imagem',
-      'Acesso ao modelo ScreenAI',
-    ],
-  },
-  {
     id: 2,
     name: 'PRO',
     tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
@@ -141,7 +127,7 @@ export default function PricingPage() {
 
       {/* Plans Grid */}
       <div className="px-4 sm:px-6 pb-24">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
           {plans.map((plan) => (
             <div
               key={plan.name}
