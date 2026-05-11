@@ -136,7 +136,7 @@ export function DashboardTab() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-emerald-300">R$ {INITIAL_STATE.total_revenue_brl.toFixed(2)}</div>
-              <p className="text-xs text-emerald-500/70 mt-1">PRO: R$ {INITIAL_STATE.revenue_split.pro.toFixed(2)} | PREMIUM: R$ {INITIAL_STATE.revenue_split.premium.toFixed(2)}</p>
+              
             </CardContent>
           </Card>
         </div>
