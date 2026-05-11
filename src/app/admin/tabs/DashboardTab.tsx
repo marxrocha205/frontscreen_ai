@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Users, MessageSquare, Loader2, DollarSign, BrainCircuit, Activity, Zap } from "lucide-react"
+import { Users, MessageSquare, Loader2, DollarSign, BrainCircuit, Activity, Zap, RefreshCw } from "lucide-react"
 import { MetricCard } from "../components/MetricCard"
 import { TrendsChart, TrendData } from "../components/TrendsChart"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -10,13 +10,22 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
 
 const INITIAL_STATE = {
-  total_users: 168,
-  total_revenue_brl: 1907.00,
+  total_users: 199, // 146 Free + 37 Pro + 16 Premium
+  total_revenue_brl: 3941.00,
+  revenue_split: {
+    pro: 1005.00,
+    premium: 1029.00
+  },
   subs_by_plan: [
-    { plan: "Free", count: 137 },
-    { plan: "Pro", count: 22 }, 
-    { plan: "Plus", count: 9 }  
-  ]
+    { plan: "Free", count: 146 },
+    { plan: "Pro", count: 37 }, 
+    { plan: "Premium", count: 16 }  
+  ],
+  renewals: {
+    total: 20,
+    pro: 14,
+    premium: 6
+  }
 }
 
 export function DashboardTab() {
@@ -24,16 +33,16 @@ export function DashboardTab() {
   const [trends, setTrends] = useState<TrendData[]>([])
 
   const [liveData, setLiveData] = useState({
-    online_users: 11, // Inicializado perto dos 10
+    online_users: 11,
     active_sessions: 18,
     total_messages: 94532,
     total_sessions: 18420,
-    total_cost_brl: 724.25, 
+    total_cost_brl: 784.35, // 268.03 + 116.03 + 78.14 + 322.15
     cost_by_model: [
-      { model: "ElevenLabs", cost_brl: 322.10 },
-      { model: "ClaudAI", cost_brl: 218.01 },
-      { model: "Gemini", cost_brl: 116.02 },
-      { model: "OpenAI", cost_brl: 68.12 }
+      { model: "ElevenLabs", cost_brl: 322.15 },
+      { model: "Claude", cost_brl: 268.03 },
+      { model: "Gemini", cost_brl: 116.03 },
+      { model: "OpenAI", cost_brl: 78.14 }
     ]
   })
 
@@ -46,7 +55,6 @@ export function DashboardTab() {
         d.setHours(d.getHours() - i)
         const hour = d.getHours()
         
-        // Picos noturnos ajustados para tráfego muito mais modesto
         let baseActivity = 5
         if (hour >= 19 && hour <= 23) baseActivity = 15 + ((hour - 19) * 5)
         else if (hour >= 0 && hour <= 2) baseActivity = 35 - (hour * 10)
@@ -68,33 +76,27 @@ export function DashboardTab() {
 
     const socketInterval = setInterval(() => {
       setLiveData(prev => {
-        // Flutuação muito menor e sutil (-1 a +1)
         const userChange = Math.floor(Math.random() * 3) - 1
         let newOnline = prev.online_users + userChange
         
         const currentHour = new Date().getHours()
         const isNight = currentHour >= 19 || currentHour <= 2
         
-        // LIMITES APERTADOS: Mantém rigorosamente próximo de ~10
         const minUsers = isNight ? 12 : 6
         const maxUsers = isNight ? 22 : 14
         
         if (newOnline < minUsers) newOnline += 1
         if (newOnline > maxUsers) newOnline -= 1
 
-        // Multiplicador de sessões reduzido (cada pessoa tem 1 a 2 abas abertas)
         const sessionMultiplier = 1.2 + Math.random()
         const newActiveSessions = Math.floor(newOnline * sessionMultiplier)
         
-        // Mensagens quase não sobem (chance muito baixa)
         const newMessages = prev.total_messages + (Math.random() > 0.8 ? 1 : 0)
         const newTotalSessions = prev.total_sessions + (Math.random() > 0.9 ? 1 : 0)
 
         let incrementedTotal = 0
         const newCosts = prev.cost_by_model.map(model => {
-          // VELOCIDADE DE CUSTO SUPER LENTA
           const spendRate = model.model === "ElevenLabs" ? 0.001 : 0.0003 
-          // Chance de aumentar é de apenas 15% por ciclo (antes era 70%)
           const increment = Math.random() > 0.85 ? (Math.random() * spendRate) : 0
           
           const updatedCost = model.cost_brl + increment
@@ -123,7 +125,9 @@ export function DashboardTab() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      
+      {/* 1º BLOCO: Finanças e Renovações */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="col-span-1">
           <Card className="bg-emerald-500/10 border border-emerald-500/20 shadow-sm h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -132,7 +136,7 @@ export function DashboardTab() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-emerald-300">R$ {INITIAL_STATE.total_revenue_brl.toFixed(2)}</div>
-              <p className="text-xs text-emerald-500/70 mt-1">LTV Acumulado</p>
+              <p className="text-xs text-emerald-500/70 mt-1">PRO: R$ {INITIAL_STATE.revenue_split.pro.toFixed(2)} | PREMIUM: R$ {INITIAL_STATE.revenue_split.premium.toFixed(2)}</p>
             </CardContent>
           </Card>
         </div>
@@ -153,6 +157,22 @@ export function DashboardTab() {
           </Card>
         </div>
 
+        <div className="col-span-1">
+          <Card className="bg-purple-500/10 border border-purple-500/20 shadow-sm h-full">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-400">Assinaturas Renovadas</CardTitle>
+              <RefreshCw className="w-4 h-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold text-purple-300">{INITIAL_STATE.renewals.total}</div>
+              <p className="text-xs text-purple-500/70 mt-1">{INITIAL_STATE.renewals.pro} PRO | {INITIAL_STATE.renewals.premium} PREMIUM</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* 2º BLOCO: Tráfego e Utilizadores Online */}
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
         <div className="col-span-1">
           <Card className="bg-blue-500/10 border border-blue-500/20 shadow-sm h-full relative overflow-hidden transition-all duration-300">
             <div className="absolute top-0 right-0 p-4">
