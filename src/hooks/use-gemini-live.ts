@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { AudioRecorder, AudioPlayer } from '@/lib/audio-utils';
 import { useScreenShare } from './use-screen-share';
 import { useChatStore } from './use-chat-store';
+import { useVoiceConfig } from './use-voice-config';
+import { useI18n } from '@/context/i18n-context';
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
@@ -174,8 +176,12 @@ export function useGeminiLive() {
 
         if (modelTurn?.parts) {
           for (const part of modelTurn.parts) {
-            if (part.inlineData) audioPlayerRef.current?.playChunk(part.inlineData.data);
-            if (part.inline_data) audioPlayerRef.current?.playChunk(part.inline_data.data);
+            // Processa o áudio apenas se vier como parte do JSON (inlineData)
+            if (part.inlineData?.data) {
+              audioPlayerRef.current?.playChunk(part.inlineData.data);
+            } else if (part.inline_data?.data) {
+              audioPlayerRef.current?.playChunk(part.inline_data.data);
+            }
             
             if (part.text && !outputTranscription?.text) {
               console.log("🤖 IA Texto:", part.text);
@@ -230,7 +236,8 @@ export function useGeminiLive() {
           currentUserTranscriptRef.current = "";
         }
       }
-    } catch {
+    } catch (e) {
+      // Se data for um Blob (binário), tocamos como áudio direto
       if (data instanceof Blob) {
         const arrayBuffer = await data.arrayBuffer();
         const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
@@ -248,22 +255,34 @@ export function useGeminiLive() {
     const ws = new WebSocket(URL);
     wsRef.current = ws;
 
+    const { voiceType } = useVoiceConfig.getState();
+
     ws.onopen = () => {
       setIsConnected(true);
+
       ws.send(JSON.stringify({
         setup: {
           model: "models/gemini-3.1-flash-live-preview",
-          generationConfig: { responseModalities: ["AUDIO"] },
+          generationConfig: { 
+            responseModalities: ["AUDIO"],
+            speech_config: {
+              voice_config: {
+                prebuilt_voice_config: {
+                  voice_name: voiceType // Ex: "Aoede", "Puck", etc.
+                }
+              }
+            }
+          },
           outputAudioTranscription: {},
           inputAudioTranscription: {},
           systemInstruction: { 
             parts: [{ text: `Você é o ScreenAI.
 Sua visão da tela depende do botão de compartilhamento (ícone de monitor).
 REGRAS CRÍTICAS:
-1. Se o usuário perguntar sobre a tela e você NÃO recebeu frames recentemente, você DEVE dizer: 'Por favor, clique no botão de compartilhamento de tela (ícone do monitor) para que eu possa ver.'
+1. Se o usuário perguntar sobre a tela e você NÃO recebeu frames recentemente, você DEVE dizer o equivalente a: 'Por favor, clique no botão de compartilhamento de tela (ícone do monitor) para que eu possa ver.' no idioma dele.
 2. NUNCA diga que está vendo a 'área de trabalho' ou qualquer outra coisa se não houver vídeo chegando.
 3. Se o vídeo parar de chegar, assuma que o usuário desligou o compartilhamento.
-4. Responda sempre em português brasileiro de forma breve e natural.` }] 
+4. Responda SEMPRE no mesmo idioma em que o usuário falar com você. Se ele falar em português, responda em português. Se ele falar em inglês, responda em inglês. Seja breve e natural.` }] 
           }
         }
       }));

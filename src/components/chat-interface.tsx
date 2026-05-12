@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useI18n } from '@/context/i18n-context'
-import { useWebsocket, stopAllAudio } from '@/hooks/use-websocket'
+import { useWebsocket } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
 import { useScreenShare, captureScreenFrame } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
@@ -13,7 +13,7 @@ import { isMobileDevice } from '@/lib/utils'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
@@ -52,7 +52,7 @@ export function ChatInterface() {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
   const { isLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -76,7 +76,6 @@ export function ChatInterface() {
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
   const handleSpeechStart = useCallback(() => {
-    stopAllAudio()
     sendCancel()
   }, [sendCancel])
 
@@ -165,7 +164,6 @@ export function ChatInterface() {
 
   const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
-      stopAllAudio()
 
       let audioBase64 = undefined
       if (isVoiceActive) {
@@ -217,18 +215,6 @@ export function ChatInterface() {
               await fetchConversations()
             }
             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response })
-
-            stopAllAudio()
-            if (isSoundEnabled) {
-              if (data.audio_base64) {
-                const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64)
-                audio.play().catch(e => console.error('Erro ao tocar áudio:', e))
-              } else if (data.response) {
-                const utterance = new SpeechSynthesisUtterance(data.response.replace(/[*#_]/g, ''))
-                utterance.lang = language === 'pt-BR' ? 'pt-BR' : 'en-US'
-                window.speechSynthesis.speak(utterance)
-              }
-            }
           } else if (data.status === 'error' && data.message && data.message.includes('Créditos insuficientes')) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
@@ -618,15 +604,6 @@ export function ChatInterface() {
               )}
               <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
-              </Button>
-              <Button
-                id="tour-audio-toggle"
-                size="icon"
-                onClick={toggleSound}
-                title={isSoundEnabled ? (language === 'pt-BR' ? 'Silenciar IA' : 'Silence IA') : (language === 'pt-BR' ? 'Ativar voz da IA' : 'Enable IA Voice')}
-                className={`rounded-full w-10 h-10 transition-all ${!isSoundEnabled ? 'bg-zinc-800 text-zinc-500' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
-              >
-                {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-zinc-600" />}
               </Button>
               <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
                 <Navigation className="w-5 h-5" />

@@ -60,8 +60,6 @@ export const translations = {
     'settings.theme_system': 'Sistema',
     'settings.language': 'Idioma',
     'settings.voice_assistant': 'Voz do Assistente (TTS)',
-    'settings.voice_calibration': 'Calibração de Voz',
-    'settings.open_calibration': 'Abrir Calibração (15 segundos)',
     
     'settings.mic_sensitivity': 'Sensibilidade ao som',
     'settings.mic_pause': 'Pausa antes de parar',
@@ -136,8 +134,6 @@ export const translations = {
     'settings.theme_system': 'System',
     'settings.language': 'Language',
     'settings.voice_assistant': 'Assistant Voice (TTS)',
-    'settings.voice_calibration': 'Voice Calibration',
-    'settings.open_calibration': 'Open Calibration (15 seconds)',
     
     'settings.mic_sensitivity': 'Sound sensitivity',
     'settings.mic_pause': 'Pause before stopping',
