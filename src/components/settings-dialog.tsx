@@ -2,7 +2,6 @@
 
 import * as React from 'react'
 import { useI18n } from '@/context/i18n-context'
-import { useTheme } from 'next-themes'
 import { useVoiceConfig } from '@/hooks/use-voice-config'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { 
@@ -22,8 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Settings, Mic, User, Check } from 'lucide-react'
-import { Language } from '@/locales'
+import { Mic, User } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 
@@ -41,9 +39,8 @@ const GEMINI_VOICES = [
   { id: 'Aoede', label: 'Aoede', desc_pt: 'Clara e equilibrada', desc_en: 'Clear and balanced' },
 ]
 
-export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDialogProps) {
-  const { t, language, setLanguage } = useI18n()
-  const { theme, setTheme } = useTheme()
+export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialogProps) {
+  const { t, language } = useI18n()
   const { logout } = useAuth()
   const router = useRouter()
 
@@ -56,15 +53,9 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
 
-  const handleThemeChange = (val: string | null) => {
-    if (val) setTheme(val)
-  }
-
-  const handleLanguageChange = (val: string | null) => {
-    if (val) setLanguage(val as Language)
-  }
-
   if (!mounted) return null
+
+  const initialTab = defaultTab === 'account' ? 'account' : 'voice'
 
   return (
     <Dialog>
@@ -75,13 +66,9 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
           <DialogTitle className="text-lg font-semibold">{t('settings.title')}</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue={defaultTab} className="w-full">
+        <Tabs defaultValue={initialTab} className="w-full">
           <div className="px-6 mb-2">
-            <TabsList className="w-full grid grid-cols-3 bg-zinc-900/50 p-1">
-              <TabsTrigger value="general" className="data-[state=active]:bg-zinc-800/80 data-[state=active]:text-white text-zinc-400 gap-2">
-                <Settings className="w-3.5 h-3.5" />
-                {t('settings.general')}
-              </TabsTrigger>
+            <TabsList className="w-full grid grid-cols-2 bg-zinc-900/50 p-1">
               <TabsTrigger value="voice" className="data-[state=active]:bg-zinc-800/80 data-[state=active]:text-white text-zinc-400 gap-2">
                 <Mic className="w-3.5 h-3.5" />
                 {t('settings.voice')}
@@ -94,35 +81,6 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
           </div>
 
           <ScrollWrapper>
-            <TabsContent value="general" className="mt-0 space-y-6 focus-visible:outline-none">
-              <div className="space-y-3">
-                <Label className="text-xs font-semibold text-zinc-100">{t('settings.theme')}</Label>
-                <Select value={theme ?? 'system'} onValueChange={(val) => val && handleThemeChange(val)}>
-                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                    <SelectValue placeholder={language === 'pt-BR' ? "Selecione o tema" : "Select theme"} />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                    <SelectItem value="dark">{t('settings.theme_dark')}</SelectItem>
-                    <SelectItem value="light">{t('settings.theme_light')}</SelectItem>
-                    <SelectItem value="system">{t('settings.theme_system')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-xs font-semibold text-zinc-100">{t('settings.language')}</Label>
-                <Select value={language} onValueChange={(val) => val && handleLanguageChange(val)}>
-                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                    <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
-                    <SelectItem value="en-US">English (US)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </TabsContent>
-
             <TabsContent value="voice" className="mt-0 space-y-4 focus-visible:outline-none">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
