@@ -84,7 +84,7 @@ function CardBrands() {
 function CheckoutContent() {
   const router       = useRouter()
   const searchParams = useSearchParams()
-  const { isLoggedIn } = useAuth()
+  const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
 
   const planId       = searchParams.get('plan')
   const selectedPlan = plans.find(p => p.id === Number(planId)) || plans[0]
@@ -95,8 +95,12 @@ function CheckoutContent() {
   const [pixData,       setPixData]       = useState<{ qrcode: string; copyPaste: string } | null>(null)
 
   useEffect(() => {
-    if (!isLoggedIn) router.push('/login')
-  }, [isLoggedIn, router])
+    syncFromStorage()
+  }, [syncFromStorage])
+
+  useEffect(() => {
+    if (hasHydrated && !isLoggedIn) router.push('/login')
+  }, [hasHydrated, isLoggedIn, router])
 
   const handlePixSubmit = async () => {
     setIsLoading(true)

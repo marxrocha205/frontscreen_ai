@@ -48,6 +48,7 @@ export const translations = {
     'app.model_upgrade_message': 'O modelo "{model}" está disponível apenas nos planos Pro e Premium. Faça upgrade para desbloquear modelos avançados de IA.',
     'app.insufficient_credits_title': 'Créditos Insuficientes',
     'app.insufficient_credits_message': 'Você não possui créditos suficientes para realizar esta ação no momento.',
+    'app.floating_window_title': 'Chat flutuante aberto',
     'app.floating_window_active': 'Sua conversa está ativa em uma janela flutuante. Feche-a para continuar interagindo na tela principal.',
     
     'settings.title': 'Configurações',
@@ -122,6 +123,7 @@ export const translations = {
     'app.model_upgrade_message': 'The "{model}" model is only available in Pro and Premium plans. Upgrade to unlock advanced AI models.',
     'app.insufficient_credits_title': 'Insufficient Credits',
     'app.insufficient_credits_message': 'You do not have enough credits to perform this action at this time.',
+    'app.floating_window_title': 'Floating chat open',
     'app.floating_window_active': 'Your conversation is active in a floating window. Close it to continue interacting on the main screen.',
     
     'settings.title': 'Settings',

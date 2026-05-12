@@ -9,23 +9,19 @@ import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { useConversations } from '@/hooks/use-conversations'
 import { config } from '@/lib/config'
-import { isMobileDevice } from '@/lib/utils'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export function ChatInterface() {
   const { t, language } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -53,7 +49,11 @@ export function ChatInterface() {
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
   const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
-  const { isLoggedIn } = useAuth()
+  const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
+
+  useEffect(() => {
+    syncFromStorage()
+  }, [syncFromStorage])
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -75,22 +75,6 @@ export function ChatInterface() {
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
-  const handleSpeechStart = useCallback(() => {
-    sendCancel()
-  }, [sendCancel])
-
-  const handleSpeechEnd = useCallback((audioBase64: string) => {
-    const isCurrentlySharing = useScreenShare.getState().isSharing;
-    const frame = isCurrentlySharing ? captureScreenFrame() : undefined;
-
-    sendMessage({
-      audio_base64: audioBase64,
-      image_base64: frame
-    })
-  }, [sendMessage])
-
-  const { isActive: isContinuousMicOn, isUserSpeaking, toggleContinuousMic } = useContinuousVoice(handleSpeechStart, handleSpeechEnd)
-
   const { 
     isActive: isGeminiLiveActive, 
     isConnected: isGeminiLiveConnected, 
@@ -107,24 +91,7 @@ export function ChatInterface() {
   }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
-
-
-  const handleStartSharing = () => {
-    if (isMobileDevice()) {
-      setShowMobileWarning(true)
-      return
-    }
-    startSharing()
-  }
-
-  useEffect(() => {
-    if (floatingState === 'none' && isContinuousMicOn) toggleContinuousMic()
-  }, [floatingState, isContinuousMicOn, toggleContinuousMic])
-
-  useEffect(() => {
-    if (isVoiceActive && isContinuousMicOn) toggleContinuousMic()
-  }, [isVoiceActive, isContinuousMicOn, toggleContinuousMic])
+  const { isSharing: isScreenShared, stopSharing, stream } = useScreenShare()
 
   useEffect(() => {
     if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
@@ -145,8 +112,15 @@ export function ChatInterface() {
   }, [messages.length, isStreaming])
 
   const requireAuth = (action: () => void) => {
-    if (!isLoggedIn) setShowLoginPrompt(true)
-    else action()
+    if (!hasHydrated) {
+      syncFromStorage()
+    }
+
+    if (useAuth.getState().isLoggedIn) {
+      action()
+    } else {
+      setShowLoginPrompt(true)
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -154,13 +128,6 @@ export function ChatInterface() {
       setSelectedFile(e.target.files[0])
     }
   }
-
-  const QUICK_ACTIONS = [
-    { icon: FileText, label: t('app.summarize'), prompt: t('app.summarize_prompt') },
-    { icon: Code, label: t('app.explain_code'), prompt: t('app.explain_code_prompt') },
-    { icon: Table, label: language === 'pt-BR' ? "Extrair para Tabela" : "Extract to Table", prompt: language === 'pt-BR' ? "Extraia os dados relevantes desta tela e organize-os em uma tabela Markdown clara." : "Extract relevant data from this screen and organize it into a clear Markdown table." },
-    { icon: Languages, label: t('app.translate'), prompt: t('app.translate_prompt') },
-  ]
 
   const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
@@ -254,32 +221,17 @@ export function ChatInterface() {
     lastMessage.role === 'user' || 
     (lastMessage.role === 'assistant' && !hasVisibleContent(lastMessage.content))
   );
+  const isEmptyChat = messages.length === 0 && !isStreaming;
+  const emptyChatPrompt = language === 'pt-BR'
+    ? 'O que está na sua mente hoje?'
+    : "What's on your mind today?";
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
-      <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
-        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
-          <DialogHeader>
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
-              <MonitorUp className="w-6 h-6 text-zinc-400" />
-            </div>
-            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
-              {t('app.exclusive_desktop')}
-            </DialogTitle>
-            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
-              {t('app.exclusive_desktop_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => setShowMobileWarning(false)} className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium">
-            OK
-          </Button>
-        </DialogContent>
-      </Dialog>
-
-      {isLoggedIn && (
+      {hasHydrated && isLoggedIn && (
         <div id="tour-credits" className="absolute top-4 right-4 z-50 group">
           {/* Badge principal */}
           <div className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-default transition-colors duration-200 ${
@@ -299,48 +251,50 @@ export function ChatInterface() {
           </div>
 
           {/* Tooltip card */}
-          <div className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
-              <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
-                {userPlan || 'Free'}
-              </span>
-            </div>
-
-            <div className="mb-3">
-              <div className="flex items-end justify-between mb-1.5">
-                <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
-                <span className={`text-xl font-bold tabular-nums ${
-                  credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
-                }`}>
-                  {credits !== null ? credits.toLocaleString(language) : '--'}
+          <div className="absolute top-full right-0 pt-2 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
+            <div className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
+                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+                  {userPlan || 'Free'}
                 </span>
               </div>
-              {/* Barra de progresso */}
-              {credits !== null && (
-                <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
-                    }`}
-                    style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
-                  />
+
+              <div className="mb-3">
+                <div className="flex items-end justify-between mb-1.5">
+                  <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
+                  <span className={`text-xl font-bold tabular-nums ${
+                    credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
+                  }`}>
+                    {credits !== null ? credits.toLocaleString(language) : '--'}
+                  </span>
                 </div>
+                {/* Barra de progresso */}
+                {credits !== null && (
+                  <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
+                      }`}
+                      style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {credits !== null && credits < 20 && (
+                <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                  {t('app.credits_low')}
+                </p>
               )}
+
+              <a
+                href="/pricing"
+                className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
+              >
+                {t('app.view_plans')}
+              </a>
             </div>
-
-            {credits !== null && credits < 20 && (
-              <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
-                {t('app.credits_low')}
-              </p>
-            )}
-
-            <a
-              href="/pricing"
-              className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
-            >
-              {t('app.view_plans')}
-            </a>
           </div>
         </div>
       )}
@@ -450,15 +404,13 @@ export function ChatInterface() {
                           table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
                           th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
                           td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-                          code: ({ inline, className, children, ...props }: any) => {
+                          code: ({ className, children, ...props }: any) => {
                             const match = /language-(\w+)/.exec(className || '')
-                            return !inline ? (
+                            return match ? (
                               <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                                {match && (
-                                  <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
-                                  </div>
-                                )}
+                                <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                  <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                </div>
                                 <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
                                   <code className={className} {...props}>{children}</code>
                                 </div>
@@ -511,23 +463,19 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
-        <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-        {(isScreenShared || floatingState !== 'none') && (
-          <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
-            {QUICK_ACTIONS.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(action.prompt)}
-                className="flex items-center gap-1.5 bg-[#1e1e1e]/90 hover:bg-[#2a2a2a] backdrop-blur-md border border-zinc-700/50 text-zinc-300 hover:text-zinc-100 text-xs font-medium px-3.5 py-2 rounded-full transition-all shadow-lg"
-              >
-                <action.icon className="w-3.5 h-3.5" />
-                {action.label}
-              </button>
-            ))}
-          </div>
+      <div
+        className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 z-10 pointer-events-none transition-all duration-300 ${
+          isEmptyChat
+            ? 'top-1/2 -translate-y-1/2 pb-0'
+            : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
+        }`}
+      >
+        {isEmptyChat && (
+          <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
+            {emptyChatPrompt}
+          </h1>
         )}
-
+        <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
               <div className="bg-indigo-500/20 p-1.5 rounded-lg">
@@ -548,18 +496,12 @@ export function ChatInterface() {
             <div className="pb-0.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
+                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className="rounded-full h-10 w-10 transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60">
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                  <DropdownMenuItem onClick={isScreenShared ? stopSharing : handleStartSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                    <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
-                    <span className="font-medium text-[14px]">
-                      {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group mt-1">
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                     <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                     <span className="font-medium text-[14px]">{t('app.send_file')}</span>
                   </DropdownMenuItem>

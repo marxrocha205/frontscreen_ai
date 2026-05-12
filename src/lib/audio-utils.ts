@@ -3,6 +3,18 @@
  * Utilitários para áudio LPCM - Versão com Detecção de Atividade
  */
 
+const createAudioContext = (options: AudioContextOptions) => {
+  const AudioContextConstructor =
+    window.AudioContext ||
+    (window as Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+
+  if (!AudioContextConstructor) {
+    throw new Error('AudioContext não suportado neste navegador');
+  }
+
+  return new AudioContextConstructor(options);
+};
+
 export class AudioRecorder {
   private audioContext: AudioContext | null = null;
   private processor: ScriptProcessorNode | null = null;
@@ -16,7 +28,7 @@ export class AudioRecorder {
   }
 
   async start() {
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+    this.audioContext = createAudioContext({ sampleRate: 16000 });
     if (this.audioContext.state === 'suspended') await this.audioContext.resume();
 
     this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -50,11 +62,17 @@ export class AudioRecorder {
   }
 
   stop() {
-    this.processor?.disconnect();
+    if (this.processor) {
+      this.processor.onaudioprocess = null;
+      this.processor.disconnect();
+      this.processor = null;
+    }
     this.stream?.getTracks().forEach(track => track.stop());
+    this.stream = null;
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close().catch(() => {});
     }
+    this.audioContext = null;
   }
 }
 
@@ -63,12 +81,12 @@ export class AudioPlayer {
   private nextStartTime: number = 0;
 
   constructor() {
-    this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+    this.audioContext = createAudioContext({ sampleRate: 24000 });
   }
 
   async playChunk(base64Audio: string) {
     if (this.audioContext.state === 'closed') {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+      this.audioContext = createAudioContext({ sampleRate: 24000 });
     }
     if (this.audioContext.state === 'suspended') await this.audioContext.resume();
     try {
@@ -88,7 +106,7 @@ export class AudioPlayer {
       if (this.nextStartTime < currentTime) this.nextStartTime = currentTime;
       source.start(this.nextStartTime);
       this.nextStartTime += audioBuffer.duration;
-    } catch (e) {}
+    } catch {}
   }
 
   async beep() {
