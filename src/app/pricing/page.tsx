@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
 import { Check, Loader2 } from 'lucide-react'
@@ -42,11 +42,19 @@ const plans = [
 
 export default function PricingPage() {
   const router = useRouter()
-  const { isLoggedIn } = useAuth()
+  const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
   const [isNavigating, setIsNavigating] = useState(false)
 
+  useEffect(() => {
+    syncFromStorage()
+  }, [syncFromStorage])
+
   const handlePlanClick = (plan: typeof plans[0]) => {
-    if (!isLoggedIn) {
+    if (!hasHydrated) {
+      syncFromStorage()
+    }
+
+    if (!useAuth.getState().isLoggedIn) {
       router.push('/login')
       return
     }
@@ -92,7 +100,7 @@ export default function PricingPage() {
           />
         </Link>
         <div className="flex items-center gap-3">
-          {isLoggedIn ? (
+          {hasHydrated && isLoggedIn ? (
             <Link href="/app" className="text-sm text-zinc-400 hover:text-white transition-colors">
               Voltar ao App
             </Link>

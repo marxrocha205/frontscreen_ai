@@ -42,13 +42,13 @@ const ModelIcon = ({ id }: { id: string }) => {
 
 export default function AppLayout({ children }: { children: ReactNode }) {
   const { t, language } = useI18n()
-  const { isLoggedIn, user, logout } = useAuth()
+  const { hasHydrated, isLoggedIn, user, logout, syncFromStorage } = useAuth()
 
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
   const { conversations, fetchConversations, loadConversation, deleteConversation, renameConversation, activeId, isLoading, createNewConversation } = useConversations()
 
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
-  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, isSidebarOpen, setIsSidebarOpen } = useChatStore()
+  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, isSidebarOpen, setIsSidebarOpen } = useChatStore()
   const { openChat } = useFloatingChat()
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
 
@@ -60,6 +60,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
+  const currentPlanLabel = userPlan
+    ? (language === 'pt-BR' ? `Plano ${userPlan}` : `${userPlan} Plan`)
+    : (language === 'pt-BR' ? 'Carregando plano...' : 'Loading plan...')
 
   const handleModelSelect = (model: typeof AI_MODELS[number]) => {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
@@ -74,8 +77,41 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   // Dispara a busca do histórico no banco de dados assim que a tela abre
   useEffect(() => {
-    fetchConversations()
-  }, [fetchConversations])
+    syncFromStorage()
+
+    const handleResume = () => {
+      syncFromStorage()
+      if (useAuth.getState().isLoggedIn) {
+        fetchCredits()
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        syncFromStorage()
+        if (useAuth.getState().isLoggedIn) {
+          fetchCredits()
+        }
+      }
+    }
+
+    window.addEventListener('pageshow', handleResume)
+    window.addEventListener('focus', handleResume)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('pageshow', handleResume)
+      window.removeEventListener('focus', handleResume)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [syncFromStorage, fetchCredits])
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchConversations()
+      fetchCredits()
+    }
+  }, [isLoggedIn, fetchConversations, fetchCredits])
 
   useEffect(() => {
     const handleResize = () => {
@@ -98,7 +134,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const handleAuthAction = (action: () => void) => {
-    if (isLoggedIn) {
+    if (!hasHydrated) {
+      syncFromStorage()
+    }
+
+    if (useAuth.getState().isLoggedIn) {
       action()
     } else {
       setShowLoginPrompt(true)
@@ -141,7 +181,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-[100dvh] w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
-      {!isLoggedIn && (
+      {hasHydrated && !isLoggedIn && (
         <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
           <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
             {t('register.login')}
@@ -366,7 +406,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
 
         <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
-          {!isLoggedIn && (
+          {hasHydrated && !isLoggedIn && (
             <div className="px-1 py-2 flex flex-col gap-3">
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-semibold text-zinc-100 leading-tight">
@@ -385,7 +425,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           )}
 
-          {isLoggedIn ? (
+          {hasHydrated && isLoggedIn ? (
             <SettingsDialog trigger={
               <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
                 <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
@@ -404,7 +444,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </Button>
           )}
 
-          {isLoggedIn && (
+          {hasHydrated && isLoggedIn && (
             <SettingsDialog
               defaultTab="account"
               trigger={
@@ -416,7 +456,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   </Avatar>
                   <div className="flex flex-col items-start leading-tight">
                     <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
-                    <span className="text-xs text-zinc-500">{t('app.free_plan')}</span>
+                    <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
                   </div>
                 </Button>
               }

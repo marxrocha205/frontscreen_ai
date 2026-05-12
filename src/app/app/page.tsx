@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { ChatInterface } from '@/components/chat-interface'
+import { useI18n } from '@/context/i18n-context'
 
 /**
  * Página principal do Chat.
@@ -14,6 +15,7 @@ import { ChatInterface } from '@/components/chat-interface'
  */
 export default function ChatPage() {
   const { floatingState, pipWindow } = useChatStore()
+  const { t } = useI18n()
   const [portalContainer, setPortalContainer] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
@@ -37,9 +39,9 @@ export default function ChatPage() {
         {createPortal(chatUI, portalContainer)}
         <div className="flex flex-col items-center justify-center flex-1 w-full text-zinc-400 gap-4 bg-[#0a0a0a]">
           <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-800/50 flex flex-col items-center gap-3">
-            <span className="text-2xl font-semibold text-zinc-200">Chat Flutuante Aberto</span>
+            <span className="text-2xl font-semibold text-zinc-200">{t('app.floating_window_title')}</span>
             <span className="text-sm text-center max-w-sm">
-              Sua conversa está ativa em uma janela flutuante. Feche-a para continuar interagindo na tela principal.
+              {t('app.floating_window_active')}
             </span>
           </div>
         </div>

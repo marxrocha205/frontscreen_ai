@@ -10,6 +10,36 @@ const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelang
 const createLiveMessageId = (role: 'user' | 'assistant') =>
   `live-${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
+type LiveState = {
+  isActive: boolean;
+  isConnected: boolean;
+  isStarting: boolean;
+};
+
+const liveStateListeners = new Set<(state: LiveState) => void>();
+let liveState: LiveState = {
+  isActive: false,
+  isConnected: false,
+  isStarting: false
+};
+let activeLiveOwner: symbol | null = null;
+let stopActiveGeminiLiveSession: (() => void) | null = null;
+
+const emitLiveState = (partial: Partial<LiveState>) => {
+  liveState = { ...liveState, ...partial };
+  liveStateListeners.forEach((listener) => listener(liveState));
+};
+
+const isLiveSessionOpen = () => (
+  liveState.isActive ||
+  liveState.isConnected ||
+  liveState.isStarting
+);
+
+export const stopGeminiLiveSession = () => {
+  stopActiveGeminiLiveSession?.();
+};
+
 const appendTranscriptChunk = (current: string, chunk: string) => {
   const next = chunk.trim();
   if (!next) return current;
@@ -31,8 +61,8 @@ const updateMessageContent = (messageId: string, content: string) => {
 };
 
 export function useGeminiLive() {
-  const [isActive, setIsActive] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isActive, setIsActive] = useState(liveState.isActive);
+  const [isConnected, setIsConnected] = useState(liveState.isConnected);
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
@@ -42,6 +72,7 @@ export function useGeminiLive() {
   const isStartingRef = useRef(false);
   const activeSessionIdRef = useRef(0);
   const hasStartedRecorderRef = useRef(false);
+  const liveOwnerRef = useRef(Symbol('gemini-live-owner'));
   
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -53,6 +84,19 @@ export function useGeminiLive() {
   const currentUserTranscriptRef = useRef<string>("");
 
   const { isSharing, stream } = useScreenShare();
+
+  useEffect(() => {
+    const listener = (state: LiveState) => {
+      setIsActive(state.isActive);
+      setIsConnected(state.isConnected);
+    };
+
+    liveStateListeners.add(listener);
+    listener(liveState);
+    return () => {
+      liveStateListeners.delete(listener);
+    };
+  }, []);
 
   const captureAndSendFrame = useCallback(() => {
     const now = Date.now();
@@ -104,8 +148,7 @@ export function useGeminiLive() {
     activeSessionIdRef.current += 1;
     isStartingRef.current = false;
     hasStartedRecorderRef.current = false;
-    setIsActive(false);
-    setIsConnected(false);
+    emitLiveState({ isActive: false, isConnected: false, isStarting: false });
     if (videoIntervalRef.current) {
       clearInterval(videoIntervalRef.current);
       videoIntervalRef.current = null;
@@ -134,6 +177,10 @@ export function useGeminiLive() {
     currentAssistantTranscriptRef.current = "";
     currentUserMessageIdRef.current = null;
     currentUserTranscriptRef.current = "";
+    if (activeLiveOwner === liveOwnerRef.current) {
+      activeLiveOwner = null;
+      stopActiveGeminiLiveSession = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -287,6 +334,7 @@ export function useGeminiLive() {
   const startSession = useCallback(async () => {
     if (!GEMINI_API_KEY) return alert("Configure a API Key");
     if (
+      isLiveSessionOpen() ||
       isStartingRef.current ||
       wsRef.current?.readyState === WebSocket.CONNECTING ||
       wsRef.current?.readyState === WebSocket.OPEN
@@ -296,10 +344,12 @@ export function useGeminiLive() {
 
     isStartingRef.current = true;
     hasStartedRecorderRef.current = false;
+    activeLiveOwner = liveOwnerRef.current;
+    stopActiveGeminiLiveSession = stopSession;
     const sessionId = activeSessionIdRef.current + 1;
     activeSessionIdRef.current = sessionId;
 
-    setIsActive(true);
+    emitLiveState({ isActive: true, isConnected: false, isStarting: true });
     audioPlayerRef.current = new AudioPlayer();
     await audioPlayerRef.current.beep();
     if (activeSessionIdRef.current !== sessionId) return;
@@ -315,7 +365,7 @@ export function useGeminiLive() {
         return;
       }
       isStartingRef.current = false;
-      setIsConnected(true);
+      emitLiveState({ isActive: true, isConnected: true, isStarting: false });
 
       ws.send(JSON.stringify({
         setup: {
@@ -354,5 +404,14 @@ REGRAS CRÍTICAS:
     };
   }, [stopSession, processIncomingMessage]);
 
-  return { isActive, isConnected, startSession, stopSession };
+  const stopLiveSession = useCallback(() => {
+    if (stopActiveGeminiLiveSession) {
+      stopActiveGeminiLiveSession();
+      return;
+    }
+
+    stopSession();
+  }, [stopSession]);
+
+  return { isActive, isConnected, startSession, stopSession: stopLiveSession };
 }

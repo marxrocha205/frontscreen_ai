@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react'
 import { useChatStore } from './use-chat-store'
+import { stopGeminiLiveSession } from './use-gemini-live'
 
 /**
  * Copia todas as folhas de estilo CSS da aba principal para a janela de destino (PiP ou Popup).
@@ -33,10 +34,15 @@ function syncStylesheets(targetDoc: Document) {
 export function useFloatingChat() {
   const { closeFloatingMode, openFloatingMode, floatingState } = useChatStore()
 
+  const closeChat = useCallback(() => {
+    stopGeminiLiveSession()
+    closeFloatingMode()
+  }, [closeFloatingMode])
+
   const openChat = useCallback(async () => {
     // Segurança: não abre dois popups ao mesmo tempo
     if (floatingState !== 'none') {
-      closeFloatingMode()
+      closeChat()
       return
     }
 
@@ -53,7 +59,7 @@ export function useFloatingChat() {
         syncStylesheets(pipWin.document)
 
         // Registra o fechamento automático ao "X" da janelinha
-        pipWin.addEventListener('pagehide', () => closeFloatingMode())
+        pipWin.addEventListener('pagehide', closeChat)
 
         openFloatingMode(pipWin, 'pip')
         return
@@ -76,10 +82,10 @@ export function useFloatingChat() {
     popup.document.title = 'ScreenAI Chat'
 
     // Registra o fechamento automático ao "X" da janela
-    popup.addEventListener('beforeunload', () => closeFloatingMode())
+    popup.addEventListener('beforeunload', closeChat)
 
     openFloatingMode(popup, 'popup')
-  }, [floatingState, openFloatingMode, closeFloatingMode])
+  }, [floatingState, openFloatingMode, closeChat])
 
   return { openChat }
 }

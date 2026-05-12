@@ -32,7 +32,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.className} h-[100dvh] overflow-hidden overscroll-none antialiased bg-black`}
+      className={`${inter.className} dark h-[100dvh] overflow-hidden overscroll-none antialiased bg-black`}
       suppressHydrationWarning
     >
       <body className="h-[100dvh] flex flex-col overflow-hidden overscroll-none bg-black" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>

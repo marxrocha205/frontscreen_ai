@@ -48,14 +48,19 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
     voiceType, setVoiceType
   } = useVoiceConfig()
 
-  const { userPlan } = useChatStore()
+  const { userPlan, fetchCredits } = useChatStore()
 
   const [mounted, setMounted] = React.useState(false)
-  React.useEffect(() => setMounted(true), [])
+  React.useEffect(() => {
+    setMounted(true)
+    fetchCredits()
+  }, [fetchCredits])
 
   if (!mounted) return null
 
   const initialTab = defaultTab === 'account' ? 'account' : 'voice'
+  const planName = userPlan || (language === 'pt-BR' ? 'Carregando...' : 'Loading...')
+  const isFreePlan = (userPlan || '').trim().toLowerCase() === 'free'
 
   return (
     <Dialog>
@@ -109,11 +114,13 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
                    <div className="flex justify-between items-center mb-4">
                      <span className="text-sm font-medium">{language === 'pt-BR' ? 'Plano Atual' : 'Current Plan'}</span>
-                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{userPlan || 'Free'}</span>
+                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{planName}</span>
                    </div>
-                   <Button onClick={() => router.push("/pricing")} className="w-full bg-zinc-200 text-zinc-900 hover:bg-white text-xs font-bold uppercase h-10">
-                     {language === 'pt-BR' ? 'Fazer Upgrade' : 'Upgrade Now'}
-                   </Button>
+                   {isFreePlan && (
+                     <Button onClick={() => router.push("/pricing")} className="w-full bg-zinc-200 text-zinc-900 hover:bg-white text-xs font-bold uppercase h-10">
+                       {language === 'pt-BR' ? 'Fazer Upgrade' : 'Upgrade Now'}
+                     </Button>
+                   )}
                  </div>
 
                  <div className="p-3 border-t border-zinc-800/50">

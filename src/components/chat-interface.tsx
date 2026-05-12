@@ -12,7 +12,7 @@ import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
@@ -49,7 +49,11 @@ export function ChatInterface() {
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
   const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
-  const { isLoggedIn } = useAuth()
+  const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
+
+  useEffect(() => {
+    syncFromStorage()
+  }, [syncFromStorage])
 
   useEffect(() => {
     if (isLoggedIn) {
@@ -108,8 +112,15 @@ export function ChatInterface() {
   }, [messages.length, isStreaming])
 
   const requireAuth = (action: () => void) => {
-    if (!isLoggedIn) setShowLoginPrompt(true)
-    else action()
+    if (!hasHydrated) {
+      syncFromStorage()
+    }
+
+    if (useAuth.getState().isLoggedIn) {
+      action()
+    } else {
+      setShowLoginPrompt(true)
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -117,13 +128,6 @@ export function ChatInterface() {
       setSelectedFile(e.target.files[0])
     }
   }
-
-  const QUICK_ACTIONS = [
-    { icon: FileText, label: t('app.summarize'), prompt: t('app.summarize_prompt') },
-    { icon: Code, label: t('app.explain_code'), prompt: t('app.explain_code_prompt') },
-    { icon: Table, label: language === 'pt-BR' ? "Extrair para Tabela" : "Extract to Table", prompt: language === 'pt-BR' ? "Extraia os dados relevantes desta tela e organize-os em uma tabela Markdown clara." : "Extract relevant data from this screen and organize it into a clear Markdown table." },
-    { icon: Languages, label: t('app.translate'), prompt: t('app.translate_prompt') },
-  ]
 
   const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
@@ -227,7 +231,7 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
 
-      {isLoggedIn && (
+      {hasHydrated && isLoggedIn && (
         <div id="tour-credits" className="absolute top-4 right-4 z-50 group">
           {/* Badge principal */}
           <div className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-default transition-colors duration-200 ${
@@ -247,48 +251,50 @@ export function ChatInterface() {
           </div>
 
           {/* Tooltip card */}
-          <div className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
-              <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
-                {userPlan || 'Free'}
-              </span>
-            </div>
-
-            <div className="mb-3">
-              <div className="flex items-end justify-between mb-1.5">
-                <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
-                <span className={`text-xl font-bold tabular-nums ${
-                  credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
-                }`}>
-                  {credits !== null ? credits.toLocaleString(language) : '--'}
+          <div className="absolute top-full right-0 pt-2 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
+            <div className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
+                <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+                  {userPlan || 'Free'}
                 </span>
               </div>
-              {/* Barra de progresso */}
-              {credits !== null && (
-                <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
-                    }`}
-                    style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
-                  />
+
+              <div className="mb-3">
+                <div className="flex items-end justify-between mb-1.5">
+                  <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
+                  <span className={`text-xl font-bold tabular-nums ${
+                    credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
+                  }`}>
+                    {credits !== null ? credits.toLocaleString(language) : '--'}
+                  </span>
                 </div>
+                {/* Barra de progresso */}
+                {credits !== null && (
+                  <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${
+                        credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
+                      }`}
+                      style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {credits !== null && credits < 20 && (
+                <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                  {t('app.credits_low')}
+                </p>
               )}
+
+              <a
+                href="/pricing"
+                className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
+              >
+                {t('app.view_plans')}
+              </a>
             </div>
-
-            {credits !== null && credits < 20 && (
-              <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
-                {t('app.credits_low')}
-              </p>
-            )}
-
-            <a
-              href="/pricing"
-              className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
-            >
-              {t('app.view_plans')}
-            </a>
           </div>
         </div>
       )}
@@ -398,15 +404,13 @@ export function ChatInterface() {
                           table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
                           th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
                           td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-                          code: ({ inline, className, children, ...props }: any) => {
+                          code: ({ className, children, ...props }: any) => {
                             const match = /language-(\w+)/.exec(className || '')
-                            return !inline ? (
+                            return match ? (
                               <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                                {match && (
-                                  <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
-                                  </div>
-                                )}
+                                <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                  <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                </div>
                                 <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
                                   <code className={className} {...props}>{children}</code>
                                 </div>
@@ -472,21 +476,6 @@ export function ChatInterface() {
           </h1>
         )}
         <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-        {(isScreenShared || floatingState !== 'none') && (
-          <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
-            {QUICK_ACTIONS.map((action, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSend(action.prompt)}
-                className="flex items-center gap-1.5 bg-[#1e1e1e]/90 hover:bg-[#2a2a2a] backdrop-blur-md border border-zinc-700/50 text-zinc-300 hover:text-zinc-100 text-xs font-medium px-3.5 py-2 rounded-full transition-all shadow-lg"
-              >
-                <action.icon className="w-3.5 h-3.5" />
-                {action.label}
-              </button>
-            ))}
-          </div>
-        )}
-
           {selectedFile && (
             <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
               <div className="bg-indigo-500/20 p-1.5 rounded-lg">

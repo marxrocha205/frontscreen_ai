@@ -2,6 +2,7 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { useChatStore } from './use-chat-store'
 import { useConversations } from './use-conversations'
 import { config } from '@/lib/config'
+import { useAuth } from './use-auth'
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -23,15 +24,59 @@ export function stopAllAudio() {
 
 export function useWebsocket() {
   const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage } = useChatStore()
+  const { isLoggedIn, syncFromStorage } = useAuth()
   const wsRef = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
+  const [reconnectKey, setReconnectKey] = useState(0)
+
+  useEffect(() => {
+    syncFromStorage()
+
+    const requestReconnect = () => {
+      syncFromStorage()
+      const readyState = wsRef.current?.readyState
+      if (readyState !== WebSocket.OPEN && readyState !== WebSocket.CONNECTING) {
+        setReconnectKey((key) => key + 1)
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        requestReconnect()
+      }
+    }
+
+    window.addEventListener('pageshow', requestReconnect)
+    window.addEventListener('focus', requestReconnect)
+    window.addEventListener('online', requestReconnect)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      window.removeEventListener('pageshow', requestReconnect)
+      window.removeEventListener('focus', requestReconnect)
+      window.removeEventListener('online', requestReconnect)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [syncFromStorage])
 
   // Inicia a ligação quando o hook é montado
   useEffect(() => {
+    if (!isLoggedIn) {
+      return
+    }
+
+    if (
+      wsRef.current?.readyState === WebSocket.OPEN ||
+      wsRef.current?.readyState === WebSocket.CONNECTING
+    ) {
+      return
+    }
+
     // Puxa o token que guardámos no Login
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
     
     if (!token) {
+      syncFromStorage()
       return // Sem token: o usuário não está logado, mas pode navegar livremente
     }
 
@@ -162,7 +207,7 @@ export function useWebsocket() {
       wsRef.current = null
       }
     }
-  }, [addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage])
+  }, [isLoggedIn, reconnectKey, syncFromStorage, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage])
 
   // Função para enviar o Payload Multimodal
   const sendMessage = useCallback((payload: { text?: string, image_base64?: string, audio_base64?: string }) => {
