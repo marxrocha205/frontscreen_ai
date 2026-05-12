@@ -1,10 +1,10 @@
-
 "use client"
 
 import * as React from 'react'
 import { useI18n } from '@/context/i18n-context'
 import { useTheme } from 'next-themes'
 import { useVoiceConfig } from '@/hooks/use-voice-config'
+import { useChatStore } from '@/hooks/use-chat-store'
 import { 
   Dialog, 
   DialogContent, 
@@ -47,6 +47,8 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
     isVoiceEnabled, setIsVoiceEnabled,
     voiceType, setVoiceType
   } = useVoiceConfig()
+
+  const { userPlan } = useChatStore()
 
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
@@ -109,7 +111,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.theme')}</Label>
                 <Select value={theme ?? 'system'} onValueChange={handleThemeChange}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                    <SelectValue placeholder="Selecione o tema" />
+                    <SelectValue placeholder={language === 'pt-BR' ? "Selecione o tema" : "Select theme"} />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                     <SelectItem value="dark">{t('settings.theme_dark')}</SelectItem>
@@ -128,7 +130,6 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                     <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
                     <SelectItem value="en-US">English (US)</SelectItem>
-                    <SelectItem value="es-ES">Español (ES)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -140,8 +141,8 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                   <div className="flex items-center gap-3">
                     {isVoiceEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
                     <div className="flex flex-col">
-                      <span className="text-sm font-medium">Respostas por Voz</span>
-                      <span className="text-[11px] text-zinc-500">A IA falará as respostas</span>
+                      <span className="text-sm font-medium">{language === 'pt-BR' ? 'Respostas por Voz' : 'Voice Responses'}</span>
+                      <span className="text-[11px] text-zinc-500">{t('settings.ai_speaks')}</span>
                     </div>
                   </div>
                   <Switch 
@@ -151,7 +152,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                 </div>
 
                 <div className="space-y-3">
-                  <Label className="text-xs font-semibold text-zinc-100">Voz do Assistente</Label>
+                  <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
                   <Select 
                     value={voiceType} 
                     onValueChange={handleVoiceChange}
@@ -161,16 +162,16 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                      <SelectItem value="nova">Nova (Feminina)</SelectItem>
-                      <SelectItem value="shimmer">Shimmer (Expressiva)</SelectItem>
-                      <SelectItem value="alloy">Alloy (Neutra)</SelectItem>
+                      <SelectItem value="nova">Nova ({language === 'pt-BR' ? 'Feminina' : 'Female'})</SelectItem>
+                      <SelectItem value="shimmer">Shimmer ({language === 'pt-BR' ? 'Expressiva' : 'Expressive'})</SelectItem>
+                      <SelectItem value="alloy">Alloy ({language === 'pt-BR' ? 'Neutra' : 'Neutral'})</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="space-y-4 border-t border-zinc-800/50 pt-6">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-zinc-200">Sensibilidade do Microfone</Label>
+                    <Label className="text-xs font-semibold text-zinc-200">{t('settings.mic_sensitivity')}</Label>
                     <span className="text-xs text-zinc-400">{speechThreshold}</span>
                   </div>
                   <Slider 
@@ -181,7 +182,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                   />
 
                   <div className="flex items-center justify-between mt-4">
-                    <Label className="text-xs font-semibold text-zinc-200">Tempo de Pausa (Silêncio)</Label>
+                    <Label className="text-xs font-semibold text-zinc-200">{t('settings.pause_time')}</Label>
                     <span className="text-xs text-zinc-400">{silenceMs / 1000}s</span>
                   </div>
                   <Slider 
@@ -199,17 +200,17 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                <div className="space-y-4">
                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
                    <div className="flex justify-between items-center mb-4">
-                     <span className="text-sm font-medium">Plano Atual</span>
-                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Free</span>
+                     <span className="text-sm font-medium">{language === 'pt-BR' ? 'Plano Atual' : 'Current Plan'}</span>
+                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{userPlan || 'Free'}</span>
                    </div>
                    <Button onClick={() => router.push("/pricing")} className="w-full bg-zinc-200 text-zinc-900 hover:bg-white text-xs font-bold uppercase h-10">
-                     Fazer Upgrade
+                     {language === 'pt-BR' ? 'Fazer Upgrade' : 'Upgrade Now'}
                    </Button>
                  </div>
 
                  <div className="p-3 border-t border-zinc-800/50">
                     <Button onClick={logout} variant="outline" className="w-full border-zinc-800 text-red-400 hover:bg-red-950/20">
-                       Sair da Conta
+                       {language === 'pt-BR' ? 'Sair da Conta' : 'Log Out'}
                     </Button>
                  </div>
                </div>

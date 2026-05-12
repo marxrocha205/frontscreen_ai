@@ -22,7 +22,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     } else {
       const browserLang = navigator.language.split('-')[0] // e.g. "pt" from "pt-BR"
       if (browserLang === 'pt') setLanguage('pt-BR')
-      else if (browserLang === 'es') setLanguage('es-ES')
       else setLanguage('en-US')
     }
   }, [])

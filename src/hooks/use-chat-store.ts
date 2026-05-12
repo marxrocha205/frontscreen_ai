@@ -38,8 +38,6 @@ interface ChatState {
   setIsStreaming: (isStreaming: boolean) => void
   setCredits: (credits: number) => void
   fetchCredits: () => Promise<void>
-  hasSeenTour: boolean | null
-  setHasSeenTour: (seen: boolean) => void
   setSelectedModel: (modelId: string) => void
   clearMessages: () => void
   openFloatingMode: (win: Window, type: 'pip' | 'popup') => void
@@ -60,8 +58,6 @@ export const useChatStore = create<ChatState>((set) => ({
   pipWindow: null,
   isUpgradeDialogOpen: false,
   upgradeDialogMessage: null,
-  hasSeenTour: null,
-  setHasSeenTour: (seen) => set({ hasSeenTour: seen }),
   isSoundEnabled: false,
   isSidebarOpen: false,
 
@@ -100,9 +96,6 @@ export const useChatStore = create<ChatState>((set) => ({
         }
         if (data.plan_name !== undefined) {
           set({ userPlan: data.plan_name })
-        }
-        if (data.has_seen_tour !== undefined) {
-          set({ hasSeenTour: data.has_seen_tour })
         }
       }
     } catch (error) {
