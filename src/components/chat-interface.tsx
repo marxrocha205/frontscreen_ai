@@ -9,22 +9,19 @@ import { useAuth } from '@/hooks/use-auth'
 import { useChatStore } from '@/hooks/use-chat-store'
 import { useConversations } from '@/hooks/use-conversations'
 import { config } from '@/lib/config'
-import { isMobileDevice } from '@/lib/utils'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export function ChatInterface() {
   const { t, language } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
-  const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -90,16 +87,7 @@ export function ChatInterface() {
   }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
 
   const videoRef = useRef<HTMLVideoElement>(null)
-  const { isSharing: isScreenShared, startSharing, stopSharing, stream } = useScreenShare()
-
-
-  const handleStartSharing = () => {
-    if (isMobileDevice()) {
-      setShowMobileWarning(true)
-      return
-    }
-    startSharing()
-  }
+  const { isSharing: isScreenShared, stopSharing, stream } = useScreenShare()
 
   useEffect(() => {
     if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
@@ -229,30 +217,15 @@ export function ChatInterface() {
     lastMessage.role === 'user' || 
     (lastMessage.role === 'assistant' && !hasVisibleContent(lastMessage.content))
   );
+  const isEmptyChat = messages.length === 0 && !isStreaming;
+  const emptyChatPrompt = language === 'pt-BR'
+    ? 'O que está na sua mente hoje?'
+    : "What's on your mind today?";
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
-
-      <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
-        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
-          <DialogHeader>
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
-              <MonitorUp className="w-6 h-6 text-zinc-400" />
-            </div>
-            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
-              {t('app.exclusive_desktop')}
-            </DialogTitle>
-            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
-              {t('app.exclusive_desktop_desc')}
-            </DialogDescription>
-          </DialogHeader>
-          <Button onClick={() => setShowMobileWarning(false)} className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium">
-            OK
-          </Button>
-        </DialogContent>
-      </Dialog>
 
       {isLoggedIn && (
         <div id="tour-credits" className="absolute top-4 right-4 z-50 group">
@@ -486,7 +459,18 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 w-full max-w-5xl mx-auto px-4 pb-8 z-10 pointer-events-none">
+      <div
+        className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 z-10 pointer-events-none transition-all duration-300 ${
+          isEmptyChat
+            ? 'top-1/2 -translate-y-1/2 pb-0'
+            : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
+        }`}
+      >
+        {isEmptyChat && (
+          <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
+            {emptyChatPrompt}
+          </h1>
+        )}
         <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
         {(isScreenShared || floatingState !== 'none') && (
           <div className="pointer-events-auto flex flex-wrap items-center gap-2 mb-3 ml-2 animate-in fade-in slide-in-from-bottom-2">
@@ -523,18 +507,12 @@ export function ChatInterface() {
             <div className="pb-0.5">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className={`rounded-full h-10 w-10 transition-colors ${isScreenShared ? 'bg-blue-500/10 text-blue-500' : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60'}`}>
+                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className="rounded-full h-10 w-10 transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60">
                     <Plus className="w-5 h-5" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                  <DropdownMenuItem onClick={isScreenShared ? stopSharing : handleStartSharing} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                    <MonitorUp className={`w-5 h-5 shrink-0 ${isScreenShared ? 'text-blue-500' : 'text-zinc-400 group-hover:text-zinc-300'}`} />
-                    <span className="font-medium text-[14px]">
-                      {isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}
-                    </span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group mt-1">
+                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                     <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                     <span className="font-medium text-[14px]">{t('app.send_file')}</span>
                   </DropdownMenuItem>
