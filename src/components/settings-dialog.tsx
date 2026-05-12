@@ -97,7 +97,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
             <TabsContent value="general" className="mt-0 space-y-6 focus-visible:outline-none">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.theme')}</Label>
-                <Select value={theme ?? 'system'} onValueChange={handleThemeChange}>
+                <Select value={theme ?? 'system'} onValueChange={(val) => val && handleThemeChange(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
                     <SelectValue placeholder={language === 'pt-BR' ? "Selecione o tema" : "Select theme"} />
                   </SelectTrigger>
@@ -111,7 +111,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
 
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.language')}</Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={(val) => val && handleLanguageChange(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
                     <SelectValue />
                   </SelectTrigger>
@@ -126,7 +126,7 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
             <TabsContent value="voice" className="mt-0 space-y-4 focus-visible:outline-none">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
-                <Select value={voiceType} onValueChange={setVoiceType}>
+                <Select value={voiceType} onValueChange={(val) => val && setVoiceType(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
                     <SelectValue placeholder={language === 'pt-BR' ? "Selecione uma voz" : "Select a voice"} />
                   </SelectTrigger>
