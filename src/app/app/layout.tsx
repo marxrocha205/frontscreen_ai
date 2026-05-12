@@ -20,7 +20,6 @@ import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { useFloatingChat } from '@/hooks/use-floating-chat'
 import { useScreenShare } from '@/hooks/use-screen-share'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
-import { GuidedTour } from '@/components/guided-tour'
 import { isMobileDevice } from '@/lib/utils'
 
 const ModelIcon = ({ id }: { id: string }) => {
@@ -42,7 +41,7 @@ const ModelIcon = ({ id }: { id: string }) => {
 }
 
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const { isLoggedIn, user, logout } = useAuth()
 
   // A MÁGICA REAL AQUI: Desestruturamos as funções reais do banco de dados
@@ -66,7 +65,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
     const isFreeUser = !userPlan || userPlan.toLowerCase() === 'free'
     if (model.requiresPro && isFreeUser) {
-      setUpgradeDialogMessage(`O modelo "${model.label}" está disponível apenas nos planos Pro e Premium. Faça upgrade para desbloquear modelos avançados de IA.`)
+      setUpgradeDialogMessage(t('app.model_upgrade_message').replace('{model}', model.label))
       setIsUpgradeDialogOpen(true)
       return
     }
@@ -142,14 +141,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex h-[100dvh] w-full bg-zinc-950 text-zinc-100 overflow-hidden relative">
-      <GuidedTour />
       {!isLoggedIn && (
         <div className="absolute top-4 right-4 z-40 flex items-center gap-2">
           <Button onClick={() => router.push('/login')} variant="ghost" className="rounded-[20px] bg-white text-zinc-900 hover:bg-zinc-200 hover:text-black h-10 px-4 sm:px-5 font-semibold text-sm shadow-sm">
-            Log in
+            {t('register.login')}
           </Button>
           <Button onClick={() => router.push('/login')} className="hidden sm:inline-flex rounded-[20px] bg-[#1a1a1a] text-white hover:bg-zinc-800 h-10 px-5 font-semibold border border-zinc-700/50 text-sm">
-            Sign up for free
+            {t('login.signup')}
           </Button>
 
           <DropdownMenu>
@@ -161,7 +159,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <DropdownMenuContent align="end" className="w-64 bg-[#232323] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl overflow-hidden z-[100]">
               <DropdownMenuItem onClick={() => router.push('/pricing')} className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                 <Sparkles className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
-                <span className="font-medium">See plans and pricing</span>
+                <span className="font-medium">{t('help.see_plans')}</span>
               </DropdownMenuItem>
 
               <DropdownMenuItem asChild>
@@ -169,7 +167,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   trigger={
                     <div className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                       <SettingsIcon className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
-                      <span className="font-medium">Settings</span>
+                      <span className="font-medium">{t('app.settings')}</span>
                     </div>
                   }
                 />
@@ -179,7 +177,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
               <DropdownMenuItem onClick={() => router.push('/privacy')} className="gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                 <FileText className="w-4 h-4 text-zinc-500 group-hover:text-zinc-300" />
-                <span className="font-medium">Terms & policies</span>
+                <span className="font-medium">{t('help.terms')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -269,7 +267,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 autoFocus
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar conversa..."
+                placeholder={t('app.search_chat')}
                 className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
               />
             </div>
@@ -300,9 +298,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             >
               <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
               <span className="text-sm font-medium">
-                {floatingState === 'none' && 'Destacar Chat (PiP)'}
-                {floatingState === 'pip' && 'Restaurar (PiP Nativo)'}
-                {floatingState === 'popup' && 'Restaurar (Popup)'}
+                {floatingState === 'none' && (language === 'pt-BR' ? 'Destacar Chat (PiP)' : 'Detach Chat (PiP)')}
+                {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar (PiP Nativo)' : 'Restore (Native PiP)')}
+                {floatingState === 'popup' && (language === 'pt-BR' ? 'Restaurar (Popup)' : 'Restore (Popup)')}
               </span>
             </Button>
 
@@ -310,15 +308,15 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
         <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
           <div className="px-3 py-2 mb-1">
-            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">Suas conversas</span>
+            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Suas conversas' : 'Your conversations'}</span>
           </div>
 
           <div className="space-y-[2px]">
             {isLoading ? (
-              <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">A carregar...</div>
+              <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">{language === 'pt-BR' ? 'A carregar...' : 'Loading...'}</div>
             ) : filteredConversations.length === 0 ? (
               <div className="text-zinc-600 text-[13px] px-3 mt-2">
-                {searchQuery ? 'Nenhuma conversa encontrada.' : 'Nenhuma conversa ainda.'}
+                {searchQuery ? (language === 'pt-BR' ? 'Nenhuma conversa encontrada.' : 'No conversation found.') : (language === 'pt-BR' ? 'Nenhuma conversa ainda.' : 'No conversation yet.')}
               </div>
             ) : (
               filteredConversations.map((item) => (
@@ -349,14 +347,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     <button
                       onClick={(e) => startEditing(e, item.id, item.title)}
                       className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                      title="Renomear"
+                      title={language === 'pt-BR' ? "Renomear" : "Rename"}
                     >
                       <Pencil className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
                       className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                      title="Excluir"
+                      title={language === 'pt-BR' ? "Excluir" : "Delete"}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -372,17 +370,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             <div className="px-1 py-2 flex flex-col gap-3">
               <div className="flex flex-col gap-2">
                 <span className="text-sm font-semibold text-zinc-100 leading-tight">
-                  Receba respostas personalizadas para você
+                  {t('help.personalized_responses')}
                 </span>
                 <p className="text-[13px] text-zinc-500 leading-normal">
-                  Entre para receber respostas com base em chats salvos, além de criar imagens e carregar arquivos.
+                  {t('help.login_benefit')}
                 </p>
               </div>
               <Button
                 onClick={() => router.push('/login')}
                 className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
               >
-                Entrar
+                {t('register.login')}
               </Button>
             </div>
           )}
@@ -481,17 +479,17 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <MonitorUp className="w-6 h-6 text-zinc-400" />
             </div>
             <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
-              Função exclusiva para Desktop
+              {t('app.exclusive_desktop')}
             </DialogTitle>
             <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
-              O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
+              {t('app.exclusive_desktop_desc')}
             </DialogDescription>
           </DialogHeader>
           <Button
             onClick={() => setShowMobileWarning(false)}
             className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
           >
-            Entendi
+            OK
           </Button>
         </DialogContent>
       </Dialog>

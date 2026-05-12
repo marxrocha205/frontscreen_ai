@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useI18n } from '@/context/i18n-context'
-import { useWebsocket, stopAllAudio } from '@/hooks/use-websocket'
+import { useWebsocket } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
 import { useScreenShare, captureScreenFrame } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
@@ -13,7 +13,7 @@ import { isMobileDevice } from '@/lib/utils'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, Volume2, VolumeX, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
+import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useContinuousVoice } from '@/hooks/use-continuous-voice'
@@ -22,7 +22,7 @@ import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 
 export function ChatInterface() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
@@ -36,17 +36,23 @@ export function ChatInterface() {
   const [editContent, setEditContent] = useState("")
 
   // Frases de Loading dinâmicas
-  const loadingPhrases = [
+  const loadingPhrases = language === 'pt-BR' ? [
     "A entender o prompt...",
     "A analisar o contexto...",
     "A processar informações...",
     "A gerar resposta...",
     "Quase pronto..."
+  ] : [
+    "Understanding the prompt...",
+    "Analyzing context...",
+    "Processing information...",
+    "Generating response...",
+    "Almost ready..."
   ]
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, isSoundEnabled, toggleSound, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
   const { isLoggedIn } = useAuth()
 
   useEffect(() => {
@@ -70,7 +76,6 @@ export function ChatInterface() {
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
   const handleSpeechStart = useCallback(() => {
-    stopAllAudio()
     sendCancel()
   }, [sendCancel])
 
@@ -151,15 +156,14 @@ export function ChatInterface() {
   }
 
   const QUICK_ACTIONS = [
-    { icon: FileText, label: "Resumir", prompt: "Por favor, faça um resumo claro e conciso do que está visível na minha tela agora." },
-    { icon: Code, label: "Explicar Código", prompt: "Analise e explique o código que está na minha tela passo a passo." },
-    { icon: Table, label: "Extrair para Tabela", prompt: "Extraia os dados relevantes desta tela e organize-os em uma tabela Markdown clara." },
-    { icon: Languages, label: "Traduzir", prompt: "Traduza o conteúdo principal visível nesta tela para o Português." },
+    { icon: FileText, label: t('app.summarize'), prompt: t('app.summarize_prompt') },
+    { icon: Code, label: t('app.explain_code'), prompt: t('app.explain_code_prompt') },
+    { icon: Table, label: language === 'pt-BR' ? "Extrair para Tabela" : "Extract to Table", prompt: language === 'pt-BR' ? "Extraia os dados relevantes desta tela e organize-os em uma tabela Markdown clara." : "Extract relevant data from this screen and organize it into a clear Markdown table." },
+    { icon: Languages, label: t('app.translate'), prompt: t('app.translate_prompt') },
   ]
 
   const handleSend = async (overrideText?: any) => {
     requireAuth(async () => {
-      stopAllAudio()
 
       let audioBase64 = undefined
       if (isVoiceActive) {
@@ -183,7 +187,7 @@ export function ChatInterface() {
         addMessage({
           id: Date.now().toString(),
           role: 'user',
-          content: textToSend || `[Arquivo: ${selectedFile.name}]`
+          content: textToSend || (language === 'pt-BR' ? `[Arquivo: ${selectedFile.name}]` : `[File: ${selectedFile.name}]`)
         })
 
         setIsStreaming(true)
@@ -211,18 +215,6 @@ export function ChatInterface() {
               await fetchConversations()
             }
             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response })
-
-            stopAllAudio()
-            if (isSoundEnabled) {
-              if (data.audio_base64) {
-                const audio = new Audio('data:audio/mp3;base64,' + data.audio_base64)
-                audio.play().catch(e => console.error('Erro ao tocar áudio:', e))
-              } else if (data.response) {
-                const utterance = new SpeechSynthesisUtterance(data.response.replace(/[*#_]/g, ''))
-                utterance.lang = 'pt-BR'
-                window.speechSynthesis.speak(utterance)
-              }
-            }
           } else if (data.status === 'error' && data.message && data.message.includes('Créditos insuficientes')) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
@@ -275,14 +267,14 @@ export function ChatInterface() {
               <MonitorUp className="w-6 h-6 text-zinc-400" />
             </div>
             <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
-              Função exclusiva para Desktop
+              {t('app.exclusive_desktop')}
             </DialogTitle>
             <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
-              O compartilhamento de tela não é suportado em dispositivos móveis. Acesse pelo computador para usar esta função.
+              {t('app.exclusive_desktop_desc')}
             </DialogDescription>
           </DialogHeader>
           <Button onClick={() => setShowMobileWarning(false)} className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium">
-            Entendi
+            OK
           </Button>
         </DialogContent>
       </Dialog>
@@ -298,9 +290,9 @@ export function ChatInterface() {
             <span className={`text-sm font-bold ${
               (credits !== null && credits < 20) ? 'text-red-400' : 'text-zinc-200'
             }`}>
-              {credits !== null ? credits.toLocaleString('pt-BR') : '--'}
+              {credits !== null ? credits.toLocaleString(language) : '--'}
             </span>
-            <span className="text-xs text-zinc-500 hidden sm:inline font-medium">créditos</span>
+            <span className="text-xs text-zinc-500 hidden sm:inline font-medium">{t('app.credits')}</span>
             {credits !== null && credits < 20 && (
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             )}
@@ -309,7 +301,7 @@ export function ChatInterface() {
           {/* Tooltip card */}
           <div className="absolute top-full right-0 mt-2 w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Seu Plano</span>
+              <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
               <span className="text-xs font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded-full">
                 {userPlan || 'Free'}
               </span>
@@ -317,11 +309,11 @@ export function ChatInterface() {
 
             <div className="mb-3">
               <div className="flex items-end justify-between mb-1.5">
-                <span className="text-xs text-zinc-500">Créditos disponíveis</span>
+                <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
                 <span className={`text-xl font-bold tabular-nums ${
                   credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
                 }`}>
-                  {credits !== null ? credits.toLocaleString('pt-BR') : '--'}
+                  {credits !== null ? credits.toLocaleString(language) : '--'}
                 </span>
               </div>
               {/* Barra de progresso */}
@@ -339,7 +331,7 @@ export function ChatInterface() {
 
             {credits !== null && credits < 20 && (
               <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
-                Seus créditos estão quase esgotados. Faça upgrade para continuar usando a IA.
+                {t('app.credits_low')}
               </p>
             )}
 
@@ -347,7 +339,7 @@ export function ChatInterface() {
               href="/pricing"
               className="block w-full text-center text-xs font-semibold text-zinc-400 hover:text-white bg-zinc-800/60 hover:bg-zinc-700/60 border border-zinc-700/50 rounded-xl py-2.5 transition-all duration-150"
             >
-              Ver planos e preços
+              {t('app.view_plans')}
             </a>
           </div>
         </div>
@@ -411,13 +403,13 @@ export function ChatInterface() {
                     />
                     <div className="flex justify-end gap-2 mt-3">
                       <Button variant="ghost" size="sm" onClick={() => setEditingMessageId(null)} className="text-zinc-400 hover:text-zinc-200">
-                        Cancelar
+                        {language === 'pt-BR' ? 'Cancelar' : 'Cancel'}
                       </Button>
                       <Button size="sm" onClick={() => {
                         setEditingMessageId(null);
                         handleSend(editContent);
                       }} className="bg-zinc-200 text-zinc-900 hover:bg-white font-medium">
-                        Atualizar e Enviar
+                        {language === 'pt-BR' ? 'Atualizar e Enviar' : 'Update and Send'}
                       </Button>
                     </div>
                   </div>
@@ -433,7 +425,7 @@ export function ChatInterface() {
                           setEditContent(m.content);
                         }}
                         className="absolute -left-12 top-3 p-2 bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-zinc-700 shadow-sm"
-                        title="Editar mensagem"
+                        title={language === 'pt-BR' ? "Editar mensagem" : "Edit message"}
                       >
                         <Pencil className="w-4 h-4" />
                       </button>
@@ -497,7 +489,7 @@ export function ChatInterface() {
                     <div className="absolute inset-0 rounded-full border-[2px] border-transparent border-t-zinc-200 animate-[spin_0.8s_linear_infinite]"></div>
                     <img 
                       src="/icon.png" 
-                      alt="A carregar" 
+                      alt="Loading" 
                       className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse" 
                     />
                   </div>
@@ -512,7 +504,7 @@ export function ChatInterface() {
                 className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm animate-in fade-in"
               >
                 <Square className="w-3.5 h-3.5 fill-current" />
-                Parar resposta
+                {language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
               </button>
             </div>
           )}
@@ -604,7 +596,7 @@ export function ChatInterface() {
                   id="tour-continuous-mic"
                   size="icon"
                   onClick={toggleGeminiLive}
-                  title={isGeminiLiveActive ? "Encerrar Gemini Live" : "Iniciar Gemini Live (Voz + Visão)"}
+                  title={isGeminiLiveActive ? (language === 'pt-BR' ? "Encerrar Gemini Live" : "End Gemini Live") : (language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)")}
                   className={`rounded-full w-10 h-10 transition-all ${isGeminiLiveActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
                 >
                   <AudioLines className={`w-5 h-5 ${isGeminiLiveActive ? 'animate-pulse scale-110' : ''}`} />
@@ -612,15 +604,6 @@ export function ChatInterface() {
               )}
               <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
-              </Button>
-              <Button
-                id="tour-audio-toggle"
-                size="icon"
-                onClick={toggleSound}
-                title={isSoundEnabled ? 'Silenciar IA' : 'Ativar voz da IA'}
-                className={`rounded-full w-10 h-10 transition-all ${!isSoundEnabled ? 'bg-zinc-800 text-zinc-500' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
-              >
-                {isSoundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5 text-zinc-600" />}
               </Button>
               <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
                 <Navigation className="w-5 h-5" />

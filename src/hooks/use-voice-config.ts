@@ -19,9 +19,8 @@ export const useVoiceConfig = create<VoiceConfigState>()(
     (set) => ({
       speechThreshold: 5,
       silenceMs: 1500,
-      isVoiceEnabled: true, 
-      voiceType: 'nova', 
-      
+      isVoiceEnabled: true,
+      voiceType: 'Aoede',      
       setSpeechThreshold: (val) => {
         console.log(`[VoiceConfig] Threshold alterado para: ${val}`);
         set({ speechThreshold: val });

@@ -1,10 +1,10 @@
-
 "use client"
 
 import * as React from 'react'
 import { useI18n } from '@/context/i18n-context'
 import { useTheme } from 'next-themes'
 import { useVoiceConfig } from '@/hooks/use-voice-config'
+import { useChatStore } from '@/hooks/use-chat-store'
 import { 
   Dialog, 
   DialogContent, 
@@ -20,11 +20,9 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select'
-import { Slider } from '@/components/ui/slider'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Settings, Mic, User, Volume2, VolumeX } from 'lucide-react'
+import { Settings, Mic, User, Check } from 'lucide-react'
 import { Language } from '@/locales'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
@@ -35,6 +33,14 @@ interface SettingsDialogProps {
   defaultTab?: string;
 }
 
+const GEMINI_VOICES = [
+  { id: 'Puck', label: 'Puck', desc_pt: 'Energética e vibrante', desc_en: 'Energetic and vibrant' },
+  { id: 'Charon', label: 'Charon', desc_pt: 'Calma e profunda', desc_en: 'Calm and deep' },
+  { id: 'Kore', label: 'Kore', desc_pt: 'Feminina e brilhante', desc_en: 'Female and bright' },
+  { id: 'Fenrir', label: 'Fenrir', desc_pt: 'Masculina e séria', desc_en: 'Male and serious' },
+  { id: 'Aoede', label: 'Aoede', desc_pt: 'Clara e equilibrada', desc_en: 'Clear and balanced' },
+]
+
 export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDialogProps) {
   const { t, language, setLanguage } = useI18n()
   const { theme, setTheme } = useTheme()
@@ -42,16 +48,14 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
   const router = useRouter()
 
   const { 
-    speechThreshold, setSpeechThreshold, 
-    silenceMs, setSilenceMs,
-    isVoiceEnabled, setIsVoiceEnabled,
     voiceType, setVoiceType
   } = useVoiceConfig()
+
+  const { userPlan } = useChatStore()
 
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => setMounted(true), [])
 
-  // Handler seguro para o Select (Base UI espera string | null)
   const handleThemeChange = (val: string | null) => {
     if (val) setTheme(val)
   }
@@ -60,24 +64,10 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
     if (val) setLanguage(val as Language)
   }
 
-  const handleVoiceChange = (val: string | null) => {
-    if (val) setVoiceType(val)
-  }
-
-  // Handler seguro para o Slider
-  const handleSliderChange = (setter: (val: number) => void) => (vals: number | readonly number[]) => {
-    const value = Array.isArray(vals) ? vals[0] : vals
-    setter(value)
-  }
-
   if (!mounted) return null
 
   return (
     <Dialog>
-      {/* DICA SÊNIOR: Removido asChild. 
-          No Base UI, o DialogTrigger por padrão funciona como um wrapper. 
-          Certifique-se que seu componente Button use forwardRef.
-      */}
       <DialogTrigger render={trigger} />
       
       <DialogContent className="sm:max-w-[480px] bg-zinc-950 border-zinc-800 text-zinc-100 p-0 overflow-hidden shadow-2xl focus:outline-none">
@@ -107,9 +97,9 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
             <TabsContent value="general" className="mt-0 space-y-6 focus-visible:outline-none">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.theme')}</Label>
-                <Select value={theme ?? 'system'} onValueChange={handleThemeChange}>
+                <Select value={theme ?? 'system'} onValueChange={(val) => val && handleThemeChange(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                    <SelectValue placeholder="Selecione o tema" />
+                    <SelectValue placeholder={language === 'pt-BR' ? "Selecione o tema" : "Select theme"} />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                     <SelectItem value="dark">{t('settings.theme_dark')}</SelectItem>
@@ -121,77 +111,38 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
 
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.language')}</Label>
-                <Select value={language} onValueChange={handleLanguageChange}>
+                <Select value={language} onValueChange={(val) => val && handleLanguageChange(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
                     <SelectItem value="pt-BR">Português (Brasil)</SelectItem>
                     <SelectItem value="en-US">English (US)</SelectItem>
-                    <SelectItem value="es-ES">Español (ES)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </TabsContent>
 
-            <TabsContent value="voice" className="mt-0 space-y-6 focus-visible:outline-none">
-              <div className="space-y-6">
-                <div className="flex items-center justify-between p-3 rounded-lg border border-zinc-800 bg-zinc-900/30">
-                  <div className="flex items-center gap-3">
-                    {isVoiceEnabled ? <Volume2 className="w-4 h-4 text-emerald-400" /> : <VolumeX className="w-4 h-4 text-zinc-500" />}
-                    <div className="flex flex-col">
-                      <span className="text-sm font-medium">Respostas por Voz</span>
-                      <span className="text-[11px] text-zinc-500">A IA falará as respostas</span>
-                    </div>
-                  </div>
-                  <Switch 
-                    checked={isVoiceEnabled} 
-                    onCheckedChange={setIsVoiceEnabled} 
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <Label className="text-xs font-semibold text-zinc-100">Voz do Assistente</Label>
-                  <Select 
-                    value={voiceType} 
-                    onValueChange={handleVoiceChange}
-                    disabled={!isVoiceEnabled}
-                  >
-                    <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
-                      <SelectItem value="nova">Nova (Feminina)</SelectItem>
-                      <SelectItem value="shimmer">Shimmer (Expressiva)</SelectItem>
-                      <SelectItem value="alloy">Alloy (Neutra)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-4 border-t border-zinc-800/50 pt-6">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-zinc-200">Sensibilidade do Microfone</Label>
-                    <span className="text-xs text-zinc-400">{speechThreshold}</span>
-                  </div>
-                  <Slider 
-                    value={[speechThreshold]} 
-                    max={10} 
-                    step={1} 
-                     onValueChange={(v) => setSpeechThreshold(v[0])}
-                  />
-
-                  <div className="flex items-center justify-between mt-4">
-                    <Label className="text-xs font-semibold text-zinc-200">Tempo de Pausa (Silêncio)</Label>
-                    <span className="text-xs text-zinc-400">{silenceMs / 1000}s</span>
-                  </div>
-                  <Slider 
-                    value={[silenceMs]} 
-                    max={3000} 
-                    min={500} 
-                    step={100} 
-                    onValueChange={(v) => setSilenceMs(v[0])}
-                  />
-                </div>
+            <TabsContent value="voice" className="mt-0 space-y-4 focus-visible:outline-none">
+              <div className="space-y-3">
+                <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
+                <Select value={voiceType} onValueChange={(val) => val && setVoiceType(val)}>
+                  <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
+                    <SelectValue placeholder={language === 'pt-BR' ? "Selecione uma voz" : "Select a voice"} />
+                  </SelectTrigger>
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                    {GEMINI_VOICES.map((v) => (
+                      <SelectItem key={v.id} value={v.id}>
+                        <div className="flex flex-col py-1">
+                          <span className="font-medium">{v.label}</span>
+                          <span className="text-[10px] text-zinc-500">
+                            {language === 'pt-BR' ? v.desc_pt : v.desc_en}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </TabsContent>
 
@@ -199,17 +150,17 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
                <div className="space-y-4">
                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
                    <div className="flex justify-between items-center mb-4">
-                     <span className="text-sm font-medium">Plano Atual</span>
-                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">Free</span>
+                     <span className="text-sm font-medium">{language === 'pt-BR' ? 'Plano Atual' : 'Current Plan'}</span>
+                     <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{userPlan || 'Free'}</span>
                    </div>
                    <Button onClick={() => router.push("/pricing")} className="w-full bg-zinc-200 text-zinc-900 hover:bg-white text-xs font-bold uppercase h-10">
-                     Fazer Upgrade
+                     {language === 'pt-BR' ? 'Fazer Upgrade' : 'Upgrade Now'}
                    </Button>
                  </div>
 
                  <div className="p-3 border-t border-zinc-800/50">
                     <Button onClick={logout} variant="outline" className="w-full border-zinc-800 text-red-400 hover:bg-red-950/20">
-                       Sair da Conta
+                       {language === 'pt-BR' ? 'Sair da Conta' : 'Log Out'}
                     </Button>
                  </div>
                </div>
@@ -222,5 +173,5 @@ export function SettingsDialog({ trigger, defaultTab = 'general' }: SettingsDial
 }
 
 function ScrollWrapper({ children }: { children: React.ReactNode }) {
-  return <div className="px-6 pb-6 pt-2 h-[400px] overflow-y-auto custom-scrollbar">{children}</div>
+  return <div className="px-6 pb-6 pt-2 h-[420px] overflow-y-auto custom-scrollbar">{children}</div>
 }

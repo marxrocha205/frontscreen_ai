@@ -127,19 +127,11 @@ export function useWebsocket() {
              addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
           }
 
-          stopAllAudio()
-          
-          // Toca áudio só se o botão de som estiver ativado
+          // Toca áudio vindo do servidor (caso ainda venha algum, embora desativado no backend)
           const { isSoundEnabled } = useChatStore.getState()
-          if (isSoundEnabled) {
-            if (data.audio_base64) {
+          if (isSoundEnabled && data.audio_base64) {
               currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
               currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
-            } else if (data.message) {
-              const utterance = new SpeechSynthesisUtterance(data.message.replace(/[*#_]/g, ''))
-              utterance.lang = 'pt-BR'
-              window.speechSynthesis.speak(utterance)
-            }
           }
 
           // Atualiza os créditos na tela
@@ -187,9 +179,9 @@ export function useWebsocket() {
 
       const finalPayload = {
         ...payload,
-        session_id: activeId 
+        session_id: activeId,
+        language: document.documentElement.lang || 'pt-BR'
       }
-
       wsRef.current.send(JSON.stringify(finalPayload))
     } else {
       alert("Aguarde a conexão com o servidor de IA.")

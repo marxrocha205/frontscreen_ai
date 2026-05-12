@@ -138,6 +138,7 @@ export default function LoginPage() {
                 theme="filled_black"
                 shape="pill"
                 width="352"
+                ux_mode="popup"
               />
             </div>
 
