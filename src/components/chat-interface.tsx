@@ -16,7 +16,6 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Mic, Navigation, MonitorUp, Zap, Plus, FileUp, X, AudioLines, FileText, Code, Table, Languages, Pencil, Square } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { useContinuousVoice } from '@/hooks/use-continuous-voice'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -75,22 +74,6 @@ export function ChatInterface() {
 
   const { isRecording: isVoiceActive, startRecording, stopRecording } = useGeminiVoice(5, 1500)
 
-  const handleSpeechStart = useCallback(() => {
-    sendCancel()
-  }, [sendCancel])
-
-  const handleSpeechEnd = useCallback((audioBase64: string) => {
-    const isCurrentlySharing = useScreenShare.getState().isSharing;
-    const frame = isCurrentlySharing ? captureScreenFrame() : undefined;
-
-    sendMessage({
-      audio_base64: audioBase64,
-      image_base64: frame
-    })
-  }, [sendMessage])
-
-  const { isActive: isContinuousMicOn, isUserSpeaking, toggleContinuousMic } = useContinuousVoice(handleSpeechStart, handleSpeechEnd)
-
   const { 
     isActive: isGeminiLiveActive, 
     isConnected: isGeminiLiveConnected, 
@@ -117,14 +100,6 @@ export function ChatInterface() {
     }
     startSharing()
   }
-
-  useEffect(() => {
-    if (floatingState === 'none' && isContinuousMicOn) toggleContinuousMic()
-  }, [floatingState, isContinuousMicOn, toggleContinuousMic])
-
-  useEffect(() => {
-    if (isVoiceActive && isContinuousMicOn) toggleContinuousMic()
-  }, [isVoiceActive, isContinuousMicOn, toggleContinuousMic])
 
   useEffect(() => {
     if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
