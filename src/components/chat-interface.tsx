@@ -103,13 +103,43 @@ export function ChatInterface() {
   }, [stream])
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const anchoredUserMessageKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (messages.length > 0 && scrollRef.current) {
+    const latestUserIndex = messages.findLastIndex((message) => message.role === 'user')
+    if (latestUserIndex === -1 || !scrollRef.current) return
+
+    const latestUser = messages[latestUserIndex]
+    const latestUserKey = `${latestUser.id}-${latestUserIndex}`
+    const lastMessage = messages[messages.length - 1]
+    const shouldKeepUserAnchored =
+      anchoredUserMessageKeyRef.current !== latestUserKey ||
+      lastMessage?.role === 'assistant'
+
+    if (!shouldKeepUserAnchored) return
+
+    anchoredUserMessageKeyRef.current = latestUserKey
+
+    requestAnimationFrame(() => {
       const container = scrollRef.current
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+      const target = messageRefs.current.get(latestUserKey)
+      if (!container || !target) return
+
+      container.scrollTo({
+        top: Math.max(target.offsetTop - 24, 0),
+        behavior: 'smooth'
+      })
+    })
+  }, [messages])
+
+  const setMessageRef = useCallback((key: string, node: HTMLDivElement | null) => {
+    if (node) {
+      messageRefs.current.set(key, node)
+    } else {
+      messageRefs.current.delete(key)
     }
-  }, [messages.length, isStreaming])
+  }, [])
 
   const requireAuth = (action: () => void) => {
     if (!hasHydrated) {
@@ -336,12 +366,18 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
+            const messageKey = `${m.id}-${i}`
+
             if (m.role === 'assistant' && isStreaming && i === messages.length - 1) {
               if (!hasVisibleContent(m.content)) return null;
             }
 
             return (
-              <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={messageKey}
+                ref={(node) => setMessageRef(messageKey, node)}
+                className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 
                 {m.role === 'user' && editingMessageId === m.id ? (
                   // UI MODO EDIÇÃO DA MENSAGEM DO USUÁRIO
