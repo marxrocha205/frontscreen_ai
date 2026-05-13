@@ -14,13 +14,17 @@ type LiveState = {
   isActive: boolean;
   isConnected: boolean;
   isStarting: boolean;
+  phase: 'idle' | 'connecting' | 'listening' | 'speaking';
+  audioLevel: number;
 };
 
 const liveStateListeners = new Set<(state: LiveState) => void>();
 let liveState: LiveState = {
   isActive: false,
   isConnected: false,
-  isStarting: false
+  isStarting: false,
+  phase: 'idle',
+  audioLevel: 0
 };
 let activeLiveOwner: symbol | null = null;
 let stopActiveGeminiLiveSession: (() => void) | null = null;
@@ -63,11 +67,14 @@ const updateMessageContent = (messageId: string, content: string) => {
 export function useGeminiLive() {
   const [isActive, setIsActive] = useState(liveState.isActive);
   const [isConnected, setIsConnected] = useState(liveState.isConnected);
+  const [phase, setPhase] = useState(liveState.phase);
+  const [audioLevel, setAudioLevel] = useState(liveState.audioLevel);
   
   const wsRef = useRef<WebSocket | null>(null);
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
   const videoIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const assistantActivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
   const isStartingRef = useRef(false);
   const activeSessionIdRef = useRef(0);
@@ -85,10 +92,24 @@ export function useGeminiLive() {
 
   const { isSharing, stream } = useScreenShare();
 
+  const markAssistantActivity = useCallback((sessionId: number) => {
+    if (activeSessionIdRef.current !== sessionId) return;
+    emitLiveState({ phase: 'speaking', audioLevel: 0.78 });
+    if (assistantActivityTimeoutRef.current) clearTimeout(assistantActivityTimeoutRef.current);
+    assistantActivityTimeoutRef.current = setTimeout(() => {
+      if (activeSessionIdRef.current === sessionId) {
+        emitLiveState({ phase: 'listening', audioLevel: 0.14 });
+      }
+      assistantActivityTimeoutRef.current = null;
+    }, 520);
+  }, []);
+
   useEffect(() => {
     const listener = (state: LiveState) => {
       setIsActive(state.isActive);
       setIsConnected(state.isConnected);
+      setPhase(state.phase);
+      setAudioLevel(state.audioLevel);
     };
 
     liveStateListeners.add(listener);
@@ -148,10 +169,14 @@ export function useGeminiLive() {
     activeSessionIdRef.current += 1;
     isStartingRef.current = false;
     hasStartedRecorderRef.current = false;
-    emitLiveState({ isActive: false, isConnected: false, isStarting: false });
+    emitLiveState({ isActive: false, isConnected: false, isStarting: false, phase: 'idle', audioLevel: 0 });
     if (videoIntervalRef.current) {
       clearInterval(videoIntervalRef.current);
       videoIntervalRef.current = null;
+    }
+    if (assistantActivityTimeoutRef.current) {
+      clearTimeout(assistantActivityTimeoutRef.current);
+      assistantActivityTimeoutRef.current = null;
     }
     audioRecorderRef.current?.stop();
     audioRecorderRef.current = null;
@@ -215,7 +240,12 @@ export function useGeminiLive() {
               }));
             }
           },
-          () => { captureAndSendFrame(); }
+          () => { captureAndSendFrame(); },
+          (level) => {
+            if (activeSessionIdRef.current === sessionId && liveState.phase !== 'speaking') {
+              emitLiveState({ phase: 'listening', audioLevel: level });
+            }
+          }
         );
         try {
           await audioRecorderRef.current.start();
@@ -263,12 +293,15 @@ export function useGeminiLive() {
           for (const part of modelTurn.parts) {
             // Processa o áudio apenas se vier como parte do JSON (inlineData)
             if (part.inlineData?.data) {
+              markAssistantActivity(sessionId);
               audioPlayerRef.current?.playChunk(part.inlineData.data);
             } else if (part.inline_data?.data) {
+              markAssistantActivity(sessionId);
               audioPlayerRef.current?.playChunk(part.inline_data.data);
             }
             
             if (part.text && !outputTranscription?.text) {
+              markAssistantActivity(sessionId);
               console.log("🤖 IA Texto:", part.text);
 
               if (!currentAssistantMessageIdRef.current) {
@@ -293,6 +326,7 @@ export function useGeminiLive() {
         }
 
         if (outputTranscription?.text) {
+          markAssistantActivity(sessionId);
           console.log("🤖 IA Transcrição:", outputTranscription.text);
 
           if (!currentAssistantMessageIdRef.current) {
@@ -329,7 +363,7 @@ export function useGeminiLive() {
         audioPlayerRef.current?.playChunk(base64);
       }
     }
-  }, [addMessage, captureAndSendFrame, stopSession]);
+  }, [addMessage, captureAndSendFrame, markAssistantActivity, stopSession]);
 
   const startSession = useCallback(async () => {
     if (!GEMINI_API_KEY) return alert("Configure a API Key");
@@ -349,8 +383,14 @@ export function useGeminiLive() {
     const sessionId = activeSessionIdRef.current + 1;
     activeSessionIdRef.current = sessionId;
 
-    emitLiveState({ isActive: true, isConnected: false, isStarting: true });
-    audioPlayerRef.current = new AudioPlayer();
+    emitLiveState({ isActive: true, isConnected: false, isStarting: true, phase: 'connecting', audioLevel: 0 });
+    audioPlayerRef.current = new AudioPlayer((isPlaying) => {
+      if (activeSessionIdRef.current !== sessionId) return;
+      emitLiveState({
+        phase: isPlaying ? 'speaking' : 'listening',
+        audioLevel: isPlaying ? 0.72 : 0.18
+      });
+    });
     await audioPlayerRef.current.beep();
     if (activeSessionIdRef.current !== sessionId) return;
 
@@ -365,7 +405,7 @@ export function useGeminiLive() {
         return;
       }
       isStartingRef.current = false;
-      emitLiveState({ isActive: true, isConnected: true, isStarting: false });
+      emitLiveState({ isActive: true, isConnected: true, isStarting: false, phase: 'listening', audioLevel: 0.12 });
 
       ws.send(JSON.stringify({
         setup: {
@@ -413,5 +453,5 @@ REGRAS CRÍTICAS:
     stopSession();
   }, [stopSession]);
 
-  return { isActive, isConnected, startSession, stopSession: stopLiveSession };
+  return { isActive, isConnected, phase, audioLevel, startSession, stopSession: stopLiveSession };
 }

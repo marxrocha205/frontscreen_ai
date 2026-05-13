@@ -21,10 +21,12 @@ export class AudioRecorder {
   private stream: MediaStream | null = null;
   private onAudioData: (base64: string) => void;
   private onActivity?: () => void;
+  private onLevel?: (level: number) => void;
 
-  constructor(onAudioData: (base64: string) => void, onActivity?: () => void) {
+  constructor(onAudioData: (base64: string) => void, onActivity?: () => void, onLevel?: (level: number) => void) {
     this.onAudioData = onAudioData;
     this.onActivity = onActivity;
+    this.onLevel = onLevel;
   }
 
   async start() {
@@ -44,6 +46,7 @@ export class AudioRecorder {
       let sum = 0;
       for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
       const energy = Math.sqrt(sum / inputData.length);
+      this.onLevel?.(Math.min(1, energy * 22));
       
       if (energy > 0.015) { // Threshold de fala detectada
         this.onActivity?.();
@@ -79,9 +82,12 @@ export class AudioRecorder {
 export class AudioPlayer {
   private audioContext: AudioContext;
   private nextStartTime: number = 0;
+  private playbackTimeout: ReturnType<typeof setTimeout> | null = null;
+  private onPlaybackChange?: (isPlaying: boolean) => void;
 
-  constructor() {
+  constructor(onPlaybackChange?: (isPlaying: boolean) => void) {
     this.audioContext = createAudioContext({ sampleRate: 24000 });
+    this.onPlaybackChange = onPlaybackChange;
   }
 
   async playChunk(base64Audio: string) {
@@ -106,6 +112,13 @@ export class AudioPlayer {
       if (this.nextStartTime < currentTime) this.nextStartTime = currentTime;
       source.start(this.nextStartTime);
       this.nextStartTime += audioBuffer.duration;
+      this.onPlaybackChange?.(true);
+      if (this.playbackTimeout) clearTimeout(this.playbackTimeout);
+      const remainingMs = Math.max(140, (this.nextStartTime - this.audioContext.currentTime) * 1000);
+      this.playbackTimeout = setTimeout(() => {
+        this.onPlaybackChange?.(false);
+        this.playbackTimeout = null;
+      }, remainingMs);
     } catch {}
   }
 
@@ -123,6 +136,11 @@ export class AudioPlayer {
 
   stop() {
     this.nextStartTime = 0;
+    if (this.playbackTimeout) {
+      clearTimeout(this.playbackTimeout);
+      this.playbackTimeout = null;
+    }
+    this.onPlaybackChange?.(false);
     if (this.audioContext && this.audioContext.state !== 'closed') {
       this.audioContext.close().catch(() => {});
     }

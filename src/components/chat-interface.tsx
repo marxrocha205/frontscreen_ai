@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
+import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 
 export function ChatInterface() {
   const { t, language } = useI18n()
@@ -78,6 +79,8 @@ export function ChatInterface() {
   const { 
     isActive: isGeminiLiveActive, 
     isConnected: isGeminiLiveConnected, 
+    phase: geminiLivePhase,
+    audioLevel: geminiLiveAudioLevel,
     startSession: startGeminiLive, 
     stopSession: stopGeminiLive 
   } = useGeminiLive()
@@ -354,11 +357,18 @@ export function ChatInterface() {
         </div>
       )}
 
+      <GeminiLiveOrb
+        active={isGeminiLiveActive}
+        connected={isGeminiLiveConnected}
+        phase={geminiLivePhase}
+        level={geminiLiveAudioLevel}
+      />
+
       <div
         ref={scrollRef}
-        className={`absolute inset-0 overflow-y-auto pt-20 custom-scrollbar overscroll-contain ${
+        className={`absolute inset-0 overflow-y-auto pt-20 custom-scrollbar overscroll-contain transition-all duration-300 ${
           (isScreenShared || floatingState !== 'none') ? 'pb-56' : 'pb-40'
-        }`}
+        } ${isGeminiLiveActive ? 'opacity-25 blur-[2px] scale-[0.995]' : 'opacity-100 blur-0 scale-100'}`}
         style={{
           maskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))',
           WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))'
@@ -500,11 +510,11 @@ export function ChatInterface() {
       </div>
 
       <div
-        className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 z-10 pointer-events-none transition-all duration-300 ${
+        className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 pointer-events-none transition-all duration-300 ${
           isEmptyChat
             ? 'top-1/2 -translate-y-1/2 pb-0'
             : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
-        }`}
+        } ${isGeminiLiveActive ? 'z-30' : 'z-10'}`}
       >
         {isEmptyChat && (
           <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
@@ -569,17 +579,15 @@ export function ChatInterface() {
             />
 
             <div className="flex items-center gap-1.5 pb-0.5">
-              {floatingState !== 'none' && (
-                <Button
-                  id="tour-continuous-mic"
-                  size="icon"
-                  onClick={toggleGeminiLive}
-                  title={isGeminiLiveActive ? (language === 'pt-BR' ? "Encerrar Gemini Live" : "End Gemini Live") : (language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)")}
-                  className={`rounded-full w-10 h-10 transition-all ${isGeminiLiveActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
-                >
-                  <AudioLines className={`w-5 h-5 ${isGeminiLiveActive ? 'animate-pulse scale-110' : ''}`} />
-                </Button>
-              )}
+              <Button
+                id="tour-continuous-mic"
+                size="icon"
+                onClick={toggleGeminiLive}
+                title={isGeminiLiveActive ? (language === 'pt-BR' ? "Encerrar Gemini Live" : "End Gemini Live") : (language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)")}
+                className={`rounded-full w-10 h-10 transition-all ${isGeminiLiveActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
+              >
+                <AudioLines className={`w-5 h-5 ${isGeminiLiveActive ? 'animate-pulse scale-110' : ''}`} />
+              </Button>
               <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
                 <Mic className="w-5 h-5" />
               </Button>
