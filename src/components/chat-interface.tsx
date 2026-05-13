@@ -17,6 +17,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
+import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 
 export function ChatInterface() {
   const { t, language } = useI18n()
@@ -78,6 +79,8 @@ export function ChatInterface() {
   const { 
     isActive: isGeminiLiveActive, 
     isConnected: isGeminiLiveConnected, 
+    phase: geminiLivePhase,
+    audioLevel: geminiLiveAudioLevel,
     startSession: startGeminiLive, 
     stopSession: stopGeminiLive 
   } = useGeminiLive()
@@ -103,13 +106,43 @@ export function ChatInterface() {
   }, [stream])
 
   const scrollRef = useRef<HTMLDivElement>(null)
+  const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const anchoredUserMessageKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
-    if (messages.length > 0 && scrollRef.current) {
+    const latestUserIndex = messages.findLastIndex((message) => message.role === 'user')
+    if (latestUserIndex === -1 || !scrollRef.current) return
+
+    const latestUser = messages[latestUserIndex]
+    const latestUserKey = `${latestUser.id}-${latestUserIndex}`
+    const lastMessage = messages[messages.length - 1]
+    const shouldKeepUserAnchored =
+      anchoredUserMessageKeyRef.current !== latestUserKey ||
+      lastMessage?.role === 'assistant'
+
+    if (!shouldKeepUserAnchored) return
+
+    anchoredUserMessageKeyRef.current = latestUserKey
+
+    requestAnimationFrame(() => {
       const container = scrollRef.current
-      container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' })
+      const target = messageRefs.current.get(latestUserKey)
+      if (!container || !target) return
+
+      container.scrollTo({
+        top: Math.max(target.offsetTop - 24, 0),
+        behavior: 'smooth'
+      })
+    })
+  }, [messages])
+
+  const setMessageRef = useCallback((key: string, node: HTMLDivElement | null) => {
+    if (node) {
+      messageRefs.current.set(key, node)
+    } else {
+      messageRefs.current.delete(key)
     }
-  }, [messages.length, isStreaming])
+  }, [])
 
   const requireAuth = (action: () => void) => {
     if (!hasHydrated) {
@@ -324,11 +357,19 @@ export function ChatInterface() {
         </div>
       )}
 
+      <GeminiLiveOrb
+        active={isGeminiLiveActive}
+        connected={isGeminiLiveConnected}
+        phase={geminiLivePhase}
+        level={geminiLiveAudioLevel}
+        onClose={stopGeminiLive}
+      />
+
       <div
         ref={scrollRef}
-        className={`absolute inset-0 overflow-y-auto pt-20 custom-scrollbar overscroll-contain ${
+        className={`absolute inset-0 overflow-y-auto pt-20 custom-scrollbar overscroll-contain transition-all duration-300 ${
           (isScreenShared || floatingState !== 'none') ? 'pb-56' : 'pb-40'
-        }`}
+        } ${isGeminiLiveActive ? 'opacity-25 blur-[2px] scale-[0.995]' : 'opacity-100 blur-0 scale-100'}`}
         style={{
           maskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))',
           WebkitMaskImage: 'linear-gradient(to bottom, transparent 0px, black 120px, black calc(100% - 100px), transparent calc(100% - 60px))'
@@ -336,12 +377,18 @@ export function ChatInterface() {
       >
         <div className="w-full max-w-5xl mx-auto px-4 flex flex-col gap-4">
           {messages.map((m, i) => {
+            const messageKey = `${m.id}-${i}`
+
             if (m.role === 'assistant' && isStreaming && i === messages.length - 1) {
               if (!hasVisibleContent(m.content)) return null;
             }
 
             return (
-              <div key={`${m.id}-${i}`} className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div
+                key={messageKey}
+                ref={(node) => setMessageRef(messageKey, node)}
+                className={`flex w-full ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+              >
                 
                 {m.role === 'user' && editingMessageId === m.id ? (
                   // UI MODO EDIÇÃO DA MENSAGEM DO USUÁRIO
@@ -463,98 +510,98 @@ export function ChatInterface() {
         </div>
       </div>
 
-      <div
-        className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 z-10 pointer-events-none transition-all duration-300 ${
-          isEmptyChat
-            ? 'top-1/2 -translate-y-1/2 pb-0'
-            : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
-        }`}
-      >
-        {isEmptyChat && (
-          <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
-            {emptyChatPrompt}
-          </h1>
-        )}
-        <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
-          {selectedFile && (
-            <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
-              <div className="bg-indigo-500/20 p-1.5 rounded-lg">
-                <FileUp className="w-4 h-4 text-indigo-400" />
-              </div>
-              <span className="text-sm font-medium text-zinc-200 max-w-[180px] truncate">
-                {selectedFile.name}
-              </span>
-              <button onClick={() => setSelectedFile(null)} className="ml-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 p-1 rounded-md transition-colors">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+      {!isGeminiLiveActive && (
+        <div
+          className={`absolute left-0 right-0 w-full max-w-5xl mx-auto px-4 pointer-events-none transition-all duration-300 ${
+            isEmptyChat
+              ? 'top-1/2 -translate-y-1/2 pb-0'
+              : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
+          } z-10`}
+        >
+          {isEmptyChat && (
+            <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
+              {emptyChatPrompt}
+            </h1>
           )}
+          <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
+            {selectedFile && (
+              <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
+                <div className="bg-indigo-500/20 p-1.5 rounded-lg">
+                  <FileUp className="w-4 h-4 text-indigo-400" />
+                </div>
+                <span className="text-sm font-medium text-zinc-200 max-w-[180px] truncate">
+                  {selectedFile.name}
+                </span>
+                <button onClick={() => setSelectedFile(null)} className="ml-1 text-zinc-400 hover:text-red-400 hover:bg-zinc-800 p-1 rounded-md transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
-          {/* CAIXA DE TEXTO MULTI-LINHA (AUTO-RESIZE) */}
-          <div className="flex items-end gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
+            {/* CAIXA DE TEXTO MULTI-LINHA (AUTO-RESIZE) */}
+            <div className="flex items-end gap-2 bg-[#121212] rounded-[24px] p-1.5 pr-2">
 
-            <div className="pb-0.5">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button id="tour-attachment-btn" variant="ghost" size="icon" className="rounded-full h-10 w-10 transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60">
-                    <Plus className="w-5 h-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
-                  <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                    <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
-                    <span className="font-medium text-[14px]">{t('app.send_file')}</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+              <div className="pb-0.5">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button id="tour-attachment-btn" variant="ghost" size="icon" className="rounded-full h-10 w-10 transition-colors text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60">
+                      <Plus className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
+                    <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                      <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
+                      <span className="font-medium text-[14px]">{t('app.send_file')}</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
+              <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
 
-            <textarea
-              ref={textareaRef}
-              value={inputValue}
-              onChange={e => {
-                setInputValue(e.target.value);
-                e.target.style.height = 'auto'; // Reseta a altura
-                e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Cresce até ao limite de 200px
-              }}
-              onKeyDown={e => {
-                // Se pressionar Enter (SEM o Shift), envia a mensagem.
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
-              }}
-              placeholder={t('app.send_message')}
-              rows={1}
-              className="placeholder-ellipsis flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-2.5 max-h-[200px] overflow-y-auto custom-scrollbar"
-              style={{ minHeight: '40px' }}
-            />
+              <textarea
+                ref={textareaRef}
+                value={inputValue}
+                onChange={e => {
+                  setInputValue(e.target.value);
+                  e.target.style.height = 'auto'; // Reseta a altura
+                  e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Cresce até ao limite de 200px
+                }}
+                onKeyDown={e => {
+                  // Se pressionar Enter (SEM o Shift), envia a mensagem.
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={t('app.send_message')}
+                rows={1}
+                className="placeholder-ellipsis flex-1 bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-2.5 max-h-[200px] overflow-y-auto custom-scrollbar"
+                style={{ minHeight: '40px' }}
+              />
 
-            <div className="flex items-center gap-1.5 pb-0.5">
-              {floatingState !== 'none' && (
+              <div className="flex items-center gap-1.5 pb-0.5">
                 <Button
                   id="tour-continuous-mic"
                   size="icon"
                   onClick={toggleGeminiLive}
-                  title={isGeminiLiveActive ? (language === 'pt-BR' ? "Encerrar Gemini Live" : "End Gemini Live") : (language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)")}
-                  className={`rounded-full w-10 h-10 transition-all ${isGeminiLiveActive ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.5)]' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}
+                  title={language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)"}
+                  className="rounded-full w-10 h-10 transition-all bg-transparent text-zinc-500 hover:bg-zinc-800/60"
                 >
-                  <AudioLines className={`w-5 h-5 ${isGeminiLiveActive ? 'animate-pulse scale-110' : ''}`} />
+                  <AudioLines className="w-5 h-5" />
                 </Button>
-              )}
-              <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
-                <Mic className="w-5 h-5" />
-              </Button>
-              <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
-                <Navigation className="w-5 h-5" />
-              </Button>
-            </div>
+                <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-10 h-10 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-500 hover:bg-zinc-800/60'}`}>
+                  <Mic className="w-5 h-5" />
+                </Button>
+                <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-10 h-10 transition-colors">
+                  <Navigation className="w-5 h-5" />
+                </Button>
+              </div>
 
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

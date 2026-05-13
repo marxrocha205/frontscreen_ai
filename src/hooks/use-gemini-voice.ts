@@ -12,6 +12,10 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([]) // Mudado para Blob[] para melhor tipagem
+  const startedAtRef = useRef(0)
+  const hasSpeechRef = useRef(false)
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const animationFrameRef = useRef<number | null>(null)
 
   const startRecording = useCallback(async () => {
     // Limpeza de segurança caso já exista uma gravação rodando
@@ -29,7 +33,7 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
           echoCancellation: { ideal: true },
           noiseSuppression: { ideal: true },
           autoGainControl: { ideal: true },
-          // @ts-ignore - Propriedade experimental para forçar o browser a ignorar áudio local
+          // @ts-expect-error - Propriedade experimental para forçar o browser a ignorar áudio local
           suppressLocalAudioPlayback: true,
         }
       })
@@ -37,6 +41,35 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
       
       mediaRecorderRef.current = mediaRecorder
       audioChunksRef.current = []
+      startedAtRef.current = Date.now()
+      hasSpeechRef.current = false
+
+      const audioContext = new AudioContext()
+      const source = audioContext.createMediaStreamSource(stream)
+      const analyser = audioContext.createAnalyser()
+      analyser.fftSize = 1024
+      source.connect(analyser)
+      audioContextRef.current = audioContext
+
+      const samples = new Uint8Array(analyser.fftSize)
+      const detectSpeech = () => {
+        analyser.getByteTimeDomainData(samples)
+        let sum = 0
+
+        for (let i = 0; i < samples.length; i += 1) {
+          const normalized = (samples[i] - 128) / 128
+          sum += normalized * normalized
+        }
+
+        if (Math.sqrt(sum / samples.length) > 0.025) {
+          hasSpeechRef.current = true
+        }
+
+        if (mediaRecorderRef.current?.state === 'recording') {
+          animationFrameRef.current = requestAnimationFrame(detectSpeech)
+        }
+      }
+      detectSpeech()
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -66,6 +99,25 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
 
       recorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' })
+        const recordedMs = Date.now() - startedAtRef.current
+        const hasEnoughAudio = audioBlob.size > 1200 && recordedMs > 350 && hasSpeechRef.current
+
+        // Cleanup: Desliga o hardware do microfone
+        recorder.stream.getTracks().forEach(track => track.stop())
+        if (animationFrameRef.current !== null) {
+          cancelAnimationFrame(animationFrameRef.current)
+          animationFrameRef.current = null
+        }
+        audioContextRef.current?.close().catch(() => {})
+        audioContextRef.current = null
+        setIsRecording(false)
+
+        if (!hasEnoughAudio) {
+          audioChunksRef.current = []
+          resolve(undefined)
+          return
+        }
+
         const reader = new FileReader()
         
         reader.readAsDataURL(audioBlob)
@@ -75,9 +127,6 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
           resolve(base64String)
         }
 
-        // Cleanup: Desliga o hardware do microfone
-        recorder.stream.getTracks().forEach(track => track.stop())
-        setIsRecording(false)
       }
 
       recorder.stop()

@@ -149,6 +149,14 @@ export function useWebsocket() {
           // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
           setIsStreaming(false) 
 
+          if (data.session_id) {
+            const { activeId, setActiveId, fetchConversations } = useConversations.getState()
+            if (!activeId) {
+              setActiveId(data.session_id)
+            }
+            fetchConversations()
+          }
+
           // Como já preenchemos o texto via 'chunk', apenas atualizamos a bolha com o ID real 
           // e garantimos que o texto final está 100% perfeito.
           const msgs = useChatStore.getState().messages;
