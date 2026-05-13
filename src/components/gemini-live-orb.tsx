@@ -1,6 +1,7 @@
 "use client"
 
 import { cn } from '@/lib/utils'
+import { X } from 'lucide-react'
 import type { CSSProperties } from 'react'
 
 type GeminiLiveOrbProps = {
@@ -8,17 +9,27 @@ type GeminiLiveOrbProps = {
   connected: boolean
   phase: 'idle' | 'connecting' | 'listening' | 'speaking'
   level: number
+  onClose: () => void
 }
 
-export function GeminiLiveOrb({ active, connected, phase, level }: GeminiLiveOrbProps) {
+export function GeminiLiveOrb({ active, connected, phase, level, onClose }: GeminiLiveOrbProps) {
   const normalizedLevel = Math.max(0, Math.min(1, level))
   const orbScale = 1 + normalizedLevel * (phase === 'speaking' ? 0.08 : 0.14)
 
   if (!active) return null
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center px-6">
+    <div className="pointer-events-none absolute inset-0 z-40 flex items-center justify-center px-6">
       <div className="absolute inset-0 bg-[#0a0a0a]/62 backdrop-blur-[2px]" />
+      <button
+        type="button"
+        onClick={onClose}
+        title="Encerrar Gemini Live"
+        aria-label="Encerrar Gemini Live"
+        className="pointer-events-auto absolute top-5 left-1/2 z-50 flex h-11 w-11 -translate-x-1/2 items-center justify-center rounded-full border border-zinc-700/70 bg-[#171717]/85 text-zinc-300 shadow-2xl backdrop-blur-md transition-colors hover:border-zinc-500 hover:bg-zinc-800 hover:text-white"
+      >
+        <X className="h-5 w-5" />
+      </button>
       <div className="relative flex flex-col items-center gap-8">
         <div
           className={cn(
