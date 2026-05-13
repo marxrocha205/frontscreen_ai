@@ -3,12 +3,17 @@ import { AudioRecorder, AudioPlayer } from '@/lib/audio-utils';
 import { useScreenShare } from './use-screen-share';
 import { useChatStore } from './use-chat-store';
 import { useVoiceConfig } from './use-voice-config';
+import { useConversations } from './use-conversations';
+import { config } from '@/lib/config';
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
 
 const createLiveMessageId = (role: 'user' | 'assistant') =>
   `live-${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+const createLiveSessionId = () =>
+  `live-session-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 type LiveState = {
   isActive: boolean;
@@ -64,6 +69,30 @@ const updateMessageContent = (messageId: string, content: string) => {
   });
 };
 
+const upsertLiveConversationPreview = (sessionId: string, title: string) => {
+  const now = new Date().toISOString();
+  const cleanTitle = title.trim();
+  if (!cleanTitle) return;
+
+  useConversations.setState((state) => {
+    const existingConversation = state.conversations.find((conversation) => conversation.id === sessionId);
+    const nextConversation = {
+      id: sessionId,
+      title: cleanTitle.length > 30 ? `${cleanTitle.slice(0, 30)}...` : cleanTitle,
+      created_at: existingConversation?.created_at || now,
+      updated_at: now
+    };
+
+    return {
+      activeId: state.activeId || sessionId,
+      conversations: [
+        nextConversation,
+        ...state.conversations.filter((conversation) => conversation.id !== sessionId)
+      ]
+    };
+  });
+};
+
 export function useGeminiLive() {
   const [isActive, setIsActive] = useState(liveState.isActive);
   const [isConnected, setIsConnected] = useState(liveState.isConnected);
@@ -89,8 +118,65 @@ export function useGeminiLive() {
   const currentAssistantTranscriptRef = useRef<string>("");
   const currentUserMessageIdRef = useRef<string | null>(null);
   const currentUserTranscriptRef = useRef<string>("");
+  const lastUserMessageIdRef = useRef<string | null>(null);
+  const lastUserTranscriptRef = useRef<string>("");
+  const liveConversationIdRef = useRef<string | null>(null);
+  const hasSyncedLiveConversationRef = useRef(false);
 
   const { isSharing, stream } = useScreenShare();
+
+  const persistLiveMessage = useCallback(async (
+    messageId: string,
+    role: 'user' | 'assistant',
+    content: string,
+    refreshList = false
+  ) => {
+    const trimmedContent = content.trim();
+    if (!trimmedContent) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) return;
+
+    const { activeId, setActiveId, fetchConversations } = useConversations.getState();
+    const sessionId = liveConversationIdRef.current || activeId || createLiveSessionId();
+    liveConversationIdRef.current = sessionId;
+    if (sessionId && role === 'user') {
+      upsertLiveConversationPreview(sessionId, trimmedContent);
+    }
+
+    try {
+      const response = await fetch(`${config.apiUrl}/api/chat/live-message`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message_id: messageId,
+          role,
+          content: trimmedContent
+        })
+      });
+
+      if (!response.ok) return;
+
+      const data = await response.json();
+      if (data.session_id) {
+        const shouldRefreshConversations = (!activeId && !hasSyncedLiveConversationRef.current) || refreshList;
+        liveConversationIdRef.current = data.session_id;
+        hasSyncedLiveConversationRef.current = true;
+        if (!activeId) {
+          setActiveId(data.session_id);
+        }
+        if (shouldRefreshConversations) {
+          await fetchConversations();
+        }
+      }
+    } catch (error) {
+      console.error("Erro ao salvar mensagem do Gemini Live:", error);
+    }
+  }, []);
 
   const markAssistantActivity = useCallback((sessionId: number) => {
     if (activeSessionIdRef.current !== sessionId) return;
@@ -202,6 +288,8 @@ export function useGeminiLive() {
     currentAssistantTranscriptRef.current = "";
     currentUserMessageIdRef.current = null;
     currentUserTranscriptRef.current = "";
+    lastUserMessageIdRef.current = null;
+    lastUserTranscriptRef.current = "";
     if (activeLiveOwner === liveOwnerRef.current) {
       activeLiveOwner = null;
       stopActiveGeminiLiveSession = null;
@@ -280,7 +368,10 @@ export function useGeminiLive() {
             currentUserTranscriptRef.current,
             inputTranscription.text
           );
+          lastUserMessageIdRef.current = currentUserMessageIdRef.current;
+          lastUserTranscriptRef.current = currentUserTranscriptRef.current;
           updateMessageContent(currentUserMessageIdRef.current, currentUserTranscriptRef.current);
+          persistLiveMessage(currentUserMessageIdRef.current, 'user', currentUserTranscriptRef.current, true);
         }
 
         if (serverContent.interrupted) {
@@ -305,8 +396,6 @@ export function useGeminiLive() {
               console.log("🤖 IA Texto:", part.text);
 
               if (!currentAssistantMessageIdRef.current) {
-                currentUserMessageIdRef.current = null;
-                currentUserTranscriptRef.current = "";
                 currentAssistantMessageIdRef.current = createLiveMessageId('assistant');
                 currentAssistantTranscriptRef.current = "";
                 addMessage({
@@ -321,6 +410,7 @@ export function useGeminiLive() {
                 part.text
               );
               updateMessageContent(currentAssistantMessageIdRef.current, currentAssistantTranscriptRef.current);
+              persistLiveMessage(currentAssistantMessageIdRef.current, 'assistant', currentAssistantTranscriptRef.current);
             }
           }
         }
@@ -330,8 +420,6 @@ export function useGeminiLive() {
           console.log("🤖 IA Transcrição:", outputTranscription.text);
 
           if (!currentAssistantMessageIdRef.current) {
-            currentUserMessageIdRef.current = null;
-            currentUserTranscriptRef.current = "";
             currentAssistantMessageIdRef.current = createLiveMessageId('assistant');
             currentAssistantTranscriptRef.current = "";
             addMessage({
@@ -346,13 +434,24 @@ export function useGeminiLive() {
             outputTranscription.text
           );
           updateMessageContent(currentAssistantMessageIdRef.current, currentAssistantTranscriptRef.current);
+          persistLiveMessage(currentAssistantMessageIdRef.current, 'assistant', currentAssistantTranscriptRef.current);
         }
 
         if (serverContent.turn_complete || serverContent.turnComplete) {
+          if (currentUserMessageIdRef.current && currentUserTranscriptRef.current) {
+            persistLiveMessage(currentUserMessageIdRef.current, 'user', currentUserTranscriptRef.current, true);
+          } else if (lastUserMessageIdRef.current && lastUserTranscriptRef.current) {
+            persistLiveMessage(lastUserMessageIdRef.current, 'user', lastUserTranscriptRef.current, true);
+          }
+          if (currentAssistantMessageIdRef.current && currentAssistantTranscriptRef.current) {
+            persistLiveMessage(currentAssistantMessageIdRef.current, 'assistant', currentAssistantTranscriptRef.current, true);
+          }
           currentAssistantMessageIdRef.current = null;
           currentAssistantTranscriptRef.current = "";
           currentUserMessageIdRef.current = null;
           currentUserTranscriptRef.current = "";
+          lastUserMessageIdRef.current = null;
+          lastUserTranscriptRef.current = "";
         }
       }
     } catch {
@@ -363,7 +462,7 @@ export function useGeminiLive() {
         audioPlayerRef.current?.playChunk(base64);
       }
     }
-  }, [addMessage, captureAndSendFrame, markAssistantActivity, stopSession]);
+  }, [addMessage, captureAndSendFrame, markAssistantActivity, persistLiveMessage, stopSession]);
 
   const startSession = useCallback(async () => {
     if (!GEMINI_API_KEY) return alert("Configure a API Key");
@@ -378,6 +477,11 @@ export function useGeminiLive() {
 
     isStartingRef.current = true;
     hasStartedRecorderRef.current = false;
+    const activeConversationId = useConversations.getState().activeId;
+    liveConversationIdRef.current = activeConversationId || createLiveSessionId();
+    hasSyncedLiveConversationRef.current = Boolean(activeConversationId);
+    lastUserMessageIdRef.current = null;
+    lastUserTranscriptRef.current = "";
     activeLiveOwner = liveOwnerRef.current;
     stopActiveGeminiLiveSession = stopSession;
     const sessionId = activeSessionIdRef.current + 1;
