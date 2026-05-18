@@ -212,6 +212,7 @@ export function ChatInterface() {
         if (textToSend) formData.append('text', textToSend)
         formData.append('file', fileToSend)
         if (activeId) formData.append('session_id', activeId)
+        if (selectedModel) formData.append('model', selectedModel)
 
         try {
           const res = await fetch(`${config.apiUrl}/api/chat/message`, {
