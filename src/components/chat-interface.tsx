@@ -18,6 +18,7 @@ import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { GeminiLiveOrb } from '@/components/gemini-live-orb'
+import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 
 export function ChatInterface() {
   const { t, language } = useI18n()
@@ -49,7 +50,7 @@ export function ChatInterface() {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan,selectedModel, setSelectedModel } = useChatStore()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
 
   useEffect(() => {
@@ -523,6 +524,20 @@ export function ChatInterface() {
               {emptyChatPrompt}
             </h1>
           )}
+          <div className="flex justify-center mb-3 pointer-events-auto">
+            <select
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              className="bg-[#1a1a1a]/80 backdrop-blur-md text-zinc-300 border border-zinc-800/80 rounded-full px-4 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-indigo-500/50 hover:bg-[#252525] transition-colors cursor-pointer appearance-none text-center shadow-lg"
+              style={{ textAlignLast: 'center' }}
+            >
+              {AI_MODELS.map((model) => (
+                <option key={model.id} value={model.id} className="bg-[#1a1a1a] text-left">
+                  {model.label} {model.requiresPro && userPlan === 'Free' ? '(Premium)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
           <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative">
             {selectedFile && (
               <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
