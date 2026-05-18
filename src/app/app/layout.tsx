@@ -496,7 +496,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         {model.label}
                       </span>
                       <span className="text-[12px] text-zinc-500 truncate leading-tight mt-0.5">
-                        {model.description}
+                      {model.provider}
                       </span>
                     </div>
                   </div>
