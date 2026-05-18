@@ -554,9 +554,9 @@ export function ChatInterface() {
 
               {/* Pill 2: GPT-5.1 */}
               <button
-                onClick={() => handleModelSelect('openrouter/openai/gpt-4o')}
+                onClick={() => handleModelSelect('openai/gpt-4o')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === 'openrouter/openai/gpt-4o'
+                  selectedModel === 'openai/gpt-4o'
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
@@ -566,16 +566,16 @@ export function ChatInterface() {
                   alt="GPT-5.1" 
                   width={16} 
                   height={16} 
-                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'openrouter/openai/gpt-4o' ? 'opacity-100' : 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all'}`} 
+                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'openai/gpt-4o' ? 'opacity-100' : 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all'}`} 
                 />
                 <span>GPT-5.1</span>
               </button>
 
               {/* Pill 3: Claude 4.6 Sonnet Thinking */}
               <button
-                onClick={() => handleModelSelect('openrouter/anthropic/claude-3.5-sonnet')}
+                onClick={() => handleModelSelect('anthropic/claude-3-5-sonnet-20241022')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === 'openrouter/anthropic/claude-3.5-sonnet'
+                  selectedModel === 'anthropic/claude-3-5-sonnet-20241022'
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
@@ -585,7 +585,7 @@ export function ChatInterface() {
                   alt="Claude" 
                   width={16} 
                   height={16} 
-                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'openrouter/anthropic/claude-3.5-sonnet' ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 transition-all'}`} 
+                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'anthropic/claude-3-5-sonnet-20241022' ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 transition-all'}`} 
                 />
                 <span>Claude 4.6 Sonnet Thinking</span>
               </button>
@@ -595,13 +595,13 @@ export function ChatInterface() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className={`group flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                      !['', 'openrouter/openai/gpt-4o', 'openrouter/anthropic/claude-3.5-sonnet'].includes(selectedModel)
+                      !['', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
                         ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                         : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                     }`}
                   >
                     <span>
-                      {!['', 'openrouter/openai/gpt-4o', 'openrouter/anthropic/claude-3.5-sonnet'].includes(selectedModel)
+                      {!['', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
                         ? AI_MODELS.find(m => m.id === selectedModel)?.label || (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')
                         : (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')}
                     </span>
