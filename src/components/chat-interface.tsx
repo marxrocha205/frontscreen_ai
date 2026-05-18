@@ -539,17 +539,17 @@ export function ChatInterface() {
             </h1>
             
             <div className="flex flex-wrap justify-center items-center gap-2.5 mb-6 pointer-events-auto max-w-full px-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-              {/* Pill 1: ScreenAI 1.0 (Auto) */}
+              {/* Pill 1: ScreenAI 1.2 */}
               <button
-                onClick={() => handleModelSelect('')}
+                onClick={() => handleModelSelect('screen-ai-1.2')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === ''
+                  selectedModel === 'screen-ai-1.2'
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
               >
                 <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-400 to-cyan-300 shadow-[0_0_8px_rgba(99,102,241,0.9)] animate-pulse shrink-0" />
-                <span>ScreenAI 1.0</span>
+                <span>ScreenAI 1.2</span>
               </button>
 
               {/* Pill 2: GPT-5.1 */}
@@ -595,13 +595,13 @@ export function ChatInterface() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className={`group flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                      !['', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
+                      !['screen-ai-1.2', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
                         ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                         : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                     }`}
                   >
                     <span>
-                      {!['', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
+                      {!['screen-ai-1.2', 'openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022'].includes(selectedModel)
                         ? AI_MODELS.find(m => m.id === selectedModel)?.label || (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')
                         : (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')}
                     </span>

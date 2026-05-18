@@ -2,7 +2,6 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: '', label: '✨ Automático (Melhor modelo do plano)', provider: 'ScreenAI', requiresPro: false }, 
   { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', provider: 'ScreenAI', requiresPro: false },// Se vazio, usa a sua regra de fallback do backend
   { id: 'openai/gpt-4o', label: '🟢 GPT-4o (OpenAI)', provider: 'OpenAI', requiresPro: false },
   { id: 'openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', provider: 'OpenAI', requiresPro: false },
