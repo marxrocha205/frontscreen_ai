@@ -518,11 +518,11 @@ export function ChatInterface() {
               : 'bottom-0 translate-y-0 pb-5 sm:pb-8'
           } z-10`}
         >
-          {isEmptyChat && (
-            <h1 className="pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
-              {emptyChatPrompt}
-            </h1>
-          )}
+        {isEmptyChat && (
+          <h1 className="empty-chat-prompt pointer-events-none mb-5 text-center text-2xl font-semibold leading-tight text-zinc-100 sm:mb-6 sm:text-3xl">
+            <span className="empty-chat-prompt__text">{emptyChatPrompt}</span>
+          </h1>
+        )}
           <div className="flex justify-center mb-3 pointer-events-auto">
             <select
               value={selectedModel}
