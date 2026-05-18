@@ -2,12 +2,23 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: 'auto', label: 'Auto', description: 'Escolha automática do melhor modelo para cada tarefa', requiresPro: false },
-  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', requiresPro: false },
-  { id: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash', description: 'Iteração rápida e respostas ágeis', requiresPro: true },
-  { id: 'gemini-1.5-pro', label: 'Gemini 3.1 Pro', description: '1M de contexto — ideal para transcrições longas', requiresPro: true },
-  { id: 'claude-3-opus', label: 'Claude Sonnet 4.6', description: 'Melhor para roteiros, legendas e escrita criativa', requiresPro: true },
-  { id: 'gpt-5', label: 'GPT-5.2 Thinking', description: 'Raciocínio profundo para decisões de edição complexas', requiresPro: true }
+  { id: '', label: '✨ Automático (Melhor modelo)', requiresPro: false },
+  
+  // Modelos OpenAI roteados pelo OpenRouter
+  { id: 'openrouter/openai/gpt-4o', label: '🟢 GPT-4o', requiresPro: true },
+  { id: 'openrouter/openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', requiresPro: false },
+  
+  // Modelos Google roteados pelo OpenRouter
+  { id: 'openrouter/google/gemini-2.5-pro', label: '🔵 Gemini 2.5 Pro', requiresPro: true },
+  { id: 'openrouter/google/gemini-2.5-flash', label: '🔵 Gemini 2.5 Flash', requiresPro: false },
+  
+  // Modelos Anthropic roteados pelo OpenRouter
+  { id: 'openrouter/anthropic/claude-3.5-sonnet', label: '🟠 Claude 3.5 Sonnet', requiresPro: true },
+  
+  // Modelos Open-Source / Outros
+  { id: 'openrouter/deepseek/deepseek-chat', label: '🐋 DeepSeek V3', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-r1', label: '🐋 DeepSeek R1 (Raciocínio)', requiresPro: true },
+  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: '🦙 Llama 3.3 70B', requiresPro: false }
 ]
 
 export interface Message {
