@@ -2,12 +2,14 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
+
   { id: '', label: '✨ Automático (Melhor modelo do plano)', requiresPro: false }, 
   { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', requiresPro: false },// Se vazio, usa a sua regra de fallback do backend
   { id: 'openai/gpt-4o', label: '🟢 GPT-4o (OpenAI)', requiresPro: true },
   { id: 'openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', requiresPro: false },
   { id: 'anthropic/claude-3-5-sonnet-20241022', label: '🟠 Claude 3.5 Sonnet', requiresPro: true },
   { id: 'gemini/gemini-2.5-pro', label: '🔵 Gemini 2.5 Pro', requiresPro: true },
+
   { id: 'openrouter/deepseek/deepseek-chat', label: '🐋 DeepSeek V3', requiresPro: false },
   { id: 'openrouter/deepseek/deepseek-r1', label: '🐋 DeepSeek R1 (Raciocínio)', requiresPro: true },
   { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: '🦙 Llama 3.3 70B', requiresPro: false }
