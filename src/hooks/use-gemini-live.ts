@@ -232,7 +232,7 @@ export function useGeminiLive() {
     if (!canvasRef.current) canvasRef.current = document.createElement('canvas');
     const canvas = canvasRef.current;
 
-    const width = 1920;
+    const width = Math.min(video.videoWidth || 3840, 3840);
     const height = (video.videoHeight / video.videoWidth) * width;
     if (isNaN(height) || height === 0) return;
 
@@ -242,7 +242,7 @@ export function useGeminiLive() {
     if (!ctx) return;
 
     ctx.drawImage(video, 0, 0, width, height);
-    const base64Image = canvas.toDataURL('image/jpeg', 0.9).split(',')[1];
+    const base64Image = canvas.toDataURL('image/jpeg', 1).split(',')[1];
     
     wsRef.current?.send(JSON.stringify({
       realtimeInput: { video: { mimeType: "image/jpeg", data: base64Image } }

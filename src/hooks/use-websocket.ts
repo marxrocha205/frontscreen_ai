@@ -222,18 +222,21 @@ export function useWebsocket() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       
       const { activeId } = useConversations.getState()
+      // 1. CAPTURAR O MODELO SELECIONADO NO STORE
+      const { selectedModel } = useChatStore.getState() 
 
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
       }
       
-      // AQUI LIGAMOS O LOADING PELA PRIMEIRA VEZ
       setIsStreaming(true)
 
+      // 2. ADICIONAR AO PAYLOAD FINAL
       const finalPayload = {
         ...payload,
         session_id: activeId,
-        language: document.documentElement.lang || 'pt-BR'
+        language: document.documentElement.lang || 'pt-BR',
+        model: selectedModel && selectedModel !== '' ? selectedModel : undefined // <-- A MÁGICA ACONTECE AQUI
       }
       wsRef.current.send(JSON.stringify(finalPayload))
     } else {
