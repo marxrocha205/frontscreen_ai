@@ -2,23 +2,15 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: '', label: '✨ Automático (Melhor modelo)', requiresPro: false },
-
-  // Modelos OpenAI roteados pelo OpenRouter
-  { id: 'openrouter/openai/gpt-4o', label: '🟢 GPT-4o', requiresPro: false },
-  { id: 'openrouter/openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', requiresPro: false },
-
-  // Modelos Google roteados pelo OpenRouter
-  { id: 'openrouter/google/gemini-2.5-pro', label: '🔵 Gemini 2.5 Pro', requiresPro: false },
-  { id: 'openrouter/google/gemini-2.5-flash', label: '🔵 Gemini 2.5 Flash', requiresPro: false },
-
-  // Modelos Anthropic roteados pelo OpenRouter
-  { id: 'openrouter/anthropic/claude-3.5-sonnet', label: '🟠 Claude 3.5 Sonnet', requiresPro: false },
-
-  // Modelos Open-Source / Outros
-  { id: 'openrouter/deepseek/deepseek-chat', label: '🐋 DeepSeek V3', requiresPro: false },
-  { id: 'openrouter/deepseek/deepseek-r1', label: '🐋 DeepSeek R1 (Raciocínio)', requiresPro: false },
-  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: '🦙 Llama 3.3 70B', requiresPro: false }
+  { id: '', label: '✨ Automático (Melhor modelo do plano)', provider: 'ScreenAI', requiresPro: false }, 
+  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', provider: 'ScreenAI', requiresPro: false },// Se vazio, usa a sua regra de fallback do backend
+  { id: 'openai/gpt-4o', label: '🟢 GPT-4o (OpenAI)', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', provider: 'OpenAI', requiresPro: false },
+  { id: 'anthropic/claude-3-5-sonnet-20241022', label: '🟠 Claude 3.5 Sonnet', provider: 'Anthropic', requiresPro: true },
+  { id: 'gemini/gemini-2.5-pro', label: '🔵 Gemini 2.5 Pro', provider: 'Google', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-chat', label: '🐋 DeepSeek V3', provider: 'DeepSeek', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-r1', label: '🐋 DeepSeek R1 (Raciocínio)', provider: 'DeepSeek', requiresPro: false },
+  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: '🦙 Llama 3.3 70B', provider: 'Meta', requiresPro: false }
 ]
 
 export interface Message {
