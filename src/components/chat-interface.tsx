@@ -539,24 +539,24 @@ export function ChatInterface() {
             </h1>
             
             <div className="flex flex-wrap justify-center items-center gap-2.5 mb-6 pointer-events-auto max-w-full px-4 animate-in fade-in slide-in-from-bottom-3 duration-500">
-              {/* Pill 1: Inner AI Fusion (Auto) */}
+              {/* Pill 1: ScreenAI 1.0 (Auto) */}
               <button
-                onClick={() => handleModelSelect('auto')}
+                onClick={() => handleModelSelect('')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === 'auto'
+                  selectedModel === ''
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
               >
                 <div className="w-3.5 h-3.5 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-400 to-cyan-300 shadow-[0_0_8px_rgba(99,102,241,0.9)] animate-pulse shrink-0" />
-                <span>Inner AI Fusion</span>
+                <span>ScreenAI 1.0</span>
               </button>
 
               {/* Pill 2: GPT-5.1 */}
               <button
-                onClick={() => handleModelSelect('gpt-5')}
+                onClick={() => handleModelSelect('openrouter/openai/gpt-4o')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === 'gpt-5'
+                  selectedModel === 'openrouter/openai/gpt-4o'
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
@@ -566,16 +566,16 @@ export function ChatInterface() {
                   alt="GPT-5.1" 
                   width={16} 
                   height={16} 
-                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'gpt-5' ? 'opacity-100' : 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all'}`} 
+                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'openrouter/openai/gpt-4o' ? 'opacity-100' : 'opacity-60 grayscale group-hover:opacity-100 group-hover:grayscale-0 transition-all'}`} 
                 />
                 <span>GPT-5.1</span>
               </button>
 
               {/* Pill 3: Claude 4.6 Sonnet Thinking */}
               <button
-                onClick={() => handleModelSelect('claude-3-opus')}
+                onClick={() => handleModelSelect('openrouter/anthropic/claude-3.5-sonnet')}
                 className={`group flex items-center gap-2.5 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                  selectedModel === 'claude-3-opus'
+                  selectedModel === 'openrouter/anthropic/claude-3.5-sonnet'
                     ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                     : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                 }`}
@@ -585,7 +585,7 @@ export function ChatInterface() {
                   alt="Claude" 
                   width={16} 
                   height={16} 
-                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'claude-3-opus' ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 transition-all'}`} 
+                  className={`w-4 h-4 object-contain shrink-0 ${selectedModel === 'openrouter/anthropic/claude-3.5-sonnet' ? 'opacity-100' : 'opacity-60 group-hover:opacity-100 transition-all'}`} 
                 />
                 <span>Claude 4.6 Sonnet Thinking</span>
               </button>
@@ -595,13 +595,13 @@ export function ChatInterface() {
                 <DropdownMenuTrigger asChild>
                   <button
                     className={`group flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold cursor-pointer transition-all duration-200 ${
-                      !['auto', 'gpt-5', 'claude-3-opus'].includes(selectedModel)
+                      !['', 'openrouter/openai/gpt-4o', 'openrouter/anthropic/claude-3.5-sonnet'].includes(selectedModel)
                         ? 'border border-zinc-100 bg-[#1e2030]/80 text-zinc-100 shadow-[0_0_12px_rgba(99,102,241,0.15)] scale-[1.02]'
                         : 'border border-zinc-800/80 bg-[#141414]/30 text-zinc-400 hover:text-zinc-200 hover:bg-[#1f1f1f]/80'
                     }`}
                   >
                     <span>
-                      {!['auto', 'gpt-5', 'claude-3-opus'].includes(selectedModel)
+                      {!['', 'openrouter/openai/gpt-4o', 'openrouter/anthropic/claude-3.5-sonnet'].includes(selectedModel)
                         ? AI_MODELS.find(m => m.id === selectedModel)?.label || (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')
                         : (language === 'pt-BR' ? 'Ver todos os modelos' : 'View all models')}
                     </span>
