@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -328,13 +328,19 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
             {/* Botão de Destacar Chat (PiP / Popup) */}
             <Button
-              id="tour-pip-chat"
-              variant="ghost"
-              onClick={() => handleAuthAction(openChat)}
-              className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
-                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
-                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-                }`}
+               id="tour-pip-chat"
+               variant="ghost"
+               onClick={() => handleAuthAction(() => {
+                 if (isMobileDevice()) {
+                   setShowMobileWarning(true)
+                   return
+                 }
+                 openChat()
+               })}
+               className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
+                 ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                 : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                 }`}
             >
               <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
               <span className="text-sm font-medium">
@@ -383,7 +389,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                         <span className="truncate flex-1">{item.title}</span>
                       )}
                     </button>
-                    <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                    <div className="absolute right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
                       <button
                         onClick={(e) => startEditing(e, item.id, item.title)}
                         className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
@@ -474,14 +480,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
       <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
         <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
-          <DialogHeader>
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mx-auto mb-2">
-              <MonitorUp className="w-6 h-6 text-zinc-400" />
+          <DialogHeader className="flex flex-col items-center justify-center text-center">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mb-2">
+              <Laptop className="w-6 h-6 text-zinc-400" />
             </div>
             <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
               {t('app.exclusive_desktop')}
             </DialogTitle>
-            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed">
+            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed mt-1">
               {t('app.exclusive_desktop_desc')}
             </DialogDescription>
           </DialogHeader>

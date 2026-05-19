@@ -138,5 +138,5 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
 }
 
 function ScrollWrapper({ children }: { children: React.ReactNode }) {
-  return <div className="px-6 pb-6 pt-2 h-[420px] overflow-y-auto custom-scrollbar">{children}</div>
+  return <div className="px-6 pb-6 pt-2 h-[calc(85vh-160px)] md:h-[420px] max-h-[420px] overflow-y-auto custom-scrollbar">{children}</div>
 }
