@@ -254,8 +254,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             />
           </div>
           <div id="tour-sidebar-toggle" className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen
-              ? 'opacity-100 rotate-0'
-              : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
+            ? 'opacity-100 rotate-0'
+            : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
             }`}>
             {isSidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
           </div>
@@ -268,20 +268,20 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       >
         <div className="w-64 flex flex-col h-full">
           <div className="p-3 flex items-center justify-between h-[80px]">
-          <div className={`flex items-center pl-1 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-            <Image
-              src="/logobranco-semfundo.png"
-              alt="Screen AI Logo"
-              width={180}
-              height={56}
-              className="h-15 md:h-15 lg:h-15 w-auto object-contain"
-              priority
-            />
+            <div className={`flex items-center pl-1 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+              <Image
+                src="/logobranco-semfundo.png"
+                alt="Screen AI Logo"
+                width={180}
+                height={56}
+                className="h-15 md:h-15 lg:h-15 w-auto object-contain"
+                priority
+              />
+            </div>
+            <div className="w-10 h-10 pointer-events-none" />
           </div>
-          <div className="w-10 h-10 pointer-events-none" />
-        </div>
 
-        <div className="px-3 pb-3 flex flex-col gap-2">
+          <div className="px-3 pb-3 flex flex-col gap-2">
             <Button
               id="tour-new-chat"
               variant="ghost"
@@ -301,213 +301,173 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               <span className="text-sm font-medium">{t('app.search_chat')}</span>
             </Button>
 
-          {isSearchOpen && (
-            <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
-              <Input
-                autoFocus
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t('app.search_chat')}
-                className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
-              />
-            </div>
-          )}
+            {isSearchOpen && (
+              <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
+                <Input
+                  autoFocus
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t('app.search_chat')}
+                  className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
+                />
+              </div>
+            )}
 
             <Button
               id="tour-screen-share"
               variant="ghost"
               onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
               className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
-                  ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-                  : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
                 }`}
             >
               <MonitorUp className="w-4 h-4" />
               <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
             </Button>
 
-          {/* Botão de Destacar Chat (PiP / Popup) */}
+            {/* Botão de Destacar Chat (PiP / Popup) */}
             <Button
               id="tour-pip-chat"
               variant="ghost"
               onClick={() => handleAuthAction(openChat)}
               className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
-                  ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
-                  : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
                 }`}
             >
               <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
               <span className="text-sm font-medium">
-                {floatingState === 'none' && (language === 'pt-BR' ? 'Destacar Chat (PiP)' : 'Detach Chat (PiP)')}
+                {floatingState === 'none' && (language === 'pt-BR' ? 'Abrir Chat Flutuante' : 'Detach Chat (PiP)')}
                 {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar (PiP Nativo)' : 'Restore (Native PiP)')}
                 {floatingState === 'popup' && (language === 'pt-BR' ? 'Restaurar (Popup)' : 'Restore (Popup)')}
               </span>
             </Button>
 
-        </div>
-
-        <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
-          <div className="px-3 py-2 mb-1">
-            <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Suas conversas' : 'Your conversations'}</span>
           </div>
 
-          <div className="space-y-[2px]">
-            {isLoading ? (
-              <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">{language === 'pt-BR' ? 'A carregar...' : 'Loading...'}</div>
-            ) : filteredConversations.length === 0 ? (
-              <div className="text-zinc-600 text-[13px] px-3 mt-2">
-                {searchQuery ? (language === 'pt-BR' ? 'Nenhuma conversa encontrada.' : 'No conversation found.') : (language === 'pt-BR' ? 'Nenhuma conversa ainda.' : 'No conversation yet.')}
-              </div>
-            ) : (
-              filteredConversations.map((item) => (
-                <div key={item.id} className="w-full relative flex items-center group">
-                  <button
-                    onClick={() => loadConversation(item.id)}
-                    className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
-                      }`}
-                  >
-                    <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-
-                    {editingId === item.id ? (
-                      <Input
-                        autoFocus
-                        value={editingTitle}
-                        onChange={(e) => setEditingTitle(e.target.value)}
-                        onBlur={() => handleRenameSubmit(item.id)}
-                        onKeyDown={(e) => handleKeyDown(e, item.id)}
-                        onClick={(e) => e.stopPropagation()}
-                        maxLength={30}
-                        className="h-6 px-1.5 py-0 bg-zinc-900 border-zinc-700 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-indigo-500 flex-1 min-w-0"
-                      />
-                    ) : (
-                      <span className="truncate flex-1">{item.title}</span>
-                    )}
-                  </button>
-                  <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                    <button
-                      onClick={(e) => startEditing(e, item.id, item.title)}
-                      className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                      title={language === 'pt-BR' ? "Renomear" : "Rename"}
-                    >
-                      <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
-                      className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                      title={language === 'pt-BR' ? "Excluir" : "Delete"}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
-          {hasHydrated && !isLoggedIn && (
-            <div className="px-1 py-2 flex flex-col gap-3">
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-zinc-100 leading-tight">
-                  {t('help.personalized_responses')}
-                </span>
-                <p className="text-[13px] text-zinc-500 leading-normal">
-                  {t('help.login_benefit')}
-                </p>
-              </div>
-              <Button
-                onClick={() => router.push('/login')}
-                className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
-              >
-                {t('register.login')}
-              </Button>
+          <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
+            <div className="px-3 py-2 mb-1">
+              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Suas conversas' : 'Your conversations'}</span>
             </div>
-          )}
 
-          {hasHydrated && isLoggedIn ? (
-            <SettingsDialog trigger={
-              <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+            <div className="space-y-[2px]">
+              {isLoading ? (
+                <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">{language === 'pt-BR' ? 'A carregar...' : 'Loading...'}</div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="text-zinc-600 text-[13px] px-3 mt-2">
+                  {searchQuery ? (language === 'pt-BR' ? 'Nenhuma conversa encontrada.' : 'No conversation found.') : (language === 'pt-BR' ? 'Nenhuma conversa ainda.' : 'No conversation yet.')}
+                </div>
+              ) : (
+                filteredConversations.map((item) => (
+                  <div key={item.id} className="w-full relative flex items-center group">
+                    <button
+                      onClick={() => loadConversation(item.id)}
+                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
+                        }`}
+                    >
+                      <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+
+                      {editingId === item.id ? (
+                        <Input
+                          autoFocus
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onBlur={() => handleRenameSubmit(item.id)}
+                          onKeyDown={(e) => handleKeyDown(e, item.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          maxLength={30}
+                          className="h-6 px-1.5 py-0 bg-zinc-900 border-zinc-700 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-indigo-500 flex-1 min-w-0"
+                        />
+                      ) : (
+                        <span className="truncate flex-1">{item.title}</span>
+                      )}
+                    </button>
+                    <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                      <button
+                        onClick={(e) => startEditing(e, item.id, item.title)}
+                        className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                        title={language === 'pt-BR' ? "Renomear" : "Rename"}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
+                        className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                        title={language === 'pt-BR' ? "Excluir" : "Delete"}
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
+            {hasHydrated && !isLoggedIn && (
+              <div className="px-1 py-2 flex flex-col gap-3">
+                <div className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold text-zinc-100 leading-tight">
+                    {t('help.personalized_responses')}
+                  </span>
+                  <p className="text-[13px] text-zinc-500 leading-normal">
+                    {t('help.login_benefit')}
+                  </p>
+                </div>
+                <Button
+                  onClick={() => router.push('/login')}
+                  className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
+                >
+                  {t('register.login')}
+                </Button>
+              </div>
+            )}
+
+            {hasHydrated && isLoggedIn ? (
+              <SettingsDialog trigger={
+                <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                  <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+                  <span className="text-sm">{t('app.settings')}</span>
+                </Button>
+              } />
+            ) : (
+              <Button
+                id="tour-settings"
+                variant="ghost"
+                onClick={() => handleAuthAction(() => { })}
+                className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
+              >
                 <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
                 <span className="text-sm">{t('app.settings')}</span>
               </Button>
-            } />
-          ) : (
-            <Button
-              id="tour-settings"
-              variant="ghost"
-              onClick={() => handleAuthAction(() => { })}
-              className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
-            >
-              <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-              <span className="text-sm">{t('app.settings')}</span>
-            </Button>
-          )}
+            )}
 
-          {hasHydrated && isLoggedIn && (
-            <SettingsDialog
-              defaultTab="account"
-              trigger={
-                <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
-                  <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
-                    <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium">
-                      {user?.email?.substring(0, 2).toUpperCase() || 'US'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start leading-tight">
-                    <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
-                    <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
-                  </div>
-                </Button>
-              }
-            />
-          )}
-        </div>
+            {hasHydrated && isLoggedIn && (
+              <SettingsDialog
+                defaultTab="account"
+                trigger={
+                  <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                    <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
+                      <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium">
+                        {user?.email?.substring(0, 2).toUpperCase() || 'US'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start leading-tight">
+                      <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
+                      <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
+                    </div>
+                  </Button>
+                }
+              />
+            )}
+          </div>
         </div>
       </div>
 
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-        <div className="absolute top-4 left-0 right-0 z-30 flex items-center justify-center pointer-events-none h-10">
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                id="tour-model-selector"
-                variant="ghost"
-                className="pointer-events-auto flex items-center justify-center w-10 h-10 rounded-xl text-zinc-200 hover:bg-zinc-800/60 transition-all"
-              >
-                <ModelIcon id={selectedModel} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="center"
-              className="w-[320px] bg-zinc-900/95 backdrop-blur-md border border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100] pointer-events-auto"
-            >
-              {AI_MODELS.map(model => (
-                <DropdownMenuItem
-                  key={model.id}
-                  onClick={() => handleModelSelect(model)}
-                  className="flex items-center justify-between gap-3 py-2.5 px-3 focus:bg-zinc-800/80 focus:text-white cursor-pointer rounded-lg transition-all duration-200 group"
-                >
-                  <div className="flex items-center gap-3 w-full min-w-0">
-                    <ModelIcon id={model.id} />
-                    <div className="flex flex-col justify-center min-w-0 flex-1">
-                      <span className="font-medium text-[14px] text-zinc-200 group-hover:text-white leading-tight">
-                        {model.label}
-                      </span>
-                      <span className="text-[12px] text-zinc-500 truncate leading-tight mt-0.5">
-                      {model.provider}
-                      </span>
-                    </div>
-                  </div>
-                  {selectedModel === model.id && (
-                    <Check className="w-4 h-4 text-indigo-400 shrink-0 animate-in fade-in zoom-in duration-200 ml-2" />
-                  )}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
 
         {children}
       </div>

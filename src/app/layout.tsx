@@ -35,7 +35,7 @@ export default function RootLayout({
       className={`${inter.className} dark h-[100dvh] overflow-hidden overscroll-none antialiased bg-black`}
       suppressHydrationWarning
     >
-      <body className="h-[100dvh] flex flex-col overflow-hidden overscroll-none bg-black" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
+      <body className="h-[100dvh] flex flex-col overflow-hidden overscroll-none bg-black" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

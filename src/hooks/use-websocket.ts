@@ -74,7 +74,7 @@ export function useWebsocket() {
 
     // Puxa o token que guardámos no Login
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-    
+
     if (!token) {
       syncFromStorage()
       return // Sem token: o usuário não está logado, mas pode navegar livremente
@@ -129,7 +129,7 @@ export function useWebsocket() {
           if (currentMessages.length > 0) {
             const lastMsgIndex = currentMessages.length - 1;
             const lastMsg = currentMessages[lastMsgIndex];
-            
+
             // Se a última bolha for da IA, anexamos o pedacinho (chunk) ao texto dela
             if (lastMsg.role === 'assistant') {
               useChatStore.setState({
@@ -147,7 +147,7 @@ export function useWebsocket() {
         // =======================================================
         case 'ai_response':
           // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
-          setIsStreaming(false) 
+          setIsStreaming(false)
 
           if (data.session_id) {
             const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -163,7 +163,7 @@ export function useWebsocket() {
           if (msgs.length > 0) {
             const lastMsgIndex = msgs.length - 1;
             const lastMsg = msgs[lastMsgIndex];
-            
+
             if (lastMsg.role === 'assistant' && lastMsg.id === 'streaming-msg') {
               useChatStore.setState({
                 messages: [
@@ -177,14 +177,14 @@ export function useWebsocket() {
               addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
             }
           } else {
-             addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+            addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
           }
 
           // Toca áudio vindo do servidor (caso ainda venha algum, embora desativado no backend)
           const { isSoundEnabled } = useChatStore.getState()
           if (isSoundEnabled && data.audio_base64) {
-              currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
-              currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
+            currentPremiumAudio = new Audio("data:audio/mp3;base64," + data.audio_base64)
+            currentPremiumAudio.play().catch(e => console.error("Erro ao tocar áudio:", e))
           }
 
           // Atualiza os créditos na tela
@@ -212,7 +212,7 @@ export function useWebsocket() {
     return () => {
       ws.close()
       if (wsRef.current === ws) {
-      wsRef.current = null
+        wsRef.current = null
       }
     }
   }, [isLoggedIn, reconnectKey, syncFromStorage, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage])
@@ -220,15 +220,15 @@ export function useWebsocket() {
   // Função para enviar o Payload Multimodal
   const sendMessage = useCallback((payload: { text?: string, image_base64?: string, audio_base64?: string }) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      
+
       const { activeId } = useConversations.getState()
       // 1. CAPTURAR O MODELO SELECIONADO NO STORE
-      const { selectedModel } = useChatStore.getState() 
+      const { selectedModel } = useChatStore.getState()
 
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
       }
-      
+
       setIsStreaming(true)
 
       // 2. ADICIONAR AO PAYLOAD FINAL
