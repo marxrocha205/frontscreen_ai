@@ -28,7 +28,7 @@ const modelDescriptions: Record<string, { title: string; desc: string }> = {
     desc: 'Velocidade cotidiana e ótimo para tarefas do dia a dia.'
   },
   'openai/gpt-4o-mini': {
-    title: 'GPT-3.5 Turbo', // matching visual label style
+    title: 'GPT-4o Mini',
     desc: 'Respostas rápidas, leve e super inteligente.'
   },
   'openrouter/deepseek/deepseek-chat': {
