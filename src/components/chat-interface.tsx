@@ -165,9 +165,21 @@ export function ChatInterface() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
+  const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null) // Referência para a caixa de texto expansível
+  const creditsRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (creditsRef.current && !creditsRef.current.contains(event.target as Node)) {
+        setShowCreditsTooltip(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   // Estados para Edição de Mensagem
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
@@ -573,12 +585,21 @@ export function ChatInterface() {
       </Dialog>
 
       {hasHydrated && isLoggedIn && (
-        <div id="tour-credits" className="absolute top-4 right-4 z-50 group">
+        <div 
+          ref={creditsRef}
+          id="tour-credits" 
+          className="absolute top-4 right-4 z-50 group"
+          onMouseEnter={() => setShowCreditsTooltip(true)}
+          onMouseLeave={() => setShowCreditsTooltip(false)}
+        >
           {/* Badge principal */}
-          <div className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-default transition-colors duration-200 ${(credits !== null && credits < 20)
-            ? 'border-red-500/40 hover:border-red-500/60'
-            : 'border-zinc-800 hover:border-zinc-700'
-            }`}>
+          <div 
+            onClick={() => setShowCreditsTooltip(!showCreditsTooltip)}
+            className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-pointer select-none transition-colors duration-200 ${(credits !== null && credits < 20)
+              ? 'border-red-500/40 hover:border-red-500/60'
+              : 'border-zinc-800 hover:border-zinc-700'
+            }`}
+          >
             <span className={`text-sm font-bold ${(credits !== null && credits < 20) ? 'text-red-400' : 'text-zinc-200'
               }`}>
               {credits !== null ? credits.toLocaleString(language) : '--'}
@@ -590,7 +611,11 @@ export function ChatInterface() {
           </div>
 
           {/* Tooltip card */}
-          <div className="absolute top-full right-0 pt-2 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-200 origin-top-right">
+          <div className={`absolute top-full right-0 pt-2 transition-all duration-200 origin-top-right ${
+            showCreditsTooltip 
+              ? 'opacity-100 scale-100 pointer-events-auto' 
+              : 'opacity-0 scale-95 pointer-events-none'
+          }`}>
             <div className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
@@ -956,7 +981,7 @@ export function ChatInterface() {
                       <span>{language === 'pt-BR' ? 'Adicionar' : 'Add'}</span>
                     </button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100]">
+                  <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100] transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 duration-150 ease-out">
                     <DropdownMenuItem onClick={() => fileInputRef.current?.click()} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                       <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                       <span className="font-medium text-[14px]">{t('app.send_file')}</span>
