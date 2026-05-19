@@ -148,6 +148,11 @@ export function useWebsocket() {
         case 'ai_response':
           // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
           setIsStreaming(false)
+          
+          console.log("=========================================")
+          console.log("✅ Resposta final da IA recebida!")
+          console.log("Mensagem Completa:", data.message)
+          console.log("=========================================")
 
           if (data.session_id) {
             const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -238,6 +243,11 @@ export function useWebsocket() {
         language: document.documentElement.lang || 'pt-BR',
         model: selectedModel && selectedModel !== '' ? selectedModel : undefined // <-- A MÁGICA ACONTECE AQUI
       }
+      
+      console.log("=========================================")
+      console.log("🧠 IA Selecionada para envio:", finalPayload.model || "Padrão do Plano")
+      console.log("=========================================")
+      
       wsRef.current.send(JSON.stringify(finalPayload))
     } else {
       alert("Aguarde a conexão com o servidor de IA.")

@@ -91,7 +91,18 @@ function CheckoutContent() {
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card')
   const [isLoading,     setIsLoading]     = useState(false)
-  const [pixForm,       setPixForm]       = useState({ cpf: '', name: '' })
+  const [pixForm,       setPixForm]       = useState({ 
+    cpf: '', 
+    name: '',
+    phone: '',
+    zip_code: '',
+    street_name: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: ''
+  })
   const [pixData,       setPixData]       = useState<{ qrcode: string; copyPaste: string } | null>(null)
 
   useEffect(() => {
@@ -101,6 +112,29 @@ function CheckoutContent() {
   useEffect(() => {
     if (hasHydrated && !isLoggedIn) router.push('/login')
   }, [hasHydrated, isLoggedIn, router])
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    let cep = e.target.value.replace(/\D/g, '')
+    setPixForm(prev => ({ ...prev, zip_code: cep }))
+    
+    if (cep.length === 8) {
+      try {
+        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        const data = await res.json()
+        if (!data.erro) {
+          setPixForm(prev => ({
+            ...prev,
+            street_name: data.logradouro || '',
+            neighborhood: data.bairro || '',
+            city: data.localidade || '',
+            state: data.uf || ''
+          }))
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error)
+      }
+    }
+  }
 
   const handlePixSubmit = async () => {
     setIsLoading(true)
@@ -113,7 +147,14 @@ function CheckoutContent() {
           plan_id:   selectedPlan.id,
           full_name: pixForm.name,
           document:  pixForm.cpf.replace(/\D/g, ''),
-          phone:     '00000000000',
+          phone:     pixForm.phone.replace(/\D/g, ''),
+          street_name: pixForm.street_name,
+          number:    pixForm.number,
+          complement: pixForm.complement,
+          neighborhood: pixForm.neighborhood,
+          city:      pixForm.city,
+          state:     pixForm.state,
+          zip_code:  pixForm.zip_code.replace(/\D/g, '')
         }),
       })
       const data = await response.json()
@@ -269,18 +310,84 @@ function CheckoutContent() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                 <input
                   type="text"
-                  placeholder="CPF or CNPJ"
+                  placeholder="Nome completo"
+                  value={pixForm.name}
+                  onChange={e => setPixForm({ ...pixForm, name: e.target.value })}
+                  style={inputStyle}
+                />
+                <input
+                  type="text"
+                  placeholder="CPF ou CNPJ"
                   value={pixForm.cpf}
                   onChange={e => setPixForm({ ...pixForm, cpf: e.target.value })}
                   style={inputStyle}
                 />
                 <input
                   type="text"
-                  placeholder="Nome completo"
-                  value={pixForm.name}
-                  onChange={e => setPixForm({ ...pixForm, name: e.target.value })}
+                  placeholder="Celular (com DDD)"
+                  value={pixForm.phone}
+                  onChange={e => setPixForm({ ...pixForm, phone: e.target.value })}
                   style={inputStyle}
                 />
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8, marginTop: 8 }}>
+                   <p style={{ margin: '0', fontSize: 13, color: '#9ca3af', fontWeight: 500, paddingLeft: 4 }}>Endereço de Cobrança</p>
+                   <input
+                      type="text"
+                      placeholder="CEP"
+                      value={pixForm.zip_code}
+                      onChange={handleCepChange}
+                      maxLength={9}
+                      style={inputStyle}
+                   />
+                   <input
+                      type="text"
+                      placeholder="Rua / Logradouro"
+                      value={pixForm.street_name}
+                      onChange={e => setPixForm({ ...pixForm, street_name: e.target.value })}
+                      style={inputStyle}
+                   />
+                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                       <input
+                          type="text"
+                          placeholder="Número"
+                          value={pixForm.number}
+                          onChange={e => setPixForm({ ...pixForm, number: e.target.value })}
+                          style={inputStyle}
+                       />
+                       <input
+                          type="text"
+                          placeholder="Complemento"
+                          value={pixForm.complement}
+                          onChange={e => setPixForm({ ...pixForm, complement: e.target.value })}
+                          style={inputStyle}
+                       />
+                   </div>
+                   <input
+                      type="text"
+                      placeholder="Bairro"
+                      value={pixForm.neighborhood}
+                      onChange={e => setPixForm({ ...pixForm, neighborhood: e.target.value })}
+                      style={inputStyle}
+                   />
+                   <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
+                       <input
+                          type="text"
+                          placeholder="Cidade"
+                          value={pixForm.city}
+                          onChange={e => setPixForm({ ...pixForm, city: e.target.value })}
+                          style={inputStyle}
+                       />
+                       <input
+                          type="text"
+                          placeholder="UF"
+                          value={pixForm.state}
+                          onChange={e => setPixForm({ ...pixForm, state: e.target.value })}
+                          maxLength={2}
+                          style={inputStyle}
+                       />
+                   </div>
+                </div>
 
                 {/* QR code notice */}
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 4px 4px' }}>
