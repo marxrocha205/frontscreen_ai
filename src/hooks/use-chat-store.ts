@@ -16,6 +16,7 @@ export interface Message {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  model?: string
 }
 
 // Tipo discriminado para os 3 estados possíveis do chat flutuante
