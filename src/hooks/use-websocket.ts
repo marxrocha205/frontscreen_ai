@@ -115,7 +115,15 @@ export function useWebsocket() {
           }
 
           // Cria uma "bolha" de mensagem vazia na tela com um ID temporário
-          addMessage({ id: 'streaming-msg', role: 'assistant', content: '' })
+          const storeState = useChatStore.getState()
+          console.log('%c[WS][stream_start] ✅ Streaming iniciado. Modelo atribuído à mensagem:', 'color: #34d399; font-weight: bold', storeState.selectedModel || '(não definido)')
+          addMessage({ 
+            id: 'streaming-msg', 
+            role: 'assistant', 
+            content: '',
+            model: storeState.selectedModel,
+            agent_id: storeState.selectedAgentId 
+          })
           break;
 
         // =======================================================
@@ -149,10 +157,9 @@ export function useWebsocket() {
           // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
           setIsStreaming(false)
           
-          console.log("=========================================")
-          console.log("✅ Resposta final da IA recebida!")
-          console.log("Mensagem Completa:", data.message)
-          console.log("=========================================")
+          console.log('%c[WS][ai_response] ✅ Resposta final recebida do backend:', 'color: #22c55e; font-weight: bold')
+          console.log('%c[WS][ai_response] Modelo que o frontend associou à resposta:', 'color: #22c55e', useChatStore.getState().selectedModel)
+          console.log('%c[WS][ai_response] Model field no evento WS:', 'color: #22c55e', data.model || '(backend não enviou campo model no evento)')
 
           if (data.session_id) {
             const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -227,8 +234,8 @@ export function useWebsocket() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
 
       const { activeId } = useConversations.getState()
-      // 1. CAPTURAR O MODELO SELECIONADO NO STORE
-      const { selectedModel } = useChatStore.getState()
+      // 1. CAPTURAR O MODELO E AGENTE SELECIONADOS NO STORE
+      const { selectedModel, selectedAgentId } = useChatStore.getState()
 
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
@@ -241,12 +248,15 @@ export function useWebsocket() {
         ...payload,
         session_id: activeId,
         language: document.documentElement.lang || 'pt-BR',
-        model: selectedModel && selectedModel !== '' ? selectedModel : undefined // <-- A MÁGICA ACONTECE AQUI
+        model: selectedModel && selectedModel !== '' ? selectedModel : undefined, // <-- A MÁGICA ACONTECE AQUI
+        agent_id: selectedAgentId && selectedAgentId !== '' ? selectedAgentId : undefined // <-- A MÁGICA DO AGENTE AQUI
       }
       
-      console.log("=========================================")
-      console.log("🧠 IA Selecionada para envio:", finalPayload.model || "Padrão do Plano")
-      console.log("=========================================")
+      console.log('%c[WS][SEND] ========================================', 'color: #818cf8; font-weight: bold')
+      console.log('%c[WS][SEND] 🧠 Modelo selecionado no store:', 'color: #818cf8', selectedModel || '(vazio - usa padrão do backend)')
+      console.log('%c[WS][SEND] Agente selecionado:', 'color: #818cf8', selectedAgentId || '(nenhum)')
+      console.log('%c[WS][SEND] Payload completo enviado ao backend:', 'color: #818cf8', JSON.stringify(finalPayload, null, 2))
+      console.log('%c[WS][SEND] ========================================', 'color: #818cf8; font-weight: bold')
       
       wsRef.current.send(JSON.stringify(finalPayload))
     } else {

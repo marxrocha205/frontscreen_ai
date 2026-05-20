@@ -122,7 +122,9 @@
   * {
     @apply border-border outline-ring/50;
   }
-  html, body {
+
+  html,
+  body {
     @apply bg-black text-foreground font-sans;
     height: 100dvh;
     max-height: 100dvh;
@@ -139,10 +141,14 @@
 }
 
 @keyframes typing-dot {
-  0%, 60%, 100% {
+
+  0%,
+  60%,
+  100% {
     transform: translateY(0);
     opacity: 0.4;
   }
+
   30% {
     transform: translateY(-4px);
     opacity: 1;
@@ -183,6 +189,7 @@
     transform: translateY(12px) scale(0.985);
     filter: blur(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -321,48 +328,64 @@
 }
 
 @keyframes gemini-orb-breathe {
-  0%, 100% {
+
+  0%,
+  100% {
     border-radius: 47% 53% 52% 48% / 48% 46% 54% 52%;
   }
+
   50% {
     border-radius: 52% 48% 46% 54% / 51% 54% 46% 49%;
   }
 }
 
 @keyframes gemini-orb-aura {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(0.96);
   }
+
   50% {
     transform: scale(1.06);
   }
 }
 
 @keyframes gemini-orb-speaking-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(calc(var(--live-scale) * 0.985)) translate3d(0, 0, 0);
   }
+
   35% {
     transform: scale(calc(var(--live-scale) * 1.035)) translate3d(1.5%, -1%, 0);
   }
+
   70% {
     transform: scale(calc(var(--live-scale) * 1.015)) translate3d(-1%, 1.2%, 0);
   }
 }
 
 @keyframes gemini-orb-cloud-one {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate3d(-3%, -1%, 0) rotate(8deg) scale(1);
   }
+
   50% {
     transform: translate3d(5%, 3%, 0) rotate(18deg) scale(1.06);
   }
 }
 
 @keyframes gemini-orb-cloud-two {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translate3d(4%, -2%, 0) rotate(-10deg) scale(1.04);
   }
+
   50% {
     transform: translate3d(-4%, 4%, 0) rotate(8deg) scale(0.98);
   }
@@ -373,9 +396,11 @@
     transform: scale(0.78);
     opacity: 0;
   }
+
   36% {
     opacity: calc(0.1 + var(--live-level) * 0.28);
   }
+
   100% {
     transform: scale(calc(1.18 + var(--live-level) * 0.22));
     opacity: 0;
