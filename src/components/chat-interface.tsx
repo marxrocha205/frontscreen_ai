@@ -263,7 +263,10 @@ export function ChatInterface() {
       setIsUpgradeDialogOpen(true)
       return
     }
+    console.log('%c[MODEL SELECT] ✅ Usuário selecionou modelo:', 'color: #a78bfa; font-weight: bold', modelId)
+    console.log('%c[MODEL SELECT] Label:', 'color: #a78bfa', model.label, '| Provider:', model.provider)
     setSelectedModel(modelId)
+    console.log('%c[MODEL SELECT] store.selectedModel após setSelectedModel:', 'color: #a78bfa', modelId)
   }
 
   useEffect(() => {
@@ -440,6 +443,8 @@ export function ChatInterface() {
         if (selectedModel) formData.append('model', selectedModel)
         if (selectedAgentId && selectedAgentId !== '') formData.append('agent_id', selectedAgentId)
 
+        console.log('%c[CHAT][FILE UPLOAD] Enviando arquivo com modelo:', 'color: #f59e0b; font-weight: bold', selectedModel || '(não definido)')
+
         try {
           const res = await fetch(`${config.apiUrl}/api/chat/message`, {
             method: 'POST',
@@ -461,6 +466,7 @@ export function ChatInterface() {
               model: selectedModel,
               agent_id: selectedAgentId
             })
+            console.log('%c[CHAT][FILE UPLOAD] Resposta recebida do backend. Modelo usado pelo frontend:', 'color: #22c55e; font-weight: bold', selectedModel)
           } else if (data.status === 'error' && data.message && data.message.includes('Créditos insuficientes')) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)

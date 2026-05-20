@@ -111,7 +111,10 @@ export const useChatStore = create<ChatState>((set) => ({
     }
   },
 
-  setSelectedModel: (modelId) => set({ selectedModel: modelId }),
+  setSelectedModel: (modelId) => {
+    console.log('%c[STORE] 🔄 setSelectedModel chamado com:', 'color: #f472b6; font-weight: bold', modelId)
+    set({ selectedModel: modelId })
+  },
   setSelectedAgentId: (agentId) => set({ selectedAgentId: agentId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
 
