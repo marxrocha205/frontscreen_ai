@@ -1,7 +1,60 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+// Updated imports for LLM icons
+import { Gemini, Claude, DeepSeek, Meta } from '@lobehub/icons';
 import Image from 'next/image'
+
+// Updated ModalModelIcon component using Lobehub icons
+const ModalModelIcon = ({ id }: { id: string }) => {
+  if (id === 'screen-ai-1.2') {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)] shrink-0">
+        <Image src="/screenai-logo.png" alt="ScreenAI" width={18} height={18} className="w-5 h-5 object-contain" />
+      </div>
+    );
+  }
+  if (id === 'openai/gpt-4o' || id === 'openai/gpt-4o-mini') {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#10a37f] flex items-center justify-center shadow-[0_0_12px_rgba(16,163,127,0.25)] shrink-0">
+        <Image src="/chatgpt-logo.png" alt="GPT" width={18} height={18} className="w-5 h-5 object-contain" />
+      </div>
+    );
+  }
+  if (id === 'anthropic/claude-3-5-sonnet-20241022') {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#fbf0df] flex items-center justify-center shadow-[0_0_12px_rgba(247,230,205,0.15)] shrink-0">
+        <Claude.Color size={24} />
+      </div>
+    );
+  }
+  if (id.includes('gemini')) {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#f0f4f9] flex items-center justify-center shadow-[0_0_12px_rgba(240,244,249,0.15)] shrink-0">
+        <Gemini.Color size={24} />
+      </div>
+    );
+  }
+  if (id.includes('deepseek')) {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#f4f6ff] flex items-center justify-center shadow-[0_0_12px_rgba(24,83,242,0.15)] shrink-0">
+        <DeepSeek.Color size={24} />
+      </div>
+    );
+  }
+  if (id.includes('llama')) {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#ecf3fe] flex items-center justify-center shadow-[0_0_12px_rgba(0,100,224,0.15)] shrink-0">
+        <Meta.Color size={24} />
+      </div>
+    );
+  }
+  return (
+    <div className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0">
+      <Sparkles className="w-5 h-5 text-zinc-400" />
+    </div>
+  );
+};
 import { useI18n } from '@/context/i18n-context'
 import { useWebsocket } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
@@ -20,6 +73,50 @@ import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
 import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+
+const AgentIconSvg = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <circle cx="11" cy="7" r="4.5" />
+    <path d="M3 21a8 8 0 0 1 8-8" />
+    <path d="M14 16h7" />
+    <path d="M17 13l-3 3 3 3" />
+    <path d="M14 20h7" />
+    <path d="M18 17l3 3-3 3" />
+  </svg>
+);
+
+const CopyIconSvg = ({ className = "w-4 h-4" }: { className?: string }) => (
+  <svg viewBox="0 0 111.07 122.88" className={className} fill="currentColor">
+    <path fillRule="evenodd" clipRule="evenodd" d="M97.67,20.81L97.67,20.81l0.01,0.02c3.7,0.01,7.04,1.51,9.46,3.93c2.4,2.41,3.9,5.74,3.9,9.42h0.02v0.02v75.28 v0.01h-0.02c-0.01,3.68-1.51,7.03-3.93,9.46c-2.41,2.4-5.74,3.9-9.42,3.9v0.02h-0.02H38.48h-0.01v-0.02 c-3.69-0.01-7.04-1.5-9.46-3.93c-2.4-2.41-3.9-5.74-3.91-9.42H25.1c0-25.96,0-49.34,0-75.3v-0.01h0.02 c0.01-3.69,1.52-7.04,3.94-9.46c2.41-2.4,5.73-3.9,9.42-3.91v-0.02h0.02C58.22,20.81,77.95,20.81,97.67,20.81L97.67,20.81z M0.02,75.38L0,13.39v-0.01h0.02c0.01-3.69,1.52-7.04,3.93-9.46c2.41-2.4,5.74-3.9,9.42-3.91V0h0.02h59.19 c7.69,0,8.9,9.96,0.01,10.16H13.4h-0.02v-0.02c-0.88,0-1.68,0.37-2.27,0.97c-0.59,0.58-0.96,1.4-0.96,2.27h0.02v0.01v3.17 c0,19.61,0,39.21,0,58.81C10.17,83.63,0.02,84.09,0.02,75.38L0.02,75.38z M100.91,109.49V34.2v-0.02h0.02 c0-0.87-0.37-1.68-0.97-2.27c-0.59-0.58-1.4-0.96-2.28-0.96v0.02h-0.01H38.48h-0.02v-0.02c-0.88,0-1.68,0.38-2.27,0.97 c-0.59,0.58-0.96,1.4-0.96,2.27h0.02v0.01v75.28v0.02h-0.02c0,0.88,0.38,1.68,0.97,2.27c0.59,0.59,1.4,0.96,2.27,0.96v-0.02h0.01 h59.19h0.02v0.02c0.87,0,1.68-0.38,2.27-0.97c0.59-0.58,0.96-1.4,0.96-2.27L100.91,109.49L100.91,109.49L100.91,109.49 L100.91,109.49z" />
+  </svg>
+);
+
+const AGENTS = [
+  { id: '', label: 'Assistente Geral', description: 'Responde de forma geral e acessível sobre qualquer assunto.' },
+  { id: 'agent_programming', label: 'Programador Sênior', description: 'Escreve, depura e explica códigos em várias linguagens.' },
+  { id: 'agent_contract_analyst', label: 'Analista de Contratos', description: 'Analisa e resume contratos e termos jurídicos.' },
+  { id: 'agent_web_researcher', label: 'Pesquisa Web', description: 'Investiga tópicos complexos e faz resumos estruturados.' },
+  { id: 'agent_learning_tutor', label: 'Tutor de Estudos', description: 'Explica conceitos difíceis de forma simples e didática.' },
+  { id: 'agent_writing_consultant', label: 'Consultor de Escrita', description: 'Reescreve, corrige e refina textos e artigos.' },
+  { id: 'agent_business_strategy_consultant', label: 'Consultor Estratégico', description: 'Desenvolve ideias de negócio e estratégias corporativas.' },
+  { id: 'agent_critical_thinking_consultant', label: 'Pensamento Crítico', description: 'Avalia argumentos e identifica falácias ou melhorias.' },
+  { id: 'agent_decision_facilitator', label: 'Facilitador de Decisão', description: 'Ajuda a estruturar escolhas complexas de forma racional.' },
+  { id: 'agent_feedback_analyst', label: 'Analista de Feedback', description: 'Analisa retornos de usuários e clientes para insights acionáveis.' },
+  { id: 'agent_interview_coach', label: 'Treinador de Entrevista', description: 'Simula entrevistas e prepara respostas de alto impacto.' },
+  { id: 'agent_meeting_coordinator', label: 'Organizador de Reunião', description: 'Estrutura pautas, ata de reunião e planos de ação.' },
+  { id: 'agent_metaphor_specialist', label: 'Especialista em Metáforas', description: 'Explica conceitos abstratos usando analogias criativas.' },
+  { id: 'agent_process_designer', label: 'Designer de Processos', description: 'Modelagem de fluxos de trabalho e otimização operacional.' },
+  { id: 'agent_product_objection_analyst', label: 'Analista de Objeções', description: 'Mapeia e contorna resistências de clientes e vendas.' },
+  { id: 'agent_technical_translator', label: 'Tradutor Técnico', description: 'Traduz documentos preservando a terminologia técnica precisa.' }
+]
 
 // Premium descriptions lookup table to match mockups exactly
 const modelDescriptions: Record<string, { title: string; desc: string }> = {
@@ -57,57 +154,6 @@ const modelDescriptions: Record<string, { title: string; desc: string }> = {
   }
 }
 
-// Gorgeous colorful logos mapping for each model container
-const ModalModelIcon = ({ id }: { id: string }) => {
-  if (id === 'screen-ai-1.2') {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)] shrink-0">
-        <Image src="/screenai-logo.png" alt="ScreenAI" width={18} height={18} className="w-5 h-5 object-contain" />
-      </div>
-    )
-  }
-  if (id === 'openai/gpt-4o' || id === 'openai/gpt-4o-mini') {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-[#10a37f] flex items-center justify-center shadow-[0_0_12px_rgba(16,163,127,0.25)] shrink-0">
-        <Image src="/chatgpt-logo.png" alt="GPT" width={18} height={18} className="w-5 h-5 object-contain" />
-      </div>
-    )
-  }
-  if (id === 'anthropic/claude-3-5-sonnet-20241022') {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-[#e05600] flex items-center justify-center shadow-[0_0_12px_rgba(224,86,0,0.25)] shrink-0">
-        <Image src="/claude-logo.png" alt="Claude" width={18} height={18} className="w-5 h-5 object-contain" />
-      </div>
-    )
-  }
-  if (id === 'gemini/gemini-2.5-pro') {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-[#1a73e8] flex items-center justify-center shadow-[0_0_12px_rgba(26,115,232,0.25)] shrink-0">
-        <Image src="/gemini-logo.png" alt="Gemini" width={18} height={18} className="w-5 h-5 object-contain" />
-      </div>
-    )
-  }
-  if (id.includes('deepseek')) {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-600 via-sky-600 to-blue-600 flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.25)] shrink-0">
-        <span className="text-base text-white">🐋</span>
-      </div>
-    )
-  }
-  if (id.includes('llama')) {
-    return (
-      <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center shadow-[0_0_12px_rgba(244,63,94,0.25)] shrink-0">
-        <span className="text-base text-white">🦙</span>
-      </div>
-    )
-  }
-  return (
-    <div className="w-9 h-9 rounded-xl bg-zinc-800 flex items-center justify-center shrink-0">
-      <Sparkles className="w-5 h-5 text-zinc-400" />
-    </div>
-  )
-}
-
 // Gorgeous mini logos mapping for the input bar selector
 const InputModelIcon = ({ id }: { id: string }) => {
   if (id === 'screen-ai-1.2') {
@@ -126,29 +172,29 @@ const InputModelIcon = ({ id }: { id: string }) => {
   }
   if (id === 'anthropic/claude-3-5-sonnet-20241022') {
     return (
-      <div className="w-5 h-5 rounded-full bg-[#e05600] flex items-center justify-center shrink-0">
-        <Image src="/claude-logo.png" alt="Claude" width={10} height={10} className="w-2.5 h-2.5 object-contain" />
+      <div className="w-5 h-5 rounded-full bg-[#fbf0df] flex items-center justify-center shrink-0">
+        <Claude.Color size={14} />
       </div>
     )
   }
-  if (id === 'gemini/gemini-2.5-pro') {
+  if (id.includes('gemini')) {
     return (
-      <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-600 to-[#1a73e8] flex items-center justify-center shrink-0">
-        <Image src="/gemini-logo.png" alt="Gemini" width={10} height={10} className="w-2.5 h-2.5 object-contain" />
+      <div className="w-5 h-5 rounded-full bg-[#f0f4f9] flex items-center justify-center shrink-0 overflow-hidden">
+        <Gemini.Color size={14} />
       </div>
     )
   }
   if (id.includes('deepseek')) {
     return (
-      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-600 flex items-center justify-center shrink-0">
-        <span className="text-[10px] text-white select-none">🐋</span>
+      <div className="w-5 h-5 rounded-full bg-[#f4f6ff] flex items-center justify-center shrink-0 overflow-hidden">
+        <DeepSeek.Color size={14} />
       </div>
     )
   }
   if (id.includes('llama')) {
     return (
-      <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center shrink-0">
-        <span className="text-[10px] text-white select-none">🦙</span>
+      <div className="w-5 h-5 rounded-full bg-[#ecf3fe] flex items-center justify-center shrink-0 overflow-hidden">
+        <Meta.Color size={14} />
       </div>
     )
   }
@@ -165,6 +211,8 @@ export function ChatInterface() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
+
+  const [isAgentsDialogOpen, setIsAgentsDialogOpen] = useState(false)
   const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -184,6 +232,7 @@ export function ChatInterface() {
   // Estados para Edição de Mensagem
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState("")
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
 
   // Frases de Loading dinâmicas
   const loadingPhrases = language === 'pt-BR' ? [
@@ -202,7 +251,7 @@ export function ChatInterface() {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan, selectedModel, setSelectedModel } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan, selectedModel, setSelectedModel, selectedAgentId, setSelectedAgentId } = useChatStore()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
 
   const handleModelSelect = (modelId: string) => {
@@ -389,6 +438,7 @@ export function ChatInterface() {
         formData.append('file', fileToSend)
         if (activeId) formData.append('session_id', activeId)
         if (selectedModel) formData.append('model', selectedModel)
+        if (selectedAgentId && selectedAgentId !== '') formData.append('agent_id', selectedAgentId)
 
         try {
           const res = await fetch(`${config.apiUrl}/api/chat/message`, {
@@ -404,7 +454,13 @@ export function ChatInterface() {
               setActiveId(data.session_id)
               await fetchConversations()
             }
-            addMessage({ id: Date.now().toString(), role: 'assistant', content: data.response })
+            addMessage({
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: data.response,
+              model: selectedModel,
+              agent_id: selectedAgentId
+            })
           } else if (data.status === 'error' && data.message && data.message.includes('Créditos insuficientes')) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
@@ -450,6 +506,7 @@ export function ChatInterface() {
     : "What's on your mind today?";
 
   const activeModelName = modelDescriptions[selectedModel]?.title || AI_MODELS.find(m => m.id === selectedModel)?.label || 'ScreenAI'
+  const currentAgent = AGENTS.find(a => a.id === selectedAgentId) || AGENTS[0]
   const placeholderText = !isEmptyChat
     ? (language === 'pt-BR' ? `Mensagem para o ${activeModelName}` : `Message for ${activeModelName}`)
     : t('app.send_message');
@@ -459,7 +516,7 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
 
       <Dialog open={isModelsDialogOpen} onOpenChange={setIsModelsDialogOpen}>
-        <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-y-auto md:overflow-hidden bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto custom-scrollbar">
+        <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
           <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
             {/* Elegant Header Title */}
             <div className="flex items-center gap-2.5 px-5 py-1.5 rounded-full text-xs font-bold bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 shadow-md select-none">
@@ -469,7 +526,7 @@ export function ChatInterface() {
           </DialogHeader>
 
           {/* Columns Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 pt-4 md:pt-5 pb-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 pt-4 md:pt-5 pb-2 overflow-y-auto md:overflow-visible pr-1 custom-scrollbar">
             {/* RÁPIDO Column */}
             <div className="flex flex-col min-w-0">
               <span className="text-zinc-500 tracking-wider text-[11px] font-bold uppercase mb-3 px-1">
@@ -584,21 +641,77 @@ export function ChatInterface() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={isAgentsDialogOpen} onOpenChange={setIsAgentsDialogOpen}>
+        <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
+          <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
+            {/* Elegant Header Title */}
+            <div className="flex items-center gap-2.5 px-5 py-1.5 rounded-full text-xs font-bold bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 shadow-md select-none">
+
+              <span>{language === 'pt-BR' ? 'AGENTES DE IA' : 'AI AGENTS'}</span>
+            </div>
+          </DialogHeader>
+
+          {/* Grid of Agents */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-4 md:pt-5 pb-2 overflow-y-auto pr-1 custom-scrollbar">
+            {AGENTS.map(agent => (
+              <button
+                key={agent.id}
+                onClick={() => {
+                  setSelectedAgentId(agent.id)
+                  setIsAgentsDialogOpen(false)
+                }}
+                className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto ${selectedAgentId === agent.id
+                  ? 'border-zinc-700 bg-zinc-800/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_rgba(99,102,241,0.08)]'
+                  : 'border-transparent bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-800/60'
+                  }`}
+              >
+                <div className="w-9 h-9 rounded-xl bg-zinc-900/80 border border-zinc-850 flex items-center justify-center shrink-0 text-base group-hover:border-zinc-800 overflow-hidden">
+                  {agent.id === '' ? (
+                    <AgentIconSvg className="w-5 h-5 text-zinc-400" />
+                  ) : (
+                    <Image
+                      src={`/agents/${agent.id}.png`}
+                      alt={agent.label}
+                      width={36}
+                      height={36}
+                      className="w-full h-full object-cover"
+                    />
+                  )}
+                </div>
+                <div className="flex flex-col justify-center min-w-0 flex-1">
+                  <span className="font-semibold text-[13px] text-zinc-100 group-hover:text-white leading-tight block truncate md:whitespace-normal">
+                    {agent.label}
+                  </span>
+                  <span className="text-[11px] text-zinc-500 group-hover:text-zinc-400 mt-1 leading-normal line-clamp-2">
+                    {agent.description}
+                  </span>
+                </div>
+                {selectedAgentId === agent.id && (
+                  <div className="w-5 h-5 rounded-full bg-zinc-100 flex items-center justify-center shrink-0 self-center ml-auto shadow-[0_0_8px_rgba(255,255,255,0.2)]">
+                    <Check className="w-3 h-3 text-zinc-900 stroke-[3px]" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {hasHydrated && isLoggedIn && (
-        <div 
+        <div
           ref={creditsRef}
-          id="tour-credits" 
+          id="tour-credits"
           className="absolute top-4 right-4 z-50 group"
           onMouseEnter={() => setShowCreditsTooltip(true)}
           onMouseLeave={() => setShowCreditsTooltip(false)}
         >
           {/* Badge principal */}
-          <div 
+          <div
             onClick={() => setShowCreditsTooltip(!showCreditsTooltip)}
             className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-pointer select-none transition-colors duration-200 ${(credits !== null && credits < 20)
               ? 'border-red-500/40 hover:border-red-500/60'
               : 'border-zinc-800 hover:border-zinc-700'
-            }`}
+              }`}
           >
             <span className={`text-sm font-bold ${(credits !== null && credits < 20) ? 'text-red-400' : 'text-zinc-200'
               }`}>
@@ -611,11 +724,10 @@ export function ChatInterface() {
           </div>
 
           {/* Tooltip card */}
-          <div className={`absolute top-full right-0 pt-2 transition-all duration-200 origin-top-right ${
-            showCreditsTooltip 
-              ? 'opacity-100 scale-100 pointer-events-auto' 
-              : 'opacity-0 scale-95 pointer-events-none'
-          }`}>
+          <div className={`absolute top-full right-0 pt-2 transition-all duration-200 origin-top-right ${showCreditsTooltip
+            ? 'opacity-100 scale-100 pointer-events-auto'
+            : 'opacity-0 scale-95 pointer-events-none'
+            }`}>
             <div className="w-64 bg-[#1a1a1a]/95 backdrop-blur-xl border border-zinc-800 rounded-2xl p-4 shadow-2xl">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}</span>
@@ -761,44 +873,102 @@ export function ChatInterface() {
                       </button>
                     )}
 
-                    <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                          a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
-                          ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
-                          ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                          li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
-                          h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
-                          h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
-                          h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
-                          strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
-                          em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
-                          blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
-                          hr: () => <hr className="my-6 border-zinc-800/80" />,
-                          table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
-                          th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
-                          td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-                          code: ({ className, children, ...props }: any) => {
-                            const match = /language-(\w+)/.exec(className || '')
-                            return match ? (
-                              <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                                <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                  <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                    <div className="flex flex-col w-full min-w-0">
+                      <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
+                        <ReactMarkdown
+                          remarkPlugins={[remarkGfm]}
+                          components={{
+                            p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                            a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
+                            ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                            li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
+                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
+                            strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                            em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
+                            blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
+                            hr: () => <hr className="my-6 border-zinc-800/80" />,
+                            table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
+                            th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
+                            td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
+                            code: ({ className, children, ...props }: any) => {
+                              const match = /language-(\w+)/.exec(className || '')
+                              return match ? (
+                                <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
+                                  <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                  </div>
+                                  <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
+                                    <code className={className} {...props}>{children}</code>
+                                  </div>
                                 </div>
-                                <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
-                                  <code className={className} {...props}>{children}</code>
+                              ) : (
+                                <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
+                              )
+                            }
+                          }}
+                        >
+                          {m.content}
+                        </ReactMarkdown>
+                      </div>
+
+                      {/* AI Identification Badge & Actions */}
+                      {m.role === 'assistant' && (
+                        <div className="flex items-center gap-2 w-full mt-3">
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(m.content)
+                              setCopiedMessageId(m.id)
+                              setTimeout(() => setCopiedMessageId(null), 2000)
+                            }}
+                            className="flex items-center justify-center p-1.5 rounded-md hover:bg-zinc-800/80 text-zinc-500 hover:text-zinc-300 transition-colors shadow-sm"
+                            title={language === 'pt-BR' ? 'Copiar resposta' : 'Copy response'}
+                          >
+                            {copiedMessageId === m.id ? (
+                              <Check className="w-3.5 h-3.5 text-green-500" />
+                            ) : (
+                              <CopyIconSvg className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+
+                          {(() => {
+                            const msgAgentId = m.agent_id !== undefined ? m.agent_id : currentAgent.id;
+                            const msgModelId = m.model !== undefined ? m.model : selectedModel;
+
+                            const badgeAgent = AGENTS.find(a => a.id === msgAgentId) || { id: '', label: 'Assistente Geral' };
+                            const badgeModelLabel = AI_MODELS.find(model => model.id === msgModelId)?.label || 'ScreenAI 1.2';
+
+                            return (
+                              <div className="flex items-center gap-2 select-none">
+                                {badgeAgent.id !== '' && (
+                                  <div className="flex items-center gap-1.5 px-1.5 py-0.5">
+                                    <div className="w-3.5 h-3.5 rounded-full overflow-hidden shrink-0 relative flex items-center justify-center">
+                                      <Image
+                                        src={`/agents/${badgeAgent.id}.png`}
+                                        alt={badgeAgent.label}
+                                        width={14}
+                                        height={14}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <span className="text-[10px] font-medium text-zinc-500 leading-none">{badgeAgent.label}</span>
+                                  </div>
+                                )}
+                                <div className="flex items-center gap-1.5 px-2 py-1">
+                                  <div className="scale-[0.7] -mx-1 origin-center">
+                                    <InputModelIcon id={msgModelId} />
+                                  </div>
+                                  <span className="text-[10px] font-medium text-zinc-500 leading-none">
+                                    {badgeModelLabel}
+                                  </span>
                                 </div>
                               </div>
-                            ) : (
-                              <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
                             )
-                          }
-                        }}
-                      >
-                        {m.content}
-                      </ReactMarkdown>
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -967,9 +1137,9 @@ export function ChatInterface() {
             </div>
 
             {/* Bottom Row: Pills (Left) and Action Buttons (Right) - POSICIONADOS NA PARTE CINZA */}
-            <div className="flex items-center justify-between w-full px-2 py-1">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full px-2 py-1">
               {/* Left Side: Pills */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {/* Plus Attachment Button */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -989,6 +1159,28 @@ export function ChatInterface() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {/* Agent Selector Button */}
+                <button
+                  onClick={() => setIsAgentsDialogOpen(true)}
+                  className="flex items-center gap-1.5 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full pl-2 pr-3 py-1.5 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                >
+                  {currentAgent.id === '' ? (
+                    <AgentIconSvg className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                  ) : (
+                    <div className="w-3.5 h-3.5 rounded-full overflow-hidden shrink-0 relative flex items-center justify-center">
+                      <Image
+                        src={`/agents/${currentAgent.id}.png`}
+                        alt={currentAgent.label}
+                        width={14}
+                        height={14}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <span className="leading-none">{currentAgent.label}</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                </button>
+
                 {/* AI Model Selector Button (Only visible if NOT empty chat) */}
                 {!isEmptyChat && (
                   <button
@@ -1005,7 +1197,7 @@ export function ChatInterface() {
               </div>
 
               {/* Right Side: Action Buttons */}
-              <div className="flex items-center gap-1.5 pr-1">
+              <div className="flex items-center justify-end gap-1.5 pr-1 w-full sm:w-auto">
                 <Button
                   id="tour-continuous-mic"
                   size="icon"

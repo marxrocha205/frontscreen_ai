@@ -115,7 +115,14 @@ export function useWebsocket() {
           }
 
           // Cria uma "bolha" de mensagem vazia na tela com um ID temporário
-          addMessage({ id: 'streaming-msg', role: 'assistant', content: '' })
+          const storeState = useChatStore.getState()
+          addMessage({ 
+            id: 'streaming-msg', 
+            role: 'assistant', 
+            content: '',
+            model: storeState.selectedModel,
+            agent_id: storeState.selectedAgentId 
+          })
           break;
 
         // =======================================================
@@ -227,8 +234,8 @@ export function useWebsocket() {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
 
       const { activeId } = useConversations.getState()
-      // 1. CAPTURAR O MODELO SELECIONADO NO STORE
-      const { selectedModel } = useChatStore.getState()
+      // 1. CAPTURAR O MODELO E AGENTE SELECIONADOS NO STORE
+      const { selectedModel, selectedAgentId } = useChatStore.getState()
 
       if (payload.text) {
         addMessage({ id: Date.now().toString(), role: 'user', content: payload.text })
@@ -241,7 +248,8 @@ export function useWebsocket() {
         ...payload,
         session_id: activeId,
         language: document.documentElement.lang || 'pt-BR',
-        model: selectedModel && selectedModel !== '' ? selectedModel : undefined // <-- A MÁGICA ACONTECE AQUI
+        model: selectedModel && selectedModel !== '' ? selectedModel : undefined, // <-- A MÁGICA ACONTECE AQUI
+        agent_id: selectedAgentId && selectedAgentId !== '' ? selectedAgentId : undefined // <-- A MÁGICA DO AGENTE AQUI
       }
       
       console.log("=========================================")

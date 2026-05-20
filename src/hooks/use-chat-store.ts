@@ -3,13 +3,14 @@ import { config } from '@/lib/config'
 
 export const AI_MODELS = [
   { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', provider: 'ScreenAI', requiresPro: false },// Se vazio, usa a sua regra de fallback do backend
-  { id: 'openai/gpt-4o', label: '🟢 GPT-4o (OpenAI)', provider: 'OpenAI', requiresPro: false },
-  { id: 'openai/gpt-4o-mini', label: '🟢 GPT-4o Mini', provider: 'OpenAI', requiresPro: false },
-  { id: 'anthropic/claude-3-5-sonnet-20241022', label: '🟠 Claude 3.5 Sonnet', provider: 'Anthropic', requiresPro: true },
-  { id: 'gemini/gemini-2.5-pro', label: '🔵 Gemini 2.5 Pro', provider: 'Google', requiresPro: false },
-  { id: 'openrouter/deepseek/deepseek-chat', label: '🐋 DeepSeek V3', provider: 'DeepSeek', requiresPro: false },
-  { id: 'openrouter/deepseek/deepseek-r1', label: '🐋 DeepSeek R1 (Raciocínio)', provider: 'DeepSeek', requiresPro: false },
-  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: '🦙 Llama 3.3 70B', provider: 'Meta', requiresPro: false }
+  { id: 'openai/gpt-4o', label: 'GPT-4o (OpenAI)', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI', requiresPro: false },
+  { id: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', provider: 'Anthropic', requiresPro: true },
+  { id: 'gemini/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google', requiresPro: false },
+  { id: 'gemini/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-chat', label: 'DeepSeek V3', provider: 'DeepSeek', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-r1', label: 'DeepSeek R1 (Raciocínio)', provider: 'DeepSeek', requiresPro: false },
+  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B', provider: 'Meta', requiresPro: false }
 ]
 
 export interface Message {
@@ -17,6 +18,7 @@ export interface Message {
   role: 'user' | 'assistant' | 'system'
   content: string
   model?: string
+  agent_id?: string
 }
 
 // Tipo discriminado para os 3 estados possíveis do chat flutuante
@@ -28,6 +30,7 @@ interface ChatState {
   credits: number | null
   userPlan: string | null
   selectedModel: string
+  selectedAgentId: string
   floatingState: FloatingState
   pipWindow: Window | null
   isUpgradeDialogOpen: boolean
@@ -42,6 +45,7 @@ interface ChatState {
   setCredits: (credits: number) => void
   fetchCredits: () => Promise<void>
   setSelectedModel: (modelId: string) => void
+  setSelectedAgentId: (agentId: string) => void
   clearMessages: () => void
   openFloatingMode: (win: Window, type: 'pip' | 'popup') => void
   closeFloatingMode: () => void
@@ -57,6 +61,7 @@ export const useChatStore = create<ChatState>((set) => ({
   credits: null,
   userPlan: null,
   selectedModel: AI_MODELS[0].id,
+  selectedAgentId: '',
   floatingState: 'none',
   pipWindow: null,
   isUpgradeDialogOpen: false,
@@ -107,6 +112,7 @@ export const useChatStore = create<ChatState>((set) => ({
   },
 
   setSelectedModel: (modelId) => set({ selectedModel: modelId }),
+  setSelectedAgentId: (agentId) => set({ selectedAgentId: agentId }),
   clearMessages: () => set({ messages: [], isStreaming: false }),
 
   openFloatingMode: (win, type) => set({ floatingState: type, pipWindow: win }),

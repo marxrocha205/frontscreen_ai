@@ -8,6 +8,7 @@ import { stopAllAudio } from './use-websocket'
 export interface Conversation {
   id: string
   title: string
+  agent_id?: string
   created_at: string
   updated_at: string
 }
@@ -67,7 +68,16 @@ export const useConversations = create<ConversationsState>((set, get) => ({
     stopAllAudio()
     set({ activeId: id })
     
-    const { clearMessages, addMessage } = useChatStore.getState()
+    // Restaurar agente selecionado se houver
+    const session = get().conversations.find((c) => c.id === id)
+    const { clearMessages, addMessage, setSelectedAgentId } = useChatStore.getState()
+    
+    if (session && session.agent_id) {
+      setSelectedAgentId(session.agent_id)
+    } else {
+      setSelectedAgentId('') // fallback para assistente geral
+    }
+    
     clearMessages()
 
     try {
@@ -84,7 +94,9 @@ export const useConversations = create<ConversationsState>((set, get) => ({
           addMessage({
             id: msg.id || Date.now().toString() + Math.random(),
             role: msg.role,
-            content: msg.content
+            content: msg.content,
+            model: msg.model,
+            agent_id: msg.agent_id
           })
         })
       } else {
