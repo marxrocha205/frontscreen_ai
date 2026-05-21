@@ -1003,12 +1003,11 @@ export function ChatInterface() {
             );
           })}
 
-          {/* INDICADOR DE CARREGAMENTO & BOTÃO PARAR */}
+          {/* INDICADOR DE CARREGAMENTO */}
           {isStreaming && (
-            <div className="flex flex-col items-start w-full pl-2 my-2 gap-3">
-
+            <div className="flex items-start w-full pl-2 my-2">
               {isWaitingForFirstChunk && (
-                <div className="flex items-center gap-3 bg-zinc-800/40 px-4 py-2.5 rounded-full border border-zinc-700/50 shadow-sm animate-in fade-in zoom-in-95 duration-300">
+                <div className="flex items-center gap-3 px-1 py-1 animate-in fade-in zoom-in-95 duration-300">
                   <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
                     <div className="absolute inset-0 rounded-full border-[2px] border-zinc-600/30"></div>
                     <div className="absolute inset-0 rounded-full border-[2px] border-transparent border-t-zinc-200 animate-[spin_0.8s_linear_infinite]"></div>
@@ -1021,16 +1020,17 @@ export function ChatInterface() {
                   <span className="text-sm font-medium text-zinc-300 min-w-[160px] animate-pulse">
                     {loadingPhrases[phraseIndex]}
                   </span>
+                  <button
+                    type="button"
+                    onClick={() => sendCancel()}
+                    aria-label={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
+                    title={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-700/60 hover:text-zinc-200"
+                  >
+                    <Square className="w-3.5 h-3.5 fill-current" />
+                  </button>
                 </div>
               )}
-
-              <button
-                onClick={() => sendCancel()}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1e1e1e] text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800 border border-zinc-800 transition-colors text-xs font-medium ml-1 shadow-sm animate-in fade-in"
-              >
-                <Square className="w-3.5 h-3.5 fill-current" />
-                {language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
-              </button>
             </div>
           )}
 
