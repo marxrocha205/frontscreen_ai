@@ -330,13 +330,12 @@ export function ChatInterface() {
     }
   }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
 
-  const videoRef = useRef<HTMLVideoElement>(null)
   const { isSharing: isScreenShared, stopSharing, stream } = useScreenShare()
 
-  useEffect(() => {
-    if (videoRef.current && stream && videoRef.current.srcObject !== stream) {
-      videoRef.current.srcObject = stream
-      videoRef.current.play().catch(e => {
+  const videoRef = useCallback((node: HTMLVideoElement | null) => {
+    if (node && stream && node.srcObject !== stream) {
+      node.srcObject = stream
+      node.play().catch(e => {
         if (e.name !== 'AbortError') console.error("Error playing video:", e)
       })
     }
