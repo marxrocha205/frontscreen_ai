@@ -116,13 +116,16 @@ export function useWebsocket() {
 
           // Cria uma "bolha" de mensagem vazia na tela com um ID temporário
           const storeState = useChatStore.getState()
-          console.log('%c[WS][stream_start] ✅ Streaming iniciado. Modelo atribuído à mensagem:', 'color: #34d399; font-weight: bold', storeState.selectedModel || '(não definido)')
+          const startModel = data.model || storeState.selectedModel
+          const startAgentId = data.agent_id || storeState.selectedAgentId
+
+          console.log('%c[WS][stream_start] ✅ Streaming iniciado. Modelo atribuído à mensagem:', 'color: #34d399; font-weight: bold', startModel || '(não definido)')
           addMessage({ 
             id: 'streaming-msg', 
             role: 'assistant', 
             content: '',
-            model: storeState.selectedModel,
-            agent_id: storeState.selectedAgentId 
+            model: startModel,
+            agent_id: startAgentId 
           })
           break;
 
@@ -157,8 +160,9 @@ export function useWebsocket() {
           // AGORA SIM! A resposta terminou, podemos desligar o modo streaming/loading.
           setIsStreaming(false)
           
+          const currentStoreState = useChatStore.getState()
           console.log('%c[WS][ai_response] ✅ Resposta final recebida do backend:', 'color: #22c55e; font-weight: bold')
-          console.log('%c[WS][ai_response] Modelo que o frontend associou à resposta:', 'color: #22c55e', useChatStore.getState().selectedModel)
+          console.log('%c[WS][ai_response] Modelo que o frontend associou à resposta:', 'color: #22c55e', currentStoreState.selectedModel)
           console.log('%c[WS][ai_response] Model field no evento WS:', 'color: #22c55e', data.model || '(backend não enviou campo model no evento)')
 
           if (data.session_id) {
@@ -171,7 +175,10 @@ export function useWebsocket() {
 
           // Como já preenchemos o texto via 'chunk', apenas atualizamos a bolha com o ID real 
           // e garantimos que o texto final está 100% perfeito.
-          const msgs = useChatStore.getState().messages;
+          const msgs = currentStoreState.messages;
+          const finalModel = data.model || currentStoreState.selectedModel;
+          const finalAgentId = data.agent_id || currentStoreState.selectedAgentId;
+
           if (msgs.length > 0) {
             const lastMsgIndex = msgs.length - 1;
             const lastMsg = msgs[lastMsgIndex];
@@ -180,16 +187,34 @@ export function useWebsocket() {
               useChatStore.setState({
                 messages: [
                   ...msgs.slice(0, lastMsgIndex),
-                  { ...lastMsg, id: Date.now().toString(), content: data.message }
+                  { 
+                    ...lastMsg, 
+                    id: Date.now().toString(), 
+                    content: data.message,
+                    model: finalModel,
+                    agent_id: finalAgentId
+                  }
                 ]
               });
             } else {
               // Se por acaso a IA não mandou 'stream_start' (ex: um erro rápido da API), 
               // cria a bolha inteira de uma vez.
-              addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+              addMessage({ 
+                id: Date.now().toString(), 
+                role: 'assistant', 
+                content: data.message,
+                model: finalModel,
+                agent_id: finalAgentId
+              })
             }
           } else {
-            addMessage({ id: Date.now().toString(), role: 'assistant', content: data.message })
+            addMessage({ 
+              id: Date.now().toString(), 
+              role: 'assistant', 
+              content: data.message,
+              model: finalModel,
+              agent_id: finalAgentId
+            })
           }
 
           // Toca áudio vindo do servidor (caso ainda venha algum, embora desativado no backend)

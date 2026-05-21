@@ -5,8 +5,10 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Gemini, Claude, DeepSeek, Meta } from '@lobehub/icons';
 import Image from 'next/image'
 
-// Updated ModalModelIcon component using Lobehub icons
 const ModalModelIcon = ({ id }: { id: string }) => {
+  const title = modelDescriptions[id]?.title || '';
+  const isGemini = id.includes('gemini') || title.includes('Gêmeo') || title.includes('Gemini');
+
   if (id === 'screen-ai-1.2') {
     return (
       <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-[0_0_12px_rgba(99,102,241,0.25)] shrink-0">
@@ -28,7 +30,7 @@ const ModalModelIcon = ({ id }: { id: string }) => {
       </div>
     );
   }
-  if (id.includes('gemini')) {
+  if (isGemini) {
     return (
       <div className="w-9 h-9 rounded-xl bg-[#f0f4f9] flex items-center justify-center shadow-[0_0_12px_rgba(240,244,249,0.15)] shrink-0">
         <Gemini.Color size={24} />
@@ -156,6 +158,9 @@ const modelDescriptions: Record<string, { title: string; desc: string }> = {
 
 // Gorgeous mini logos mapping for the input bar selector
 const InputModelIcon = ({ id }: { id: string }) => {
+  const title = modelDescriptions[id]?.title || '';
+  const isGemini = id.includes('gemini') || title.includes('Gêmeo') || title.includes('Gemini');
+
   if (id === 'screen-ai-1.2') {
     return (
       <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-blue-600 via-indigo-500 to-cyan-400 flex items-center justify-center shrink-0">
@@ -177,7 +182,7 @@ const InputModelIcon = ({ id }: { id: string }) => {
       </div>
     )
   }
-  if (id.includes('gemini')) {
+  if (isGemini) {
     return (
       <div className="w-5 h-5 rounded-full bg-[#f0f4f9] flex items-center justify-center shrink-0 overflow-hidden">
         <Gemini.Color size={14} />
@@ -204,6 +209,21 @@ const InputModelIcon = ({ id }: { id: string }) => {
     </div>
   )
 }
+
+const normalizeModelId = (id: string | undefined): string => {
+  if (!id) return 'screen-ai-1.2';
+
+  if (id.includes('gpt-4o-mini')) return 'openai/gpt-4o-mini';
+  if (id.includes('gpt-4o')) return 'openai/gpt-4o';
+  if (id.includes('claude-3.5-sonnet') || id.includes('claude-3-5-sonnet')) return 'anthropic/claude-3-5-sonnet-20241022';
+  if (id.includes('gemini-2.5-pro')) return 'gemini/gemini-2.5-pro';
+  if (id.includes('gemini-2.5-flash')) return 'gemini/gemini-2.5-flash';
+  if (id.includes('deepseek-chat') || id.includes('deepseek/deepseek-chat')) return 'openrouter/deepseek/deepseek-chat';
+  if (id.includes('deepseek-r1') || id.includes('deepseek/deepseek-r1')) return 'openrouter/deepseek/deepseek-r1';
+  if (id.includes('llama-3.3-70b-instruct') || id.includes('llama-3.3-70b')) return 'openrouter/meta-llama/llama-3.3-70b-instruct';
+
+  return id;
+};
 
 export function ChatInterface() {
   const { t, language } = useI18n()
@@ -463,7 +483,7 @@ export function ChatInterface() {
               id: Date.now().toString(),
               role: 'assistant',
               content: data.response,
-              model: selectedModel,
+              model: data.model || selectedModel,
               agent_id: selectedAgentId
             })
             console.log('%c[CHAT][FILE UPLOAD] Resposta recebida do backend. Modelo usado pelo frontend:', 'color: #22c55e; font-weight: bold', selectedModel)
@@ -944,7 +964,8 @@ export function ChatInterface() {
                             const msgModelId = m.model !== undefined ? m.model : selectedModel;
 
                             const badgeAgent = AGENTS.find(a => a.id === msgAgentId) || { id: '', label: 'Assistente Geral' };
-                            const badgeModelLabel = AI_MODELS.find(model => model.id === msgModelId)?.label || 'ScreenAI 1.2';
+                            const msgNormalizedModelId = normalizeModelId(msgModelId);
+                            const badgeModelLabel = modelDescriptions[msgNormalizedModelId]?.title || AI_MODELS.find(model => model.id === msgNormalizedModelId)?.label || 'ScreenAI 1.2';
 
                             return (
                               <div className="flex items-center gap-2 select-none">
@@ -964,7 +985,7 @@ export function ChatInterface() {
                                 )}
                                 <div className="flex items-center gap-1.5 px-2 py-1">
                                   <div className="scale-[0.7] -mx-1 origin-center">
-                                    <InputModelIcon id={msgModelId} />
+                                    <InputModelIcon id={msgNormalizedModelId} />
                                   </div>
                                   <span className="text-[10px] font-medium text-zinc-500 leading-none">
                                     {badgeModelLabel}
@@ -1222,7 +1243,7 @@ export function ChatInterface() {
               </div>
             </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*" />
+            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/,application/pdf,audio/,.xlsx,.xls,.zip,.txt,.csv" />
           </div>
         </div>
       )}
