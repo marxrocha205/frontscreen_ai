@@ -22,6 +22,71 @@ export function stopAllAudio() {
   }
 }
 
+function getInterruptedMessage() {
+  if (typeof document !== 'undefined' && document.documentElement.lang !== 'pt-BR') {
+    return 'Response interrupted'
+  }
+
+  return 'Resposta interrompida'
+}
+
+function markGenerationCancelled() {
+  const interruptedMessage = getInterruptedMessage()
+
+  useChatStore.setState((state) => {
+    const streamingIndex = state.messages.findIndex((message) => message.id === 'streaming-msg')
+
+    if (streamingIndex !== -1) {
+      const streamingMessage = state.messages[streamingIndex]
+
+      if (streamingMessage.content.trim().length > 0) {
+        return { messages: state.messages }
+      }
+
+      const previousMessage = state.messages[streamingIndex - 1]
+      if (previousMessage?.role === 'assistant' && previousMessage.content === interruptedMessage) {
+        return {
+          messages: [
+            ...state.messages.slice(0, streamingIndex),
+            ...state.messages.slice(streamingIndex + 1)
+          ]
+        }
+      }
+
+      return {
+        messages: [
+          ...state.messages.slice(0, streamingIndex),
+          {
+            ...streamingMessage,
+            id: Date.now().toString(),
+            content: interruptedMessage
+          },
+          ...state.messages.slice(streamingIndex + 1)
+        ]
+      }
+    }
+
+    const lastMessage = state.messages[state.messages.length - 1]
+    if (lastMessage?.role === 'assistant' && lastMessage.content === interruptedMessage) {
+      return { messages: state.messages }
+    }
+
+    const { selectedModel, selectedAgentId } = state
+    return {
+      messages: [
+        ...state.messages,
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: interruptedMessage,
+          model: selectedModel,
+          agent_id: selectedAgentId
+        }
+      ]
+    }
+  })
+}
+
 export function useWebsocket() {
   const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage } = useChatStore()
   const { isLoggedIn, syncFromStorage } = useAuth()
@@ -103,6 +168,10 @@ export function useWebsocket() {
         // 1. MÁGICA DO STREAMING: A IA vai começar a falar
         // =======================================================
         case 'stream_start':
+          if (!useChatStore.getState().isStreaming) {
+            break;
+          }
+
           // CORREÇÃO CRÍTICA: NÃO desligamos o setIsStreaming(false) aqui!
           // O estado isStreaming deve continuar TRUE para a UI de Loading continuar a piscar
           // enquanto aguardamos o primeiro "chunk" de texto real vindo da API da IA.
@@ -243,6 +312,12 @@ export function useWebsocket() {
             addMessage({ id: Date.now().toString(), role: 'system', content: `⚠️ Aviso: ${data.message}` })
           }
           break;
+
+        case 'cancelled':
+          setIsStreaming(false)
+          stopAllAudio()
+          markGenerationCancelled()
+          break;
       }
     }
 
@@ -290,10 +365,14 @@ export function useWebsocket() {
   }, [addMessage, setIsStreaming])
 
   const sendCancel = useCallback(() => {
+    setIsStreaming(false)
+    stopAllAudio()
+    markGenerationCancelled()
+
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: "cancel_generation" }))
     }
-  }, [])
+  }, [setIsStreaming])
 
   return { messages, isConnected, isStreaming, sendMessage, sendCancel }
 }
