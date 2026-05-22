@@ -514,8 +514,8 @@ export function useGeminiLive() {
       ws.send(JSON.stringify({
         setup: {
           model: "models/gemini-3.1-flash-live-preview",
-          generationConfig: { 
-            responseModalities: ["AUDIO"],
+          generation_config: { 
+            response_modalities: ["AUDIO"],
             speech_config: {
               voice_config: {
                 prebuilt_voice_config: {
@@ -524,9 +524,9 @@ export function useGeminiLive() {
               }
             }
           },
-          outputAudioTranscription: {},
-          inputAudioTranscription: {},
-          systemInstruction: { 
+          output_audio_transcription: {},
+          input_audio_transcription: {},
+          system_instruction: { 
             parts: [{ text: `Você é o ScreenAI.
 Sua visão da tela depende do botão de compartilhamento (ícone de monitor).
 REGRAS CRÍTICAS:

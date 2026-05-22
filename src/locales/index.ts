@@ -60,7 +60,7 @@ export const translations = {
     'settings.theme_light': 'Claro',
     'settings.theme_system': 'Sistema',
     'settings.language': 'Idioma',
-    'settings.voice_assistant': 'Voz do Assistente (TTS)',
+    'settings.voice_assistant': 'Voz da ScreenAI Live',
     
     'settings.mic_sensitivity': 'Sensibilidade ao som',
     'settings.mic_pause': 'Pausa antes de parar',
@@ -135,7 +135,7 @@ export const translations = {
     'settings.theme_light': 'Light',
     'settings.theme_system': 'System',
     'settings.language': 'Language',
-    'settings.voice_assistant': 'Assistant Voice (TTS)',
+    'settings.voice_assistant': 'ScreenAI Live Voice',
     
     'settings.mic_sensitivity': 'Sound sensitivity',
     'settings.mic_pause': 'Pause before stopping',

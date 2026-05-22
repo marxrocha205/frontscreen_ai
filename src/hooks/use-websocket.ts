@@ -185,7 +185,7 @@ export function useWebsocket() {
 
           // Cria uma "bolha" de mensagem vazia na tela com um ID temporário
           const storeState = useChatStore.getState()
-          const startModel = data.model || storeState.selectedModel
+          const startModel = storeState.selectedModel === 'screen-ai-1.2' ? 'screen-ai-1.2' : data.model || storeState.selectedModel
           const startAgentId = data.agent_id || storeState.selectedAgentId
 
           console.log('%c[WS][stream_start] ✅ Streaming iniciado. Modelo atribuído à mensagem:', 'color: #34d399; font-weight: bold', startModel || '(não definido)')
@@ -245,7 +245,7 @@ export function useWebsocket() {
           // Como já preenchemos o texto via 'chunk', apenas atualizamos a bolha com o ID real 
           // e garantimos que o texto final está 100% perfeito.
           const msgs = currentStoreState.messages;
-          const finalModel = data.model || currentStoreState.selectedModel;
+          const finalModel = currentStoreState.selectedModel === 'screen-ai-1.2' ? 'screen-ai-1.2' : data.model || currentStoreState.selectedModel;
           const finalAgentId = data.agent_id || currentStoreState.selectedAgentId;
 
           if (msgs.length > 0) {
@@ -260,7 +260,7 @@ export function useWebsocket() {
                     ...lastMsg, 
                     id: Date.now().toString(), 
                     content: data.message,
-                    model: finalModel,
+                    model: lastMsg.model || finalModel,
                     agent_id: finalAgentId
                   }
                 ]

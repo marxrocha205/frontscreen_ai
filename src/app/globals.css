@@ -166,6 +166,36 @@
   text-overflow: ellipsis;
 }
 
+@keyframes enter-fade-zoom {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-enter-fade-zoom {
+  animation: enter-fade-zoom 300ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dropdown-enter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-dropdown-enter {
+  animation: dropdown-enter 200ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 .empty-chat-prompt {
   overflow: visible;
   animation: empty-prompt-enter 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
