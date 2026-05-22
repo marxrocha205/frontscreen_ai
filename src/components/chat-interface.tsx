@@ -482,7 +482,7 @@ export function ChatInterface() {
               id: Date.now().toString(),
               role: 'assistant',
               content: data.response,
-              model: data.model || selectedModel,
+              model: selectedModel === 'screen-ai-1.2' ? 'screen-ai-1.2' : data.model || selectedModel,
               agent_id: selectedAgentId
             })
             console.log('%c[CHAT][FILE UPLOAD] Resposta recebida do backend. Modelo usado pelo frontend:', 'color: #22c55e; font-weight: bold', selectedModel)
