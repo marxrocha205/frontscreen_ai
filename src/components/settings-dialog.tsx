@@ -44,11 +44,10 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
   const { logout } = useAuth()
   const router = useRouter()
 
-  const { 
-    voiceType, setVoiceType
-  } = useVoiceConfig()
+  const { voiceType, setVoiceType } = useVoiceConfig()
 
   const { userPlan, fetchCredits } = useChatStore()
+
 
   const [mounted, setMounted] = React.useState(false)
   React.useEffect(() => {
@@ -86,14 +85,14 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
           </div>
 
           <ScrollWrapper>
-            <TabsContent value="voice" className="mt-0 space-y-4 focus-visible:outline-none">
+            <TabsContent value="voice" className="mt-0 space-y-6 focus-visible:outline-none">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
                 <Select value={voiceType} onValueChange={(val) => val && setVoiceType(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
                     <SelectValue placeholder={language === 'pt-BR' ? "Selecione uma voz" : "Select a voice"} />
                   </SelectTrigger>
-                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100">
+                  <SelectContent className="bg-zinc-900 border-zinc-800 text-zinc-100 z-[100]">
                     {GEMINI_VOICES.map((v) => (
                       <SelectItem key={v.id} value={v.id}>
                         <div className="flex flex-col py-1">
