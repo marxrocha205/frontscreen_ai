@@ -9,7 +9,7 @@ env:
   AWS_REGION: us-east-2
   ECR_REPOSITORY: screenai-frontend-repo
   # URL do seu backend na AWS (o IP que descobrimos no passo anterior)
-  NEXT_PUBLIC_API_URL: http://alb-screenai-1685437188.us-east-2.elb.amazonaws.com:8000 
+  NEXT_PUBLIC_API_URL: https://appscreenai.com:8000
 
 jobs:
   build-and-push:
