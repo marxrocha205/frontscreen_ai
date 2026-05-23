@@ -1,5 +1,5 @@
 # 1. Estágio de Build
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
@@ -10,7 +10,7 @@ ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 RUN npm run build
 
 # 2. Estágio de Execução
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/.next ./.next
