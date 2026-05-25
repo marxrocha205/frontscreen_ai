@@ -7,7 +7,6 @@ import { useConversations } from './use-conversations';
 import { config } from '@/lib/config';
 
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-console.log("🔍 DEBUG GLOBAL - CHAVE GEMINI:", GEMINI_API_KEY);
 const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
 
 const createLiveMessageId = (role: 'user' | 'assistant') =>
@@ -466,7 +465,7 @@ export function useGeminiLive() {
   }, [addMessage, captureAndSendFrame, markAssistantActivity, persistLiveMessage, stopSession]);
 
   const startSession = useCallback(async () => {
-    console.log("🔍 CLICOU EM START - A CHAVE AQUI É:", GEMINI_API_KEY);
+    
     if (!GEMINI_API_KEY) return alert("Configure a API Key");
     if (
       isLiveSessionOpen() ||
