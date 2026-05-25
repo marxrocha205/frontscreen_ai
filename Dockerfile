@@ -1,12 +1,13 @@
-# 1. Estágio de Build
+# Estágio de Build
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Declarar argumentos
+# 1. Declara os argumentos que vêm do GitHub Actions
 ARG NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GEMINI_API_KEY
 
-# Definir variáveis de ambiente para o build
+# 2. ATRIBUI OS ARGUMENTOS PARA AS VARIÁVEIS DE AMBIENTE (Crucial!)
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_GEMINI_API_KEY=$NEXT_PUBLIC_GEMINI_API_KEY
@@ -15,17 +16,15 @@ COPY package*.json ./
 RUN npm install
 COPY . .
 
-# Faz o build (as variáveis acima serão injetadas agora)
+# Faz o build (agora o Next.js "enxerga" as variáveis)
 RUN npm run build
 
-# 2. Estágio de Execução (O que vai para a AWS)
+# Estágio de Execução
 FROM node:20-alpine AS runner
 WORKDIR /app
-
-# Necessário para o Next.js rodar
 ENV NODE_ENV=production
 
-# Copiar apenas o necessário
+# Copia do builder
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
