@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -56,6 +56,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [isStudioSubmenuOpen, setIsStudioSubmenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
@@ -130,6 +131,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const handleNewChat = () => {
     createNewConversation?.() // Limpa o ID ativo no Store de Conversas
     clearMessages()           // Limpa a tela
+    setIsSidebarOpen(false)
     router.push('/app')
   }
 
@@ -310,6 +312,60 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   placeholder={t('app.search_chat')}
                   className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
                 />
+              </div>
+            )}
+
+            <Button
+              id="tour-studio"
+              variant="ghost"
+              onClick={() => handleAuthAction(() => setIsStudioSubmenuOpen((prev) => !prev))}
+              className="w-full justify-between gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4" />
+                <span className="text-sm font-medium">{language === 'pt-BR' ? 'ScreenAI Studio' : 'ScreenAI Studio'}</span>
+              </div>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isStudioSubmenuOpen ? 'rotate-180' : ''}`} />
+            </Button>
+
+            {isStudioSubmenuOpen && (
+              <div className="ml-4 flex flex-col gap-1 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsStudioSubmenuOpen(false)
+                    setIsSidebarOpen(false)
+                    router.push('/app/studio?cat=imagens')
+                  }}
+                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                >
+                  <Paintbrush className="w-4 h-4" />
+                  <span>Imagem</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsStudioSubmenuOpen(false)
+                    setIsSidebarOpen(false)
+                    router.push('/app/studio?cat=video')
+                  }}
+                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                >
+                  <Video className="w-4 h-4" />
+                  <span>Vídeo</span>
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsStudioSubmenuOpen(false)
+                    setIsSidebarOpen(false)
+                    router.push('/app/studio?cat=documentos')
+                  }}
+                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>Documentos</span>
+                </Button>
               </div>
             )}
 
