@@ -112,29 +112,38 @@ export const useConversations = create<ConversationsState>((set, get) => ({
   },
 
   deleteConversation: async (id: string) => {
+    // Salva o estado anterior para rollback em caso de erro
+    const previousConversations = get().conversations
+    const previousActiveId = get().activeId
+
+    // 1. Atualização Otimista: Remove da UI imediatamente
+    set((state) => ({
+      conversations: state.conversations.filter((c) => c.id !== id),
+      activeId: state.activeId === id ? null : state.activeId
+    }))
+
+    // Se era a conversa ativa, limpa a tela imediatamente
+    if (previousActiveId === id) {
+      useChatStore.getState().clearMessages()
+      stopAllAudio()
+    }
+
     try {
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
-      if (!token) return
+      if (!token) {
+        // Rollback
+        set({ conversations: previousConversations, activeId: previousActiveId })
+        return
+      }
 
       const res = await fetch(`${config.apiUrl}/api/chat/sessions/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
 
-      if (res.ok) {
-        // Remove da lista local
-        set((state) => ({
-          conversations: state.conversations.filter((c) => c.id !== id),
-          // Se era a conversa ativa, limpa a tela
-          activeId: state.activeId === id ? null : state.activeId
-        }))
-
-        // Se era a conversa ativa, limpa as mensagens no chat store
-        if (get().activeId === null) {
-          useChatStore.getState().clearMessages()
-          stopAllAudio()
-        }
-      } else {
+      if (!res.ok) {
+        // Rollback em caso de erro do servidor
+        set({ conversations: previousConversations, activeId: previousActiveId })
         const errorText = await res.text()
         console.error("Erro ao excluir conversa:", errorText)
         if (res.status === 401 || errorText.includes("Token expirado")) {
@@ -142,6 +151,8 @@ export const useConversations = create<ConversationsState>((set, get) => ({
         }
       }
     } catch (error) {
+      // Rollback em caso de erro de rede
+      set({ conversations: previousConversations, activeId: previousActiveId })
       console.error("Erro de rede ao excluir conversa:", error)
     }
   },
