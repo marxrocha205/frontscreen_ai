@@ -29,6 +29,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAuth } from '@/hooks/use-auth'
 import { useI18n } from '@/context/i18n-context'
+import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -297,7 +298,7 @@ function StudioContent() {
           formData.append('file', selectedFile)
         }
 
-        const response = await fetch('/api/tools/generate-image', {
+        const response = await fetch(`${config.apiUrl}/api/tools/generate-image`, {
           method: 'POST',
           headers,
           body: formData
@@ -323,7 +324,7 @@ function StudioContent() {
         const formData = new FormData()
         formData.append('file', selectedFile)
 
-        const response = await fetch('/api/tools/remove-background', {
+        const response = await fetch(`${config.apiUrl}/api/tools/remove-background`, {
           method: 'POST',
           headers,
           body: formData
@@ -370,7 +371,7 @@ function StudioContent() {
         formData.append('file', selectedFile)
         formData.append('prompt', prompt || (language === 'pt-BR' ? 'Transcreva este vídeo e faça um resumo' : 'Transcribe this video and provide a summary'))
 
-        const response = await fetch('/api/tools/analyze-video', {
+        const response = await fetch(`${config.apiUrl}/api/tools/analyze-video`, {
           method: 'POST',
           headers,
           body: formData
@@ -402,7 +403,7 @@ function StudioContent() {
         formData.append('doc_type', calculatedDocType)
         formData.append('export_format', exportFormat)
 
-        const response = await fetch('/api/tools/generate-document', {
+        const response = await fetch(`${config.apiUrl}/api/tools/generate-document`, {
           method: 'POST',
           headers,
           body: formData
