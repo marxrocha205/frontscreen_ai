@@ -61,10 +61,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
+  const [showComingSoon, setShowComingSoon] = useState(false)
   const currentPlanLabel = userPlan
     ? (language === 'pt-BR' ? `Plano ${userPlan}` : `${userPlan} Plan`)
     : (language === 'pt-BR' ? 'Carregando plano...' : 'Loading plan...')
-
+  const ADMIN_EMAILS = ['marxrochascr@gmail.com', 'marxrocha.scr@gmail.com', 'admin@frontscreen.ai'] // Substitua pelos e-mails reais
+  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email)
   const handleModelSelect = (model: typeof AI_MODELS[number]) => {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
     const isFreeUser = !userPlan || userPlan.toLowerCase() === 'free'
@@ -315,18 +317,32 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </div>
             )}
 
-            <Button
-              id="tour-studio"
-              variant="ghost"
-              onClick={() => handleAuthAction(() => setIsStudioSubmenuOpen((prev) => !prev))}
-              className="w-full justify-between gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4" />
-                <span className="text-sm font-medium">{language === 'pt-BR' ? 'ScreenAI Studio' : 'ScreenAI Studio'}</span>
-              </div>
-              <ChevronDown className={`w-4 h-4 transition-transform ${isStudioSubmenuOpen ? 'rotate-180' : ''}`} />
-            </Button>
+                          <Button
+                id="tour-studio"
+                variant="ghost"
+                onClick={() => handleAuthAction(() => {
+                  if (isAdmin) {
+                    // Se for admin, abre o submenu normalmente
+                    setIsStudioSubmenuOpen((prev) => !prev)
+                  } else {
+                    // Se for usuário comum, mostra o aviso
+                    setShowComingSoon(true)
+                  }
+                })}
+                className="w-full justify-between gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  <span className="text-sm font-medium">{language === 'pt-BR' ? 'ScreenAI Studio' : 'ScreenAI Studio'}</span>
+                  {/* Opcional: Adicionar uma tag visual de "Beta" ou "Em breve" no botão */}
+                  {!isAdmin && (
+                    <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded ml-1">Beta</span>
+                  )}
+                </div>
+                {isAdmin && (
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isStudioSubmenuOpen ? 'rotate-180' : ''}`} />
+                )}
+              </Button>
 
             {isStudioSubmenuOpen && (
               <div className="ml-4 flex flex-col gap-1 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
@@ -552,6 +568,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium"
           >
             OK
+          </Button>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showComingSoon} onOpenChange={setShowComingSoon}>
+        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+          <DialogHeader className="flex flex-col items-center justify-center text-center">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 mb-2">
+              <Sparkles className="w-6 h-6 text-indigo-400" />
+            </div>
+            <DialogTitle className="text-center text-lg font-semibold text-zinc-100">
+              {language === 'pt-BR' ? 'Em Breve!' : 'Coming Soon!'}
+            </DialogTitle>
+            <DialogDescription className="text-center text-sm text-zinc-400 leading-relaxed mt-1">
+              {language === 'pt-BR' 
+                ? 'O ScreenAI Studio está em fase beta e restrito a administradores. Em breve liberaremos para todos os usuários!'
+                : 'ScreenAI Studio is currently in beta and restricted to admins. We will release it to all users soon!'}
+            </DialogDescription>
+          </DialogHeader>
+          <Button
+            onClick={() => setShowComingSoon(false)}
+            className="w-full mt-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 rounded-xl h-11 font-medium transition-colors"
+          >
+            {language === 'pt-BR' ? 'Entendi' : 'Got it'}
           </Button>
         </DialogContent>
       </Dialog>
