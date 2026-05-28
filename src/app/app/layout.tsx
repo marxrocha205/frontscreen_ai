@@ -66,7 +66,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     ? (language === 'pt-BR' ? `Plano ${userPlan}` : `${userPlan} Plan`)
     : (language === 'pt-BR' ? 'Carregando plano...' : 'Loading plan...')
   const ADMIN_EMAILS = ['marxrochascr@gmail.com', 'marxrocha.scr@gmail.com', 'admin@frontscreen.ai'] // Substitua pelos e-mails reais
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email)
+  const isAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.trim().toLowerCase()))
   const handleModelSelect = (model: typeof AI_MODELS[number]) => {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
     const isFreeUser = !userPlan || userPlan.toLowerCase() === 'free'
