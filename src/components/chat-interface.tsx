@@ -16,17 +16,25 @@ const ModalModelIcon = ({ id }: { id: string }) => {
       </div>
     );
   }
-  if (id === 'openai/gpt-4o' || id === 'openai/gpt-4o-mini') {
+  if (id.startsWith('openai/')) {
     return (
       <div className="w-9 h-9 rounded-xl bg-[#10a37f] flex items-center justify-center shadow-[0_0_12px_rgba(16,163,127,0.25)] shrink-0">
         <Image src="/chatgpt-logo.png" alt="GPT" width={18} height={18} className="w-5 h-5 object-contain" />
       </div>
     );
   }
-  if (id === 'anthropic/claude-3-5-sonnet-20241022') {
+  if (id.startsWith('anthropic/')) {
     return (
       <div className="w-9 h-9 rounded-xl bg-[#fbf0df] flex items-center justify-center shadow-[0_0_12px_rgba(247,230,205,0.15)] shrink-0">
         <Claude.Color size={24} />
+      </div>
+    );
+  }
+  // Grok / xAI logo
+  if (id.startsWith('x-ai/') || id.includes('grok')) {
+    return (
+      <div className="w-9 h-9 rounded-xl bg-[#0f1724] flex items-center justify-center shadow-[0_0_12px_rgba(0,0,0,0.25)] shrink-0">
+        <Image src="/grok-color.svg" alt="Grok" width={24} height={24} className="w-6 h-6 object-contain" />
       </div>
     );
   }
@@ -134,21 +142,77 @@ const modelDescriptions: Record<string, { title: string; desc: string }> = {
     title: 'DeepSeek V3',
     desc: 'Desempenho ágil com excelente custo-benefício.'
   },
+  'openrouter/deepseek/deepseek-r1': {
+    title: 'DeepSeek R1 (Raciocínio)',
+    desc: 'Raciocínio lógico, matemática e programação.'
+  },
+  'openrouter/deepseek/deepseek-4.0-flash': {
+    title: 'DeepSeek 4.0 Flash',
+    desc: 'Resposta rápida para cargas de trabalho maiores.'
+  },
+  'openrouter/deepseek/deepseek-4.0-pro': {
+    title: 'DeepSeek 4.0 Pro',
+    desc: 'Performance alta para tarefas que exigem precisão.'
+  },
   'openai/gpt-4o': {
     title: 'GPT-4 Omni',
     desc: 'Versatilidade e alta complexidade em tarefas complexas.'
   },
-  'anthropic/claude-3-5-sonnet-20241022': {
-    title: 'Claude 3.5 Sonnet',
-    desc: 'Raciocínio sutil, escrita fluida e códigos.'
+  'openai/gpt-4o-mini': {
+    title: 'GPT-4o Mini',
+    desc: 'Respostas rápidas, leve e super inteligente.'
+  },
+  'openai/gpt-oss': {
+    title: 'GPT OSS',
+    desc: 'Modelo Open Source da OpenAI para uso geral.'
+  },
+  'openai/gpt-5-mini': {
+    title: 'GPT-5 Mini',
+    desc: 'Excelente para tarefas rápidas com resultados avançados.'
+  },
+  'openai/gpt-5.1': {
+    title: 'GPT-5.1',
+    desc: 'Alta performance em geração de texto e raciocínio.'
+  },
+  'openai/gpt-5.2-thinking': {
+    title: 'GPT-5.2 Thinking',
+    desc: 'Modelo focado em raciocínio profundo e criatividade.'
+  },
+  'openai/gpt-5.3-codex': {
+    title: 'GPT-5.3 Codex',
+    desc: 'Especializado em geração de código e tarefas técnicas.'
+  },
+  'openai/o4-mini': {
+    title: 'o4 Mini',
+    desc: 'Modelo leve para tarefas práticas e rápidas.'
   },
   'gemini/gemini-2.5-pro': {
-    title: 'Gêmeos Pro 1.5', // matching visual label style
-    desc: 'Processamento de dados extensos e multimodais.'
+    title: 'Gemini 2.5 Pro',
+    desc: 'Processamento inteligente para prompts multimodais.'
   },
-  'openrouter/deepseek/deepseek-r1': {
-    title: 'Gêmeos 1.5 Pro (Pesquisa)', // matching deep reasoning visual label
-    desc: 'Raciocínio lógico, matemática e programação.'
+  'gemini/gemini-2.5-flash': {
+    title: 'Gemini 2.5 Flash',
+    desc: 'Rápido e eficiente para uso diário.'
+  },
+  'google/gemini-3.1-flash': {
+    title: 'Gemini 3.1 Flash',
+    desc: 'Resposta rápida com suporte avançado de contexto.'
+  },
+  'google/gemini-3.1-pro': {
+    title: 'Gemini 3.1 Pro',
+    desc: 'Alta qualidade e compreensão ampliada.'
+  },
+  'x-ai/grok-3': {
+    title: 'Grok 3',
+    desc: 'Modelo generalista rápido para alta produtividade.'
+  },
+  'x-ai/grok-4': {
+    title: 'Grok 4',
+    desc: 'Mais preciso e com melhores respostas contextuais.'
+  },
+  'x-ai/grok-4-fast': {
+    title: 'Grok 4 Fast',
+    desc: 'Versão otimizada para latência baixa.'
   },
   'openrouter/meta-llama/llama-3.3-70b-instruct': {
     title: 'Llama-3 70B R',
@@ -168,17 +232,25 @@ const InputModelIcon = ({ id }: { id: string }) => {
       </div>
     )
   }
-  if (id === 'openai/gpt-4o' || id === 'openai/gpt-4o-mini') {
+  if (id.startsWith('openai/')) {
     return (
       <div className="w-5 h-5 rounded-full bg-[#10a37f] flex items-center justify-center shrink-0">
         <Image src="/chatgpt-logo.png" alt="GPT" width={10} height={10} className="w-2.5 h-2.5 object-contain" />
       </div>
     )
   }
-  if (id === 'anthropic/claude-3-5-sonnet-20241022') {
+  if (id.startsWith('anthropic/')) {
     return (
       <div className="w-5 h-5 rounded-full bg-[#fbf0df] flex items-center justify-center shrink-0">
         <Claude.Color size={14} />
+      </div>
+    )
+  }
+  // Grok / xAI small icon
+  if (id.startsWith('x-ai/') || id.includes('grok')) {
+    return (
+      <div className="w-5 h-5 rounded-full bg-[#0f1724] flex items-center justify-center shrink-0">
+        <Image src="/grok-color.svg" alt="Grok" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
       </div>
     )
   }
@@ -558,7 +630,7 @@ export function ChatInterface() {
                 {language === 'pt-BR' ? 'RÁPIDO' : 'FAST'}
               </span>
               <div className="flex flex-col gap-2.5 max-h-none overflow-visible md:max-h-[360px] md:overflow-y-auto pr-0 md:pr-1 pointer-events-auto custom-scrollbar">
-                {AI_MODELS.filter(m => ['screen-ai-1.2', 'openai/gpt-4o-mini', 'openrouter/deepseek/deepseek-chat'].includes(m.id)).map(model => (
+                {AI_MODELS.filter(m => ['screen-ai-1.2', 'openai/gpt-4o-mini', 'openai/o4-mini', 'openrouter/deepseek/deepseek-chat', 'x-ai/grok-4-fast'].includes(m.id)).map(model => (
                   <button
                     key={model.id}
                     onClick={() => {
@@ -595,7 +667,7 @@ export function ChatInterface() {
                 {language === 'pt-BR' ? 'AVANÇADO' : 'ADVANCED'}
               </span>
               <div className="flex flex-col gap-2.5 max-h-none overflow-visible md:max-h-[360px] md:overflow-y-auto pr-0 md:pr-1 pointer-events-auto custom-scrollbar">
-                {AI_MODELS.filter(m => ['openai/gpt-4o', 'anthropic/claude-3-5-sonnet-20241022', 'gemini/gemini-2.5-pro'].includes(m.id)).map(model => (
+                {AI_MODELS.filter(m => ['openai/gpt-4o', 'openai/gpt-5-mini', 'openai/gpt-5.1', 'openai/gpt-5.2-thinking', 'openai/gpt-5.3-codex', 'openai/gpt-oss', 'gemini/gemini-2.5-pro', 'gemini/gemini-2.5-flash', 'google/gemini-3.1-flash', 'google/gemini-3.1-pro', 'anthropic/claude-3-5-sonnet-20241022', 'anthropic/claude-4.5-haiku', 'anthropic/claude-4.6-sonnet', 'anthropic/claude-4.6-sonnet-thinking', 'x-ai/grok-3', 'x-ai/grok-4', 'x-ai/grok-4-fast'].includes(m.id)).map(model => (
                   <button
                     key={model.id}
                     onClick={() => {
@@ -632,7 +704,7 @@ export function ChatInterface() {
                 {language === 'pt-BR' ? 'RACIOCÍNIO PROFUNDO' : 'DEEP REASONING'}
               </span>
               <div className="flex flex-col gap-2.5 max-h-none overflow-visible md:max-h-[360px] md:overflow-y-auto pr-0 md:pr-1 pointer-events-auto custom-scrollbar">
-                {AI_MODELS.filter(m => ['openrouter/deepseek/deepseek-r1', 'openrouter/meta-llama/llama-3.3-70b-instruct'].includes(m.id)).map(model => (
+                {AI_MODELS.filter(m => ['openrouter/deepseek/deepseek-r1', 'openrouter/deepseek/deepseek-4.0-flash', 'openrouter/deepseek/deepseek-4.0-pro', 'openrouter/meta-llama/llama-3.3-70b-instruct', 'openai/gpt-5.2-thinking', 'openai/gpt-5.3-codex', 'google/gemini-3.1-pro'].includes(m.id)).map(model => (
                   <button
                     key={model.id}
                     onClick={() => {
