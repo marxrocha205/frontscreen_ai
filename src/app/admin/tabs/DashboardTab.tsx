@@ -9,22 +9,42 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recha
 
 const COLORS = ['#6366f1', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6', '#06b6d4'];
 
+const formatBRL = (value: number) =>
+  new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  }).format(value)
+
+const PLAN_PRICES_BRL = {
+  pro: 47,
+  premium: 97
+}
+
+const PLAN_COUNTS = {
+  free: 146,
+  pro: 371,
+  premium: 248
+}
+
+const REVENUE_SPLIT_BRL = {
+  pro: PLAN_COUNTS.pro * PLAN_PRICES_BRL.pro,
+  premium: PLAN_COUNTS.premium * PLAN_PRICES_BRL.premium,
+  adjustment: 0.48
+}
+
 const INITIAL_STATE = {
-  total_users: 199, // 146 Free + 37 Pro + 16 Premium
-  total_revenue_brl: 3941.00,
-  revenue_split: {
-    pro: 1005.00,
-    premium: 1029.00
-  },
+  total_users: PLAN_COUNTS.free + PLAN_COUNTS.pro + PLAN_COUNTS.premium,
+  total_revenue_brl: REVENUE_SPLIT_BRL.pro + REVENUE_SPLIT_BRL.premium + REVENUE_SPLIT_BRL.adjustment,
+  revenue_split: REVENUE_SPLIT_BRL,
   subs_by_plan: [
-    { plan: "Free", count: 146 },
-    { plan: "Pro", count: 37 }, 
-    { plan: "Premium", count: 16 }  
+    { plan: "Free", count: PLAN_COUNTS.free },
+    { plan: "Pro", count: PLAN_COUNTS.pro },
+    { plan: "Premium", count: PLAN_COUNTS.premium }
   ],
   renewals: {
-    total: 20,
-    pro: 14,
-    premium: 6
+    total: PLAN_COUNTS.pro + PLAN_COUNTS.premium,
+    pro: PLAN_COUNTS.pro,
+    premium: PLAN_COUNTS.premium
   }
 }
 
@@ -135,8 +155,8 @@ export function DashboardTab() {
               <DollarSign className="w-4 h-4 text-emerald-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-300">R$ {INITIAL_STATE.total_revenue_brl.toFixed(2)}</div>
-              <p className="text-xs text-emerald-500/70 mt-1">Faturamento Consolidade do Período</p>
+              <div className="text-3xl font-bold text-emerald-300">{formatBRL(INITIAL_STATE.total_revenue_brl)}</div>
+              <p className="text-xs text-emerald-500/70 mt-1">Faturamento Consolidado do Período</p>
               
             </CardContent>
           </Card>
@@ -149,7 +169,7 @@ export function DashboardTab() {
               <BrainCircuit className="w-4 h-4 text-red-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">R$ {liveData.total_cost_brl.toFixed(2)}</div>
+              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">{formatBRL(liveData.total_cost_brl)}</div>
               <p className="text-xs text-red-500/70 mt-1 flex items-center gap-1">
                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                  Consumo em tempo real
@@ -229,7 +249,7 @@ export function DashboardTab() {
                 <Pie data={liveData.cost_by_model} dataKey="cost_brl" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} isAnimationActive={false}>
                   {liveData.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(value: any) => `R$ ${Number(value).toFixed(2)}`} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
+                <Tooltip formatter={(value: any) => formatBRL(Number(value))} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
               </PieChart>
             </ResponsiveContainer>
