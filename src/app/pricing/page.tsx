@@ -9,12 +9,25 @@ import Image from 'next/image'
 
 const plans = [
   {
+    id: 1,
+    name: 'FREE',
+    tagline: 'Experimente o poder da IA que enxerga sua tela.',
+    price: 'R$0',
+    cta: 'Começar Grátis',
+    features: [
+      'Créditos limitados diariamente',
+      'Acesso ao ScreenAI básico',
+      'Análise de tela em tempo real',
+      'Suporte via comunidade',
+    ],
+  },
+  {
     id: 2,
-    name: 'PRO',
+    name: 'PRO MENSAL',
     tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
-    price: 'R$47/mês',
+    price: 'R$97,90/mês',
     cta: 'Assinar PRO',
-    badge: 'Popular',
+    badge: 'Mais Flexível',
     features: [
       'Tokens ilimitados: Trabalhe o dia todo sem interrupções.',
       'Acesso Ilimitado a ScreenAI, Gemini e GPT-5.',
@@ -26,16 +39,17 @@ const plans = [
   },
   {
     id: 3,
-    name: 'PREMIUM',
-    tagline: 'Poder Absoluto By Claude',
-    price: 'R$97/mês',
-    cta: 'Assinar PLUS',
+    name: 'PRO ANUAL',
+    tagline: 'Poder Absoluto com o melhor custo-benefício.',
+    price: 'R$797,90/ano',
+    cta: 'Assinar ANUAL',
+    badge: 'Melhor Valor',
     features: [
-      'Tudo do PRO e mais',
-      'As IAs mais avançadas do mercado, agora dentro da sua tela',
-      'Janela de Contexto Gigante: Analise documentos e telas extremamente longas.',
+      'Tudo do PRO Mensal e mais',
+      'Economia de R$376 por ano',
+      'Janela de Contexto Gigante: Analise documentos longos.',
       'Multi-IA Simultânea: Claude, GPT-5 e Gemini Pro.',
-      'Suporte 24h com canal direto com nosso time técnico',
+      'Suporte 24h prioritário via WhatsApp',
     ],
   },
 ]
@@ -135,12 +149,12 @@ export default function PricingPage() {
 
       {/* Plans Grid */}
       <div className="px-4 sm:px-6 pb-24">
-        <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {plans.map((plan) => (
             <div
               key={plan.name}
               className={`relative rounded-xl border p-[1px] flex flex-col max-w-[360px] mx-auto w-full ${
-                plan.id === 2
+                plan.id === 3
                   ? 'border-zinc-700 bg-gradient-to-b from-white/[0.08] to-transparent'
                   : 'border-zinc-800 bg-zinc-900/40'
               }`}
@@ -164,7 +178,11 @@ export default function PricingPage() {
                 {/* CTA BUTTON */}
                 <button
                   onClick={() => handlePlanClick(plan)}
-                  className="w-full mb-8 h-10 rounded-[6px] font-medium text-[13px] flex items-center justify-center transition-all bg-[#4b4b4b] hover:bg-[#5b5b5b] text-zinc-200 relative z-10"
+                  className={`w-full mb-8 h-10 rounded-[6px] font-medium text-[13px] flex items-center justify-center transition-all relative z-10 ${
+                    plan.id === 3 
+                      ? 'bg-white text-zinc-900 hover:bg-zinc-200' 
+                      : 'bg-[#4b4b4b] hover:bg-[#5b5b5b] text-zinc-200'
+                  }`}
                 >
                   {plan.cta}
                 </button>
@@ -182,12 +200,12 @@ export default function PricingPage() {
                   </ul>
                 </div>
 
-                {plan.id === 2 && (
+                {plan.id === 3 && (
                   <div className="absolute -top-[150px] -left-[150px] w-[300px] h-[300px] bg-white/[0.08] rounded-full blur-[80px] pointer-events-none z-0" />
                 )}
                 <div
                   className={`absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t pointer-events-none z-0 ${
-                    plan.id === 2 ? 'from-white/[0.05] to-transparent' : 'from-white/[0.015] to-transparent'
+                    plan.id === 3 ? 'from-white/[0.05] to-transparent' : 'from-white/[0.015] to-transparent'
                   }`}
                 />
               </div>

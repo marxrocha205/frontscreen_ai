@@ -67,13 +67,13 @@ export function UsersTab() {
       const user = users.find(u => u.id === userId)
       
       let ltv = 0
-      if (user?.plan_id === 2) ltv = 47.00
-      if (user?.plan_id === 3) ltv = 97.00
+      if (user?.plan_id === 2) ltv = 97.90
+      if (user?.plan_id === 3) ltv = 797.90
 
       setUserDetails({
         user: { email: user?.email },
         subscription: { 
-          plan_name: user?.plan_id === 1 ? "Free" : user?.plan_id === 2 ? "Pro" : "Plus", 
+          plan_name: user?.plan_id === 1 ? "Free" : user?.plan_id === 2 ? "Pro Mensal" : "Pro Anual", 
           remaining_credits: user?.plan_id !== 1 ? Math.floor(Math.random() * 5000) + 1000 : 100 
         },
         ai_costs: [
@@ -121,7 +121,7 @@ export function UsersTab() {
                     <td className="p-4 font-medium text-zinc-100">{user.email}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${user.plan_id === 3 ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' : user.plan_id === 2 ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
-                        {user.plan_id === 1 ? "Free" : user.plan_id === 2 ? "Pro" : "Plus"}
+                        {user.plan_id === 1 ? "Free" : user.plan_id === 2 ? "Pro Mensal" : "Pro Anual"}
                       </span>
                     </td>
                     <td className="p-4">
