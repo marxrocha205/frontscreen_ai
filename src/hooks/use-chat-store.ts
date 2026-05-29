@@ -2,15 +2,40 @@ import { create } from 'zustand'
 import { config } from '@/lib/config'
 
 export const AI_MODELS = [
-  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', provider: 'ScreenAI', requiresPro: false },// Se vazio, usa a sua regra de fallback do backend
-  { id: 'openai/gpt-4o', label: 'GPT-4o (OpenAI)', provider: 'OpenAI', requiresPro: false },
+  { id: 'screen-ai-1.2', label: 'ScreenAI 1.2', description: 'Rápido, seguro e ótimo para tarefas do dia a dia', provider: 'ScreenAI', requiresPro: false }, // Se vazio, usa a sua regra de fallback do backend
+
+  // OpenAI
+  { id: 'openai/gpt-4o', label: 'GPT-4o', provider: 'OpenAI', requiresPro: false },
   { id: 'openai/gpt-4o-mini', label: 'GPT-4o Mini', provider: 'OpenAI', requiresPro: false },
-  { id: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', provider: 'Anthropic', requiresPro: true },
+  { id: 'openai/gpt-oss', label: 'GPT OSS', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-5-mini', label: 'GPT-5 Mini', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-5.1', label: 'GPT-5.1', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-5.2-thinking', label: 'GPT-5.2 Thinking', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/gpt-5.3-codex', label: 'GPT-5.3 Codex', provider: 'OpenAI', requiresPro: false },
+  { id: 'openai/o4-mini', label: 'o4 Mini', provider: 'OpenAI', requiresPro: false },
+
+  // Gemini / Google
   { id: 'gemini/gemini-2.5-pro', label: 'Gemini 2.5 Pro', provider: 'Google', requiresPro: false },
   { id: 'gemini/gemini-2.5-flash', label: 'Gemini 2.5 Flash', provider: 'Google', requiresPro: false },
+  { id: 'google/gemini-3.1-flash', label: 'Gemini 3.1 Flash', provider: 'Google', requiresPro: false },
+  { id: 'google/gemini-3.1-pro', label: 'Gemini 3.1 Pro', provider: 'Google', requiresPro: false },
+
+  // Grok / xAI
+  { id: 'x-ai/grok-3', label: 'Grok 3', provider: 'Grok', requiresPro: false },
+  { id: 'x-ai/grok-4', label: 'Grok 4', provider: 'Grok', requiresPro: false },
+  { id: 'x-ai/grok-4-fast', label: 'Grok 4 Fast', provider: 'Grok', requiresPro: false },
+
+  // DeepSeek
   { id: 'openrouter/deepseek/deepseek-chat', label: 'DeepSeek V3', provider: 'DeepSeek', requiresPro: false },
   { id: 'openrouter/deepseek/deepseek-r1', label: 'DeepSeek R1 (Raciocínio)', provider: 'DeepSeek', requiresPro: false },
-  { id: 'openrouter/meta-llama/llama-3.3-70b-instruct', label: 'Llama 3.3 70B', provider: 'Meta', requiresPro: false }
+  { id: 'openrouter/deepseek/deepseek-4.0-flash', label: 'DeepSeek 4.0 Flash', provider: 'DeepSeek', requiresPro: false },
+  { id: 'openrouter/deepseek/deepseek-4.0-pro', label: 'DeepSeek 4.0 Pro', provider: 'DeepSeek', requiresPro: false },
+
+  // Claude (mantém modelos já existentes)
+  { id: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet', provider: 'Anthropic', requiresPro: true },
+  { id: 'anthropic/claude-4.5-haiku', label: 'Claude 4.5 Haiku', provider: 'Anthropic', requiresPro: true },
+  { id: 'anthropic/claude-4.6-sonnet', label: 'Claude 4.6 Sonnet', provider: 'Anthropic', requiresPro: true },
+  { id: 'anthropic/claude-4.6-sonnet-thinking', label: 'Claude 4.6 Sonnet Thinking', provider: 'Anthropic', requiresPro: true }
 ]
 
 export interface Message {
