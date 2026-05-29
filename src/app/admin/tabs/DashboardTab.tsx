@@ -57,12 +57,12 @@ export function DashboardTab() {
     active_sessions: 18,
     total_messages: 94532,
     total_sessions: 18420,
-    total_cost_brl: 784.35, // 268.03 + 116.03 + 78.14 + 322.15
+    total_cost_brl: 2184.73,
     cost_by_model: [
-      { model: "ElevenLabs", cost_brl: 322.15 },
-      { model: "Claude", cost_brl: 268.03 },
-      { model: "Gemini", cost_brl: 116.03 },
-      { model: "OpenAI", cost_brl: 78.14 }
+      { model: "ElevenLabs", cost_brl: 812.46 },
+      { model: "Claude", cost_brl: 623.39 },
+      { model: "Gemini", cost_brl: 412.18 },
+      { model: "OpenAI", cost_brl: 336.70 }
     ]
   })
 
