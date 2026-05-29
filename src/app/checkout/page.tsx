@@ -12,8 +12,8 @@ import { config } from '@/lib/config'
 const plans = [
   {
     id: 2,
-    name: 'Plano PRO',
-    price: 47.00,
+    name: 'Plano PRO Mensal',
+    price: 97.90,
     features: [
       { text: 'Respostas mais inteligentes e rápidas', Icon: Zap, color: '#3b82f6' },
       { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip, color: '#3b82f6' },
@@ -23,8 +23,8 @@ const plans = [
   },
   {
     id: 3,
-    name: 'Plano PREMIUM',
-    price: 97.00,
+    name: 'Plano PRO Anual',
+    price: 797.90,
     features: [
       { text: 'Tudo do PRO e muito mais', Icon: Zap, color: '#3b82f6' },
       { text: 'Janela de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
@@ -936,7 +936,7 @@ function CheckoutContent() {
             {/* Price breakdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
-                <span>Assinatura mensal</span>
+                <span>{selectedPlan.id === 3 ? 'Assinatura anual' : 'Assinatura mensal'}</span>
                 <span style={{ color: '#d1d5db' }}>R${selectedPlan.price.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
@@ -1026,7 +1026,7 @@ function CheckoutContent() {
 
         {/* Footer disclaimer */}
         <p className="checkout-disclaimer">
-          Renova mensalmente até ser cancelado. R${selectedPlan.price.toFixed(2)}/mês serão cobrados.{' '}
+          Renova {selectedPlan.id === 3 ? 'anualmente' : 'mensalmente'} até ser cancelado. R${selectedPlan.price.toFixed(2)}/{selectedPlan.id === 3 ? 'ano' : 'mês'} serão cobrados.{' '}
           Cancele a qualquer momento{' '}
           nas Configurações. Ao assinar, você concorda com nossos{' '}
           Termos de Uso{' '}

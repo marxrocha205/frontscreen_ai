@@ -16,35 +16,35 @@ const formatBRL = (value: number) =>
   }).format(value)
 
 const PLAN_PRICES_BRL = {
-  pro: 47,
-  premium: 97
+  pro_mensal: 97.90,
+  pro_anual: 797.90
 }
 
 const PLAN_COUNTS = {
   free: 146,
-  pro: 371,
-  premium: 248
+  pro_mensal: 371,
+  pro_anual: 248
 }
 
 const REVENUE_SPLIT_BRL = {
-  pro: PLAN_COUNTS.pro * PLAN_PRICES_BRL.pro,
-  premium: PLAN_COUNTS.premium * PLAN_PRICES_BRL.premium,
+  pro_mensal: PLAN_COUNTS.pro_mensal * PLAN_PRICES_BRL.pro_mensal,
+  pro_anual: (PLAN_COUNTS.pro_anual * PLAN_PRICES_BRL.pro_anual) / 12, // Receita mensalizada
   adjustment: 0.48
 }
 
 const INITIAL_STATE = {
-  total_users: PLAN_COUNTS.free + PLAN_COUNTS.pro + PLAN_COUNTS.premium,
-  total_revenue_brl: REVENUE_SPLIT_BRL.pro + REVENUE_SPLIT_BRL.premium + REVENUE_SPLIT_BRL.adjustment,
+  total_users: PLAN_COUNTS.free + PLAN_COUNTS.pro_mensal + PLAN_COUNTS.pro_anual,
+  total_revenue_brl: REVENUE_SPLIT_BRL.pro_mensal + REVENUE_SPLIT_BRL.pro_anual + REVENUE_SPLIT_BRL.adjustment,
   revenue_split: REVENUE_SPLIT_BRL,
   subs_by_plan: [
     { plan: "Free", count: PLAN_COUNTS.free },
-    { plan: "Pro", count: PLAN_COUNTS.pro },
-    { plan: "Premium", count: PLAN_COUNTS.premium }
+    { plan: "Pro Mensal", count: PLAN_COUNTS.pro_mensal },
+    { plan: "Pro Anual", count: PLAN_COUNTS.pro_anual }
   ],
   renewals: {
-    total: PLAN_COUNTS.pro + PLAN_COUNTS.premium,
-    pro: PLAN_COUNTS.pro,
-    premium: PLAN_COUNTS.premium
+    total: PLAN_COUNTS.pro_mensal + PLAN_COUNTS.pro_anual,
+    pro_mensal: PLAN_COUNTS.pro_mensal,
+    pro_anual: PLAN_COUNTS.pro_anual
   }
 }
 
@@ -186,7 +186,7 @@ export function DashboardTab() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-purple-300">{INITIAL_STATE.renewals.total}</div>
-              <p className="text-xs text-purple-500/70 mt-1">{INITIAL_STATE.renewals.pro} PRO | {INITIAL_STATE.renewals.premium} PREMIUM</p>
+              <p className="text-xs text-purple-500/70 mt-1">{INITIAL_STATE.renewals.pro_mensal} PRO MENSAL | {INITIAL_STATE.renewals.pro_anual} PRO ANUAL</p>
             </CardContent>
           </Card>
         </div>
