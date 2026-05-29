@@ -134,10 +134,6 @@ const modelDescriptions: Record<string, { title: string; desc: string }> = {
     title: 'ScreenAI 1.2',
     desc: 'Velocidade cotidiana e ótimo para tarefas do dia a dia.'
   },
-  'openai/gpt-4o-mini': {
-    title: 'GPT-4o Mini',
-    desc: 'Respostas rápidas, leve e super inteligente.'
-  },
   'openrouter/deepseek/deepseek-chat': {
     title: 'DeepSeek V3',
     desc: 'Desempenho ágil com excelente custo-benefício.'
