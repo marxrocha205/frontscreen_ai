@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
 import { useAuth } from '@/hooks/use-auth'
 import { useConversations } from '@/hooks/use-conversations'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation' // <-- Adicionado usePathname
 import Link from 'next/link'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
@@ -53,6 +53,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
 
   const router = useRouter()
+  const pathname = usePathname() // <-- Captura a rota atual
+  
+  // Verifica se o usuário está na rota do Studio
+  const isStudioRoute = pathname?.startsWith('/app/studio')
+
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
@@ -62,11 +67,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [editingTitle, setEditingTitle] = useState('')
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
   const [showComingSoon, setShowComingSoon] = useState(false)
+  
   const currentPlanLabel = userPlan
     ? (language === 'pt-BR' ? `Plano ${userPlan}` : `${userPlan} Plan`)
     : (language === 'pt-BR' ? 'Carregando plano...' : 'Loading plan...')
   const ADMIN_EMAILS = ['marxrochascr@gmail.com', 'marxrocha.scr@gmail.com', 'admin@frontscreen.ai'] // Substitua pelos e-mails reais
   const isAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.trim().toLowerCase()))
+  
   const handleModelSelect = (model: typeof AI_MODELS[number]) => {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
     const isFreeUser = !userPlan || userPlan.toLowerCase() === 'free'
@@ -228,325 +235,324 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {isSidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      <div
-        className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-[204px]' : 'left-4'
-          }`}
-      >
-        <Button
-          variant="ghost"
-          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
-            }`}
-          title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
-        >
-          <div className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
-            }`}>
-            <Image
-              src="/logobranco-semfundo.png"
-              alt="Screen AI Logo"
-              width={180}
-              height={40}
-              className="h-15 md:h-15 w-auto object-contain"
-              priority
+      {/* Condição para esconder Overlay e Botões do Sidebar se estiver no Studio */}
+      {!isStudioRoute && (
+        <>
+          {isSidebarOpen && (
+            <div
+              className="lg:hidden fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
+              onClick={() => setIsSidebarOpen(false)}
             />
-          </div>
-          <div id="tour-sidebar-toggle" className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen
-            ? 'opacity-100 rotate-0'
-            : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
-            }`}>
-            {isSidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
-          </div>
-        </Button>
-      </div>
+          )}
 
-      <div
-        className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${isSidebarOpen ? 'w-64' : 'w-0 border-r-0'
-          }`}
-      >
-        <div className="w-64 flex flex-col h-full">
-          <div className="p-3 flex items-center justify-between h-[80px]">
-            <div className={`flex items-center pl-1 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
-              <Image
-                src="/logobranco-semfundo.png"
-                alt="Screen AI Logo"
-                width={180}
-                height={56}
-                className="h-15 md:h-15 lg:h-15 w-auto object-contain"
-                priority
-              />
-            </div>
-            <div className="w-10 h-10 pointer-events-none" />
-          </div>
-
-          <div className="px-3 pb-3 flex flex-col gap-2">
+          <div
+            className={`absolute top-4 z-[60] flex items-center justify-center transition-all duration-300 ease-in-out ${isSidebarOpen ? 'left-[204px]' : 'left-4'
+              }`}
+          >
             <Button
-              id="tour-new-chat"
               variant="ghost"
-              onClick={() => handleAuthAction(handleNewChat)}
-              className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className={`h-10 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-800/60 group relative overflow-hidden transition-all duration-300 ease-in-out ${isSidebarOpen ? 'w-10 p-0' : 'w-auto px-1'
+                }`}
+              title={isSidebarOpen ? "Close sidebar" : "Open sidebar"}
             >
-              <Plus className="w-4 h-4 text-zinc-400" />
-              <span className="text-sm font-medium">{t('app.new_chat')}</span>
-            </Button>
-            <Button
-              id="tour-search-chat"
-              variant="ghost"
-              onClick={() => handleAuthAction(() => setIsSearchOpen(!isSearchOpen))}
-              className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-              <span className="text-sm font-medium">{t('app.search_chat')}</span>
-            </Button>
-
-            {isSearchOpen && (
-              <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
-                <Input
-                  autoFocus
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={t('app.search_chat')}
-                  className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
+              <div className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen ? 'opacity-0 scale-50 absolute' : 'opacity-100 scale-100 group-hover:opacity-0'
+                }`}>
+                <Image
+                  src="/logobranco-semfundo.png"
+                  alt="Screen AI Logo"
+                  width={180}
+                  height={40}
+                  className="h-15 md:h-15 w-auto object-contain"
+                  priority
                 />
               </div>
-            )}
+              <div id="tour-sidebar-toggle" className={`flex items-center justify-center transition-all duration-300 ${isSidebarOpen
+                ? 'opacity-100 rotate-0'
+                : 'opacity-0 group-hover:opacity-100 -rotate-90 absolute inset-0'
+                }`}>
+                {isSidebarOpen ? <PanelLeftClose className="w-[22px] h-[22px]" /> : <PanelLeftOpen className="w-[26px] h-[26px]" />}
+              </div>
+            </Button>
+          </div>
 
-                          <Button
-                id="tour-studio"
-                variant="ghost"
-                onClick={() => handleAuthAction(() => {
-                  if (isAdmin) {
-                    // Se for admin, abre o submenu normalmente
-                    setIsStudioSubmenuOpen((prev) => !prev)
-                  } else {
-                    // Se for usuário comum, mostra o aviso
-                    setShowComingSoon(true)
-                  }
-                })}
-                className="w-full justify-between gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
-              >
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  <span className="text-sm font-medium">{language === 'pt-BR' ? 'ScreenAI Studio' : 'ScreenAI Studio'}</span>
-                  {/* Opcional: Adicionar uma tag visual de "Beta" ou "Em breve" no botão */}
-                  {!isAdmin && (
-                    <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded ml-1">Beta</span>
+          <div
+            className={`absolute lg:relative z-50 lg:z-auto h-full border-r border-zinc-800/60 bg-[#0f0f0f] flex flex-col flex-shrink-0 transition-all duration-300 overflow-hidden ${isSidebarOpen ? 'w-64' : 'w-0 border-r-0'
+              }`}
+          >
+            <div className="w-64 flex flex-col h-full">
+              <div className="p-3 flex items-center justify-between h-[80px]">
+                <div className={`flex items-center pl-1 transition-opacity duration-200 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}>
+                  <Image
+                    src="/logobranco-semfundo.png"
+                    alt="Screen AI Logo"
+                    width={180}
+                    height={56}
+                    className="h-15 md:h-15 lg:h-15 w-auto object-contain"
+                    priority
+                  />
+                </div>
+                <div className="w-10 h-10 pointer-events-none" />
+              </div>
+
+              <div className="px-3 pb-3 flex flex-col gap-2">
+                <Button
+                  id="tour-new-chat"
+                  variant="ghost"
+                  onClick={() => handleAuthAction(handleNewChat)}
+                  className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80"
+                >
+                  <Plus className="w-4 h-4 text-zinc-400" />
+                  <span className="text-sm font-medium">{t('app.new_chat')}</span>
+                </Button>
+                <Button
+                  id="tour-search-chat"
+                  variant="ghost"
+                  onClick={() => handleAuthAction(() => setIsSearchOpen(!isSearchOpen))}
+                  className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+                >
+                  <Search className="w-4 h-4" />
+                  <span className="text-sm font-medium">{t('app.search_chat')}</span>
+                </Button>
+
+                {isSearchOpen && (
+                  <div className="px-1 animate-in slide-in-from-top-2 fade-in duration-200 block">
+                    <Input
+                      autoFocus
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder={t('app.search_chat')}
+                      className="h-9 bg-zinc-900 border-zinc-800 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-zinc-700"
+                    />
+                  </div>
+                )}
+
+                <Button
+                  id="tour-studio"
+                  variant="ghost"
+                  onClick={() => handleAuthAction(() => {
+                    if (!isAdmin) {
+                      setIsSidebarOpen(false)
+                      router.push('/app/studio')
+                    } else {
+                      setShowComingSoon(true)
+                    }
+                  })}
+                  className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-sm font-medium">ScreenAI Studio</span>
+                    {!isAdmin && (
+                      <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded ml-1">Beta</span>
+                    )}
+                  </div>
+                </Button>
+
+                {isStudioSubmenuOpen && (
+                  <div className="ml-4 flex flex-col gap-1 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setIsStudioSubmenuOpen(false)
+                        setIsSidebarOpen(false)
+                        router.push('/app/studio?cat=imagens')
+                      }}
+                      className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                    >
+                      <Paintbrush className="w-4 h-4" />
+                      <span>{language === 'pt-BR' ? 'Imagem' : 'Image'}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setIsStudioSubmenuOpen(false)
+                        setIsSidebarOpen(false)
+                        router.push('/app/studio?cat=video')
+                      }}
+                      className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                    >
+                      <Video className="w-4 h-4" />
+                      <span>{language === 'pt-BR' ? 'Vídeo' : 'Video'}</span>
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setIsStudioSubmenuOpen(false)
+                        setIsSidebarOpen(false)
+                        router.push('/app/studio?cat=documentos')
+                      }}
+                      className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>{language === 'pt-BR' ? 'Documentos' : 'Documents'}</span>
+                    </Button>
+                  </div>
+                )}
+
+                <Button
+                  id="tour-screen-share"
+                  variant="ghost"
+                  onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
+                  className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
+                    ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
+                    : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                    }`}
+                >
+                  <MonitorUp className="w-4 h-4" />
+                  <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
+                </Button>
+
+                {/* Botão de Destacar Chat (PiP / Popup) */}
+                <Button
+                   id="tour-pip-chat"
+                   variant="ghost"
+                   onClick={() => handleAuthAction(() => {
+                     if (isMobileDevice()) {
+                       setShowMobileWarning(true)
+                       return
+                     }
+                     openChat()
+                   })}
+                   className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
+                     ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
+                     : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
+                     }`}
+                >
+                  <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
+                  <span className="text-sm font-medium">
+                    {floatingState === 'none' && (language === 'pt-BR' ? 'Abrir Chat Flutuante' : 'Detach Chat (PiP)')}
+                    {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar (PiP Nativo)' : 'Restore (Native PiP)')}
+                    {floatingState === 'popup' && (language === 'pt-BR' ? 'Restaurar (Popup)' : 'Restore (Popup)')}
+                  </span>
+                </Button>
+
+              </div>
+
+              <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
+                <div className="px-3 py-2 mb-1">
+                  <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Suas conversas' : 'Your conversations'}</span>
+                </div>
+
+                <div className="space-y-[2px]">
+                  {isLoading ? (
+                    <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">{language === 'pt-BR' ? 'A carregar...' : 'Loading...'}</div>
+                  ) : filteredConversations.length === 0 ? (
+                    <div className="text-zinc-600 text-[13px] px-3 mt-2">
+                      {searchQuery ? (language === 'pt-BR' ? 'Nenhuma conversa encontrada.' : 'No conversation found.') : (language === 'pt-BR' ? 'Nenhuma conversa ainda.' : 'No conversation yet.')}
+                    </div>
+                  ) : (
+                    filteredConversations.map((item) => (
+                      <div key={item.id} className="w-full relative flex items-center group">
+                        <button
+                          onClick={() => loadConversation(item.id)}
+                          className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
+                            }`}
+                        >
+                          <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
+
+                          {editingId === item.id ? (
+                            <Input
+                              autoFocus
+                              value={editingTitle}
+                              onChange={(e) => setEditingTitle(e.target.value)}
+                              onBlur={() => handleRenameSubmit(item.id)}
+                              onKeyDown={(e) => handleKeyDown(e, item.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              maxLength={30}
+                              className="h-6 px-1.5 py-0 bg-zinc-900 border-zinc-700 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-indigo-500 flex-1 min-w-0"
+                            />
+                          ) : (
+                            <span className="truncate flex-1">{item.title}</span>
+                          )}
+                        </button>
+                        <div className="absolute right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                          <button
+                            onClick={(e) => startEditing(e, item.id, item.title)}
+                            className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                            title={language === 'pt-BR' ? "Renomear" : "Rename"}
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
+                            className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                            title={language === 'pt-BR' ? "Excluir" : "Delete"}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
                   )}
                 </div>
-                {isAdmin && (
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isStudioSubmenuOpen ? 'rotate-180' : ''}`} />
-                )}
-              </Button>
-
-            {isStudioSubmenuOpen && (
-              <div className="ml-4 flex flex-col gap-1 px-1 animate-in slide-in-from-top-2 fade-in duration-200">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsStudioSubmenuOpen(false)
-                    setIsSidebarOpen(false)
-                    router.push('/app/studio?cat=imagens')
-                  }}
-                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
-                >
-                  <Paintbrush className="w-4 h-4" />
-                  <span>Imagem</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsStudioSubmenuOpen(false)
-                    setIsSidebarOpen(false)
-                    router.push('/app/studio?cat=video')
-                  }}
-                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
-                >
-                  <Video className="w-4 h-4" />
-                  <span>Vídeo</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setIsStudioSubmenuOpen(false)
-                    setIsSidebarOpen(false)
-                    router.push('/app/studio?cat=documentos')
-                  }}
-                  className="w-full justify-start gap-2 h-9 px-3 rounded-lg border border-zinc-800/80 bg-zinc-900/60 text-zinc-300 hover:bg-zinc-800 hover:text-white text-sm"
-                >
-                  <FileText className="w-4 h-4" />
-                  <span>Documentos</span>
-                </Button>
               </div>
-            )}
 
-            <Button
-              id="tour-screen-share"
-              variant="ghost"
-              onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
-              className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${isScreenShared
-                ? 'bg-blue-500/10 text-blue-500 hover:bg-blue-500/20'
-                : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-                }`}
-            >
-              <MonitorUp className="w-4 h-4" />
-              <span className="text-sm font-medium">{isScreenShared ? t('app.stop_sharing') : t('app.share_screen')}</span>
-            </Button>
-
-            {/* Botão de Destacar Chat (PiP / Popup) */}
-            <Button
-               id="tour-pip-chat"
-               variant="ghost"
-               onClick={() => handleAuthAction(() => {
-                 if (isMobileDevice()) {
-                   setShowMobileWarning(true)
-                   return
-                 }
-                 openChat()
-               })}
-               className={`w-full justify-start gap-2 h-10 px-3 rounded-lg border border-zinc-800/80 transition-colors ${floatingState !== 'none'
-                 ? 'bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 hover:text-blue-300'
-                 : 'bg-zinc-900/50 hover:bg-zinc-800 hover:text-white text-zinc-400'
-                 }`}
-            >
-              <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
-              <span className="text-sm font-medium">
-                {floatingState === 'none' && (language === 'pt-BR' ? 'Abrir Chat Flutuante' : 'Detach Chat (PiP)')}
-                {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar (PiP Nativo)' : 'Restore (Native PiP)')}
-                {floatingState === 'popup' && (language === 'pt-BR' ? 'Restaurar (Popup)' : 'Restore (Popup)')}
-              </span>
-            </Button>
-
-          </div>
-
-          <div className="flex-1 overflow-y-auto mt-2 px-3 pb-4">
-            <div className="px-3 py-2 mb-1">
-              <span className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider">{language === 'pt-BR' ? 'Suas conversas' : 'Your conversations'}</span>
-            </div>
-
-            <div className="space-y-[2px]">
-              {isLoading ? (
-                <div className="text-zinc-600 text-sm px-3 mt-2 animate-pulse">{language === 'pt-BR' ? 'A carregar...' : 'Loading...'}</div>
-              ) : filteredConversations.length === 0 ? (
-                <div className="text-zinc-600 text-[13px] px-3 mt-2">
-                  {searchQuery ? (language === 'pt-BR' ? 'Nenhuma conversa encontrada.' : 'No conversation found.') : (language === 'pt-BR' ? 'Nenhuma conversa ainda.' : 'No conversation yet.')}
-                </div>
-              ) : (
-                filteredConversations.map((item) => (
-                  <div key={item.id} className="w-full relative flex items-center group">
-                    <button
-                      onClick={() => loadConversation(item.id)}
-                      className={`w-full text-left flex items-center gap-2.5 px-3 py-2.5 text-sm rounded-lg transition-colors pr-16 ${activeId === item.id ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:bg-zinc-800/50 hover:text-white'
-                        }`}
+              <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
+                {hasHydrated && !isLoggedIn && (
+                  <div className="px-1 py-2 flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-sm font-semibold text-zinc-100 leading-tight">
+                        {t('help.personalized_responses')}
+                      </span>
+                      <p className="text-[13px] text-zinc-500 leading-normal">
+                        {t('help.login_benefit')}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => router.push('/login')}
+                      className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
                     >
-                      <MessageSquare className={`w-4 h-4 shrink-0 ${(activeId === item.id && editingId !== item.id) ? 'text-zinc-300' : 'text-zinc-500 group-hover:text-zinc-400'}`} />
-
-                      {editingId === item.id ? (
-                        <Input
-                          autoFocus
-                          value={editingTitle}
-                          onChange={(e) => setEditingTitle(e.target.value)}
-                          onBlur={() => handleRenameSubmit(item.id)}
-                          onKeyDown={(e) => handleKeyDown(e, item.id)}
-                          onClick={(e) => e.stopPropagation()}
-                          maxLength={30}
-                          className="h-6 px-1.5 py-0 bg-zinc-900 border-zinc-700 text-sm text-zinc-200 focus-visible:ring-1 focus-visible:ring-indigo-500 flex-1 min-w-0"
-                        />
-                      ) : (
-                        <span className="truncate flex-1">{item.title}</span>
-                      )}
-                    </button>
-                    <div className="absolute right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                      <button
-                        onClick={(e) => startEditing(e, item.id, item.title)}
-                        className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                        title={language === 'pt-BR' ? "Renomear" : "Rename"}
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
-                        className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                        title={language === 'pt-BR' ? "Excluir" : "Delete"}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
+                      {t('register.login')}
+                    </Button>
                   </div>
-                ))
-              )}
+                )}
+
+                {hasHydrated && isLoggedIn ? (
+                  <SettingsDialog trigger={
+                    <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                      <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+                      <span className="text-sm">{t('app.settings')}</span>
+                    </Button>
+                  } />
+                ) : (
+                  <Button
+                    id="tour-settings"
+                    variant="ghost"
+                    onClick={() => handleAuthAction(() => { })}
+                    className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
+                  >
+                    <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
+                    <span className="text-sm">{t('app.settings')}</span>
+                  </Button>
+                )}
+
+                {hasHydrated && isLoggedIn && (
+                  <SettingsDialog
+                    defaultTab="account"
+                    trigger={
+                      <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
+                        <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
+                          <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium">
+                            {user?.email?.substring(0, 2).toUpperCase() || 'US'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col items-start leading-tight">
+                          <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
+                          <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
+                        </div>
+                      </Button>
+                    }
+                  />
+                )}
+              </div>
             </div>
           </div>
+        </>
+      )}
 
-          <div className="p-3 border-t border-zinc-800/60 flex flex-col gap-4">
-            {hasHydrated && !isLoggedIn && (
-              <div className="px-1 py-2 flex flex-col gap-3">
-                <div className="flex flex-col gap-2">
-                  <span className="text-sm font-semibold text-zinc-100 leading-tight">
-                    {t('help.personalized_responses')}
-                  </span>
-                  <p className="text-[13px] text-zinc-500 leading-normal">
-                    {t('help.login_benefit')}
-                  </p>
-                </div>
-                <Button
-                  onClick={() => router.push('/login')}
-                  className="w-full h-10 bg-zinc-800/50 hover:bg-zinc-800 text-white rounded-[20px] border border-zinc-700/30 font-semibold text-sm transition-all mt-1"
-                >
-                  {t('register.login')}
-                </Button>
-              </div>
-            )}
-
-            {hasHydrated && isLoggedIn ? (
-              <SettingsDialog trigger={
-                <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
-                  <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-                  <span className="text-sm">{t('app.settings')}</span>
-                </Button>
-              } />
-            ) : (
-              <Button
-                id="tour-settings"
-                variant="ghost"
-                onClick={() => handleAuthAction(() => { })}
-                className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
-              >
-                <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-                <span className="text-sm">{t('app.settings')}</span>
-              </Button>
-            )}
-
-            {hasHydrated && isLoggedIn && (
-              <SettingsDialog
-                defaultTab="account"
-                trigger={
-                  <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
-                    <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
-                      <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium">
-                        {user?.email?.substring(0, 2).toUpperCase() || 'US'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col items-start leading-tight">
-                      <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
-                      <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
-                    </div>
-                  </Button>
-                }
-              />
-            )}
-          </div>
-        </div>
-      </div>
-
+      {/* Como o flex-1 ocupa todo o restante do espaço, se a sidebar estiver oculta, a children ocupará 100% da tela */}
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
-
-
         {children}
       </div>
 
