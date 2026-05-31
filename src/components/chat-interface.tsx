@@ -1161,7 +1161,7 @@ export function ChatInterface() {
               </div>
             </>
           )}
-          <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[32px] p-2 shadow-2xl relative flex flex-col gap-2">
+          <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[28px] px-1.5 pt-1.5 pb-1 shadow-2xl relative flex flex-col gap-1">
             {selectedFile && (
               <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
                 <div className="bg-indigo-500/20 p-1.5 rounded-lg">
@@ -1177,7 +1177,7 @@ export function ChatInterface() {
             )}
 
             {/* CAIXA DE TEXTO MULTI-LINHA COM LAYOUT DO MOCKUP (TEXTAREA ACIMA, BOTÕES ABAIXO) */}
-            <div className="flex flex-col gap-2.5 bg-[#121212] rounded-[24px] p-3 pr-2.5">
+            <div className="flex flex-col gap-1.5 bg-[#121212] rounded-[22px] px-2.5 py-2">
 
               {/* Textarea Area */}
               <div className="w-full flex items-start">
@@ -1198,23 +1198,23 @@ export function ChatInterface() {
                   }}
                   placeholder={placeholderText}
                   rows={1}
-                  className="placeholder-ellipsis w-full bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-1.5 max-h-[200px] overflow-y-auto custom-scrollbar"
-                  style={{ minHeight: '36px' }}
+                  className="placeholder-ellipsis w-full bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-0.5 leading-6 max-h-[200px] overflow-y-auto custom-scrollbar"
+                  style={{ minHeight: '28px' }}
                 />
               </div>
 
             </div>
 
             {/* Bottom Row: Pills (Left) and Action Buttons (Right) - POSICIONADOS NA PARTE CINZA */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between w-full px-2 py-1">
+            <div className="flex items-center justify-between gap-2 w-full px-1.5 py-0">
               {/* Left Side: Pills */}
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
                 {/* Plus Attachment Button */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       id="tour-attachment-btn"
-                      className="flex items-center gap-1 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full px-3 py-1.5 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                      className="flex items-center gap-1 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full px-2.5 py-1 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
                     >
                       <Plus className="w-3.5 h-3.5 text-zinc-400" />
                       <span>{language === 'pt-BR' ? 'Adicionar' : 'Add'}</span>
@@ -1231,7 +1231,7 @@ export function ChatInterface() {
                 {/* Agent Selector Button */}
                 <button
                   onClick={() => setIsAgentsDialogOpen(true)}
-                  className="flex items-center gap-1.5 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full pl-2 pr-3 py-1.5 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                  className="flex items-center gap-1.5 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full pl-2 pr-2.5 py-1 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
                 >
                   {currentAgent.id === '' ? (
                     <AgentIconSvg className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
@@ -1266,20 +1266,20 @@ export function ChatInterface() {
               </div>
 
               {/* Right Side: Action Buttons */}
-              <div className="flex items-center justify-end gap-1.5 pr-1 w-full sm:w-auto">
+              <div className="flex shrink-0 items-center justify-end gap-1 pr-0.5">
                 <Button
                   id="tour-continuous-mic"
                   size="icon"
                   onClick={toggleGeminiLive}
                   title={language === 'pt-BR' ? "Iniciar Gemini Live (Voz + Visão)" : "Start Gemini Live (Voice + Vision)"}
-                  className="rounded-full w-9 h-9 transition-all bg-transparent text-zinc-400 hover:bg-zinc-800/80"
+                  className="rounded-full w-8 h-8 transition-all bg-transparent text-zinc-400 hover:bg-zinc-800/80"
                 >
                   <AudioLines className="w-4.5 h-4.5" />
                 </Button>
-                <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-9 h-9 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-400 hover:bg-zinc-800/80'}`}>
+                <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-8 h-8 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-400 hover:bg-zinc-800/80'}`}>
                   <Mic className="w-4.5 h-4.5" />
                 </Button>
-                <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-9 h-9 transition-colors">
+                <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-8 h-8 transition-colors">
                   <Navigation className="w-4.5 h-4.5" />
                 </Button>
               </div>
