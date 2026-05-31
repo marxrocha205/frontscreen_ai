@@ -6,7 +6,7 @@ import { Gemini, Claude, DeepSeek, Meta } from '@lobehub/icons';
 import Image from 'next/image'
 
 const ModalModelIcon = ({ id }: { id: string }) => {
-  const title = modelDescriptions[id]?.title || '';
+  const title = MODEL_DESCRIPTIONS['pt-BR'][id]?.title || '';
   const isGemini = id.includes('gemini') || title.includes('Gêmeo') || title.includes('Gemini');
 
   if (id === 'screen-ai-1.2') {
@@ -109,116 +109,89 @@ const CopyIconSvg = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
-const AGENTS = [
-  { id: '', label: 'Assistente Geral', description: 'Responde de forma geral e acessível sobre qualquer assunto.' },
-  { id: 'agent_programming', label: 'Programador Sênior', description: 'Escreve, depura e explica códigos em várias linguagens.' },
-  { id: 'agent_contract_analyst', label: 'Analista de Contratos', description: 'Analisa e resume contratos e termos jurídicos.' },
-  { id: 'agent_web_researcher', label: 'Pesquisa Web', description: 'Investiga tópicos complexos e faz resumos estruturados.' },
-  { id: 'agent_learning_tutor', label: 'Tutor de Estudos', description: 'Explica conceitos difíceis de forma simples e didática.' },
-  { id: 'agent_writing_consultant', label: 'Consultor de Escrita', description: 'Reescreve, corrige e refina textos e artigos.' },
-  { id: 'agent_business_strategy_consultant', label: 'Consultor Estratégico', description: 'Desenvolve ideias de negócio e estratégias corporativas.' },
-  { id: 'agent_critical_thinking_consultant', label: 'Pensamento Crítico', description: 'Avalia argumentos e identifica falácias ou melhorias.' },
-  { id: 'agent_decision_facilitator', label: 'Facilitador de Decisão', description: 'Ajuda a estruturar escolhas complexas de forma racional.' },
-  { id: 'agent_feedback_analyst', label: 'Analista de Feedback', description: 'Analisa retornos de usuários e clientes para insights acionáveis.' },
-  { id: 'agent_interview_coach', label: 'Treinador de Entrevista', description: 'Simula entrevistas e prepara respostas de alto impacto.' },
-  { id: 'agent_meeting_coordinator', label: 'Organizador de Reunião', description: 'Estrutura pautas, ata de reunião e planos de ação.' },
-  { id: 'agent_metaphor_specialist', label: 'Especialista em Metáforas', description: 'Explica conceitos abstratos usando analogias criativas.' },
-  { id: 'agent_process_designer', label: 'Designer de Processos', description: 'Modelagem de fluxos de trabalho e otimização operacional.' },
-  { id: 'agent_product_objection_analyst', label: 'Analista de Objeções', description: 'Mapeia e contorna resistências de clientes e vendas.' },
-  { id: 'agent_technical_translator', label: 'Tradutor Técnico', description: 'Traduz documentos preservando a terminologia técnica precisa.' }
+type AppLanguage = 'pt-BR' | 'en-US'
+type LocalizedText = Record<AppLanguage, string>
+type LocalizedAgent = { id: string; label: LocalizedText; description: LocalizedText }
+
+const AGENT_DEFINITIONS: LocalizedAgent[] = [
+  { id: '', label: { 'pt-BR': 'Assistente Geral', 'en-US': 'General Assistant' }, description: { 'pt-BR': 'Responde de forma geral e acessível sobre qualquer assunto.', 'en-US': 'Answers general questions clearly and accessibly.' } },
+  { id: 'agent_programming', label: { 'pt-BR': 'Programador Sênior', 'en-US': 'Senior Programmer' }, description: { 'pt-BR': 'Escreve, depura e explica códigos em várias linguagens.', 'en-US': 'Writes, debugs, and explains code across multiple languages.' } },
+  { id: 'agent_contract_analyst', label: { 'pt-BR': 'Analista de Contratos', 'en-US': 'Contract Analyst' }, description: { 'pt-BR': 'Analisa e resume contratos e termos jurídicos.', 'en-US': 'Analyzes and summarizes contracts and legal terms.' } },
+  { id: 'agent_web_researcher', label: { 'pt-BR': 'Pesquisa Web', 'en-US': 'Web Researcher' }, description: { 'pt-BR': 'Investiga tópicos complexos e faz resumos estruturados.', 'en-US': 'Researches complex topics and creates structured summaries.' } },
+  { id: 'agent_learning_tutor', label: { 'pt-BR': 'Tutor de Estudos', 'en-US': 'Study Tutor' }, description: { 'pt-BR': 'Explica conceitos difíceis de forma simples e didática.', 'en-US': 'Explains difficult concepts in a simple, practical way.' } },
+  { id: 'agent_writing_consultant', label: { 'pt-BR': 'Consultor de Escrita', 'en-US': 'Writing Consultant' }, description: { 'pt-BR': 'Reescreve, corrige e refina textos e artigos.', 'en-US': 'Rewrites, edits, and refines texts and articles.' } },
+  { id: 'agent_business_strategy_consultant', label: { 'pt-BR': 'Consultor Estratégico', 'en-US': 'Strategy Consultant' }, description: { 'pt-BR': 'Desenvolve ideias de negócio e estratégias corporativas.', 'en-US': 'Develops business ideas and corporate strategies.' } },
+  { id: 'agent_critical_thinking_consultant', label: { 'pt-BR': 'Pensamento Crítico', 'en-US': 'Critical Thinking' }, description: { 'pt-BR': 'Avalia argumentos e identifica falácias ou melhorias.', 'en-US': 'Evaluates arguments and identifies fallacies or improvements.' } },
+  { id: 'agent_decision_facilitator', label: { 'pt-BR': 'Facilitador de Decisão', 'en-US': 'Decision Facilitator' }, description: { 'pt-BR': 'Ajuda a estruturar escolhas complexas de forma racional.', 'en-US': 'Helps structure complex choices rationally.' } },
+  { id: 'agent_feedback_analyst', label: { 'pt-BR': 'Analista de Feedback', 'en-US': 'Feedback Analyst' }, description: { 'pt-BR': 'Analisa retornos de usuários e clientes para insights acionáveis.', 'en-US': 'Analyzes user and customer feedback for actionable insights.' } },
+  { id: 'agent_interview_coach', label: { 'pt-BR': 'Treinador de Entrevista', 'en-US': 'Interview Coach' }, description: { 'pt-BR': 'Simula entrevistas e prepara respostas de alto impacto.', 'en-US': 'Simulates interviews and prepares high-impact answers.' } },
+  { id: 'agent_meeting_coordinator', label: { 'pt-BR': 'Organizador de Reunião', 'en-US': 'Meeting Coordinator' }, description: { 'pt-BR': 'Estrutura pautas, ata de reunião e planos de ação.', 'en-US': 'Structures agendas, meeting notes, and action plans.' } },
+  { id: 'agent_metaphor_specialist', label: { 'pt-BR': 'Especialista em Metáforas', 'en-US': 'Metaphor Specialist' }, description: { 'pt-BR': 'Explica conceitos abstratos usando analogias criativas.', 'en-US': 'Explains abstract concepts with creative analogies.' } },
+  { id: 'agent_process_designer', label: { 'pt-BR': 'Designer de Processos', 'en-US': 'Process Designer' }, description: { 'pt-BR': 'Modelagem de fluxos de trabalho e otimização operacional.', 'en-US': 'Models workflows and improves operations.' } },
+  { id: 'agent_product_objection_analyst', label: { 'pt-BR': 'Analista de Objeções', 'en-US': 'Objection Analyst' }, description: { 'pt-BR': 'Mapeia e contorna resistências de clientes e vendas.', 'en-US': 'Maps and handles customer and sales objections.' } },
+  { id: 'agent_technical_translator', label: { 'pt-BR': 'Tradutor Técnico', 'en-US': 'Technical Translator' }, description: { 'pt-BR': 'Traduz documentos preservando a terminologia técnica precisa.', 'en-US': 'Translates documents while preserving precise technical terminology.' } }
 ]
 
+const getAgents = (language: AppLanguage) =>
+  AGENT_DEFINITIONS.map(agent => ({
+    id: agent.id,
+    label: agent.label[language],
+    description: agent.description[language]
+  }))
+
 // Premium descriptions lookup table to match mockups exactly
-const modelDescriptions: Record<string, { title: string; desc: string }> = {
-  'screen-ai-1.2': {
-    title: 'ScreenAI 1.2',
-    desc: 'Velocidade cotidiana e ótimo para tarefas do dia a dia.'
+const MODEL_DESCRIPTIONS: Record<AppLanguage, Record<string, { title: string; desc: string }>> = {
+  'pt-BR': {
+    'screen-ai-1.2': { title: 'ScreenAI 1.2', desc: 'Velocidade cotidiana e ótimo para tarefas do dia a dia.' },
+    'openrouter/deepseek/deepseek-chat': { title: 'DeepSeek V3', desc: 'Desempenho ágil com excelente custo-benefício.' },
+    'openrouter/deepseek/deepseek-r1': { title: 'DeepSeek R1 (Raciocínio)', desc: 'Raciocínio lógico, matemática e programação.' },
+    'openrouter/deepseek/deepseek-4.0-flash': { title: 'DeepSeek 4.0 Flash', desc: 'Resposta rápida para cargas de trabalho maiores.' },
+    'openrouter/deepseek/deepseek-4.0-pro': { title: 'DeepSeek 4.0 Pro', desc: 'Performance alta para tarefas que exigem precisão.' },
+    'openai/gpt-4o': { title: 'GPT-4 Omni', desc: 'Versatilidade e alta complexidade em tarefas complexas.' },
+    'openai/gpt-4o-mini': { title: 'GPT-4o Mini', desc: 'Respostas rápidas, leve e super inteligente.' },
+    'openai/gpt-oss': { title: 'GPT OSS', desc: 'Modelo Open Source da OpenAI para uso geral.' },
+    'openai/gpt-5-mini': { title: 'GPT-5 Mini', desc: 'Excelente para tarefas rápidas com resultados avançados.' },
+    'openai/gpt-5.1': { title: 'GPT-5.1', desc: 'Alta performance em geração de texto e raciocínio.' },
+    'openai/gpt-5.2-thinking': { title: 'GPT-5.2 Thinking', desc: 'Modelo focado em raciocínio profundo e criatividade.' },
+    'openai/gpt-5.3-codex': { title: 'GPT-5.3 Codex', desc: 'Especializado em geração de código e tarefas técnicas.' },
+    'openai/o4-mini': { title: 'o4 Mini', desc: 'Modelo leve para tarefas práticas e rápidas.' },
+    'gemini/gemini-2.5-pro': { title: 'Gemini 2.5 Pro', desc: 'Processamento inteligente para prompts multimodais.' },
+    'gemini/gemini-2.5-flash': { title: 'Gemini 2.5 Flash', desc: 'Rápido e eficiente para uso diário.' },
+    'google/gemini-3.1-flash': { title: 'Gemini 3.1 Flash', desc: 'Resposta rápida com suporte avançado de contexto.' },
+    'google/gemini-3.1-pro': { title: 'Gemini 3.1 Pro', desc: 'Alta qualidade e compreensão ampliada.' },
+    'x-ai/grok-3': { title: 'Grok 3', desc: 'Modelo generalista rápido para alta produtividade.' },
+    'x-ai/grok-4': { title: 'Grok 4', desc: 'Mais preciso e com melhores respostas contextuais.' },
+    'x-ai/grok-4-fast': { title: 'Grok 4 Fast', desc: 'Versão otimizada para latência baixa.' },
+    'openrouter/meta-llama/llama-3.3-70b-instruct': { title: 'Llama-3 70B R', desc: 'Análise complexa, robusta e open-source.' }
   },
-  'openrouter/deepseek/deepseek-chat': {
-    title: 'DeepSeek V3',
-    desc: 'Desempenho ágil com excelente custo-benefício.'
-  },
-  'openrouter/deepseek/deepseek-r1': {
-    title: 'DeepSeek R1 (Raciocínio)',
-    desc: 'Raciocínio lógico, matemática e programação.'
-  },
-  'openrouter/deepseek/deepseek-4.0-flash': {
-    title: 'DeepSeek 4.0 Flash',
-    desc: 'Resposta rápida para cargas de trabalho maiores.'
-  },
-  'openrouter/deepseek/deepseek-4.0-pro': {
-    title: 'DeepSeek 4.0 Pro',
-    desc: 'Performance alta para tarefas que exigem precisão.'
-  },
-  'openai/gpt-4o': {
-    title: 'GPT-4 Omni',
-    desc: 'Versatilidade e alta complexidade em tarefas complexas.'
-  },
-  'openai/gpt-4o-mini': {
-    title: 'GPT-4o Mini',
-    desc: 'Respostas rápidas, leve e super inteligente.'
-  },
-  'openai/gpt-oss': {
-    title: 'GPT OSS',
-    desc: 'Modelo Open Source da OpenAI para uso geral.'
-  },
-  'openai/gpt-5-mini': {
-    title: 'GPT-5 Mini',
-    desc: 'Excelente para tarefas rápidas com resultados avançados.'
-  },
-  'openai/gpt-5.1': {
-    title: 'GPT-5.1',
-    desc: 'Alta performance em geração de texto e raciocínio.'
-  },
-  'openai/gpt-5.2-thinking': {
-    title: 'GPT-5.2 Thinking',
-    desc: 'Modelo focado em raciocínio profundo e criatividade.'
-  },
-  'openai/gpt-5.3-codex': {
-    title: 'GPT-5.3 Codex',
-    desc: 'Especializado em geração de código e tarefas técnicas.'
-  },
-  'openai/o4-mini': {
-    title: 'o4 Mini',
-    desc: 'Modelo leve para tarefas práticas e rápidas.'
-  },
-  'gemini/gemini-2.5-pro': {
-    title: 'Gemini 2.5 Pro',
-    desc: 'Processamento inteligente para prompts multimodais.'
-  },
-  'gemini/gemini-2.5-flash': {
-    title: 'Gemini 2.5 Flash',
-    desc: 'Rápido e eficiente para uso diário.'
-  },
-  'google/gemini-3.1-flash': {
-    title: 'Gemini 3.1 Flash',
-    desc: 'Resposta rápida com suporte avançado de contexto.'
-  },
-  'google/gemini-3.1-pro': {
-    title: 'Gemini 3.1 Pro',
-    desc: 'Alta qualidade e compreensão ampliada.'
-  },
-  'x-ai/grok-3': {
-    title: 'Grok 3',
-    desc: 'Modelo generalista rápido para alta produtividade.'
-  },
-  'x-ai/grok-4': {
-    title: 'Grok 4',
-    desc: 'Mais preciso e com melhores respostas contextuais.'
-  },
-  'x-ai/grok-4-fast': {
-    title: 'Grok 4 Fast',
-    desc: 'Versão otimizada para latência baixa.'
-  },
-  'openrouter/meta-llama/llama-3.3-70b-instruct': {
-    title: 'Llama-3 70B R',
-    desc: 'Análise complexa, robusta e open-source.'
+  'en-US': {
+    'screen-ai-1.2': { title: 'ScreenAI 1.2', desc: 'Everyday speed, great for daily tasks.' },
+    'openrouter/deepseek/deepseek-chat': { title: 'DeepSeek V3', desc: 'Fast performance with excellent cost efficiency.' },
+    'openrouter/deepseek/deepseek-r1': { title: 'DeepSeek R1 (Reasoning)', desc: 'Logical reasoning, math, and programming.' },
+    'openrouter/deepseek/deepseek-4.0-flash': { title: 'DeepSeek 4.0 Flash', desc: 'Fast responses for larger workloads.' },
+    'openrouter/deepseek/deepseek-4.0-pro': { title: 'DeepSeek 4.0 Pro', desc: 'High performance for precision-heavy tasks.' },
+    'openai/gpt-4o': { title: 'GPT-4 Omni', desc: 'Versatile model for complex tasks.' },
+    'openai/gpt-4o-mini': { title: 'GPT-4o Mini', desc: 'Fast, lightweight, and highly capable responses.' },
+    'openai/gpt-oss': { title: 'GPT OSS', desc: 'OpenAI open-source model for general use.' },
+    'openai/gpt-5-mini': { title: 'GPT-5 Mini', desc: 'Excellent for fast tasks with advanced results.' },
+    'openai/gpt-5.1': { title: 'GPT-5.1', desc: 'High performance for text generation and reasoning.' },
+    'openai/gpt-5.2-thinking': { title: 'GPT-5.2 Thinking', desc: 'Focused on deep reasoning and creativity.' },
+    'openai/gpt-5.3-codex': { title: 'GPT-5.3 Codex', desc: 'Specialized in code generation and technical tasks.' },
+    'openai/o4-mini': { title: 'o4 Mini', desc: 'Lightweight model for practical, fast tasks.' },
+    'gemini/gemini-2.5-pro': { title: 'Gemini 2.5 Pro', desc: 'Smart processing for multimodal prompts.' },
+    'gemini/gemini-2.5-flash': { title: 'Gemini 2.5 Flash', desc: 'Fast and efficient for daily use.' },
+    'google/gemini-3.1-flash': { title: 'Gemini 3.1 Flash', desc: 'Fast responses with advanced context support.' },
+    'google/gemini-3.1-pro': { title: 'Gemini 3.1 Pro', desc: 'High quality with expanded understanding.' },
+    'x-ai/grok-3': { title: 'Grok 3', desc: 'Fast generalist model for high productivity.' },
+    'x-ai/grok-4': { title: 'Grok 4', desc: 'More precise, with stronger contextual answers.' },
+    'x-ai/grok-4-fast': { title: 'Grok 4 Fast', desc: 'Optimized for low latency.' },
+    'openrouter/meta-llama/llama-3.3-70b-instruct': { title: 'Llama-3 70B R', desc: 'Complex, robust, open-source analysis.' }
   }
 }
 
 // Gorgeous mini logos mapping for the input bar selector
 const InputModelIcon = ({ id }: { id: string }) => {
-  const title = modelDescriptions[id]?.title || '';
+  const title = MODEL_DESCRIPTIONS['pt-BR'][id]?.title || '';
   const isGemini = id.includes('gemini') || title.includes('Gêmeo') || title.includes('Gemini');
 
   if (id === 'screen-ai-1.2') {
@@ -295,6 +268,8 @@ const normalizeModelId = (id: string | undefined): string => {
 
 export function ChatInterface() {
   const { t, language } = useI18n()
+  const agents = getAgents(language)
+  const modelDescriptions = MODEL_DESCRIPTIONS[language]
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -599,7 +574,7 @@ export function ChatInterface() {
     : "What's on your mind today?";
 
   const activeModelName = modelDescriptions[selectedModel]?.title || AI_MODELS.find(m => m.id === selectedModel)?.label || 'ScreenAI'
-  const currentAgent = AGENTS.find(a => a.id === selectedAgentId) || AGENTS[0]
+  const currentAgent = agents.find(a => a.id === selectedAgentId) || agents[0]
   const placeholderText = !isEmptyChat
     ? (language === 'pt-BR' ? `Mensagem para o ${activeModelName}` : `Message for ${activeModelName}`)
     : t('app.send_message');
@@ -746,7 +721,7 @@ export function ChatInterface() {
 
           {/* Grid of Agents */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-4 md:pt-5 pb-2 overflow-y-auto pr-1 custom-scrollbar">
-            {AGENTS.map(agent => (
+            {agents.map(agent => (
               <button
                 key={agent.id}
                 onClick={() => {
@@ -1030,7 +1005,7 @@ export function ChatInterface() {
                             const msgAgentId = m.agent_id !== undefined ? m.agent_id : currentAgent.id;
                             const msgModelId = m.model !== undefined ? m.model : selectedModel;
 
-                            const badgeAgent = AGENTS.find(a => a.id === msgAgentId) || { id: '', label: 'Assistente Geral' };
+                            const badgeAgent = agents.find(a => a.id === msgAgentId) || agents[0];
                             const msgNormalizedModelId = normalizeModelId(msgModelId);
                             const badgeModelLabel = modelDescriptions[msgNormalizedModelId]?.title || AI_MODELS.find(model => model.id === msgNormalizedModelId)?.label || 'ScreenAI 1.2';
 

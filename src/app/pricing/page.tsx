@@ -6,64 +6,88 @@ import { useAuth } from '@/hooks/use-auth'
 import { Check, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useI18n } from '@/context/i18n-context'
 
-const plans = [
-  {
-    id: 1,
-    name: 'FREE',
-    tagline: 'Experimente o poder da IA que enxerga sua tela.',
-    price: 'R$0',
-    cta: 'Começar Grátis',
-    features: [
-      'Créditos limitados diariamente',
-      'Acesso ao ScreenAI básico',
-      'Análise de tela em tempo real',
-      'Suporte via comunidade',
-    ],
-  },
-  {
-    id: 2,
-    name: 'PRO MENSAL',
-    tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
-    price: 'R$97,90/mês',
-    cta: 'Assinar PRO',
-    badge: 'Mais Flexível',
-    features: [
-      'Tokens ilimitados: Trabalhe o dia todo sem interrupções.',
-      'Acesso Ilimitado a ScreenAI, Gemini e GPT-5.',
-      'Análise avançada de código, planilhas e design',
-      'Histórico completo entre sessões',
-      'Voz humanizada, diálogos fluidos',
-      'IA que destrava qualquer tarefa, da programação ao cotidiano',
-    ],
-  },
-  {
-    id: 3,
-    name: 'PRO ANUAL',
-    tagline: 'Poder Absoluto com o melhor custo-benefício.',
-    price: 'R$797,90/ano',
-    cta: 'Assinar ANUAL',
-    badge: 'Melhor Valor',
-    features: [
-      'Tudo do PRO Mensal e mais',
-      'Economia de R$376 por ano',
-      'Janela de Contexto Gigante: Analise documentos longos.',
-      'Multi-IA Simultânea: Claude, GPT-5 e Gemini Pro.',
-      'Suporte 24h prioritário via WhatsApp',
-    ],
-  },
-]
+type PricingPlan = {
+  id: number
+  name: string
+  tagline: string
+  price: string
+  cta: string
+  badge?: string
+  features: string[]
+}
+
+const getPlans = (language: 'pt-BR' | 'en-US'): PricingPlan[] => language === 'pt-BR'
+  ? [
+      {
+        id: 1,
+        name: 'FREE',
+        tagline: 'Experimente o poder da IA que enxerga sua tela.',
+        price: 'R$0',
+        cta: 'Começar Grátis',
+        features: ['Créditos limitados diariamente', 'Acesso ao ScreenAI básico', 'Análise de tela em tempo real', 'Suporte via comunidade'],
+      },
+      {
+        id: 2,
+        name: 'PRO MENSAL',
+        tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
+        price: 'R$97,90/mês',
+        cta: 'Assinar PRO',
+        badge: 'Mais Flexível',
+        features: ['Tokens ilimitados: Trabalhe o dia todo sem interrupções.', 'Acesso Ilimitado a ScreenAI, Gemini e GPT-5.', 'Análise avançada de código, planilhas e design', 'Histórico completo entre sessões', 'Voz humanizada, diálogos fluidos', 'IA que destrava qualquer tarefa, da programação ao cotidiano'],
+      },
+      {
+        id: 3,
+        name: 'PRO ANUAL',
+        tagline: 'Poder Absoluto com o melhor custo-benefício.',
+        price: 'R$797,90/ano',
+        cta: 'Assinar ANUAL',
+        badge: 'Melhor Valor',
+        features: ['Tudo do PRO Mensal e mais', 'Economia de R$376 por ano', 'Janela de Contexto Gigante: Analise documentos longos.', 'Multi-IA Simultânea: Claude, GPT-5 e Gemini Pro.', 'Suporte 24h prioritário via WhatsApp'],
+      },
+    ]
+  : [
+      {
+        id: 1,
+        name: 'FREE',
+        tagline: 'Try the power of AI that can see your screen.',
+        price: '$0',
+        cta: 'Start Free',
+        features: ['Limited daily credits', 'Access to basic ScreenAI', 'Real-time screen analysis', 'Community support'],
+      },
+      {
+        id: 2,
+        name: 'PRO MONTHLY',
+        tagline: 'Your work routine will never feel the same.',
+        price: 'R$97.90/month',
+        cta: 'Subscribe to PRO',
+        badge: 'Most Flexible',
+        features: ['Unlimited tokens: work all day without interruptions.', 'Unlimited access to ScreenAI, Gemini, and GPT-5.', 'Advanced analysis for code, spreadsheets, and design', 'Full history across sessions', 'Human-like voice and fluid conversations', 'AI that unblocks any task, from coding to everyday work'],
+      },
+      {
+        id: 3,
+        name: 'PRO ANNUAL',
+        tagline: 'Maximum power with the best value.',
+        price: 'R$797.90/year',
+        cta: 'Subscribe Annually',
+        badge: 'Best Value',
+        features: ['Everything in PRO Monthly, plus', 'Save R$376 per year', 'Giant context window: analyze long documents.', 'Simultaneous multi-AI: Claude, GPT-5, and Gemini Pro.', 'Priority 24/7 support via WhatsApp'],
+      },
+    ]
 
 export default function PricingPage() {
   const router = useRouter()
+  const { language } = useI18n()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
   const [isNavigating, setIsNavigating] = useState(false)
+  const plans = getPlans(language)
 
   useEffect(() => {
     syncFromStorage()
   }, [syncFromStorage])
 
-  const handlePlanClick = (plan: typeof plans[0]) => {
+  const handlePlanClick = (plan: PricingPlan) => {
     if (!hasHydrated) {
       syncFromStorage()
     }
@@ -76,7 +100,6 @@ export default function PricingPage() {
       router.push('/app')
     } else {
       setIsNavigating(true)
-      // Simula o carregamento solicitado pelo usuário
       setTimeout(() => {
         router.push(`/checkout?plan=${plan.id}`)
       }, 2000)
@@ -95,8 +118,8 @@ export default function PricingPage() {
               </div>
            </div>
            <div className="space-y-2 text-center">
-              <h2 className="text-lg font-medium text-white">Preparando seu checkout...</h2>
-              <p className="text-sm text-zinc-500">Estamos conectando você ao portal de pagamento seguro.</p>
+              <h2 className="text-lg font-medium text-white">{language === 'pt-BR' ? 'Preparando seu checkout...' : 'Preparing your checkout...'}</h2>
+              <p className="text-sm text-zinc-500">{language === 'pt-BR' ? 'Estamos conectando você ao portal de pagamento seguro.' : 'We are connecting you to the secure payment portal.'}</p>
            </div>
         </div>
       )}
@@ -116,7 +139,7 @@ export default function PricingPage() {
         <div className="flex items-center gap-3">
           {hasHydrated && isLoggedIn ? (
             <Link href="/app" className="text-sm text-zinc-400 hover:text-white transition-colors">
-              Voltar ao App
+              {language === 'pt-BR' ? 'Voltar ao App' : 'Back to App'}
             </Link>
           ) : (
             <>
@@ -124,13 +147,13 @@ export default function PricingPage() {
                 onClick={() => router.push('/login')}
                 className="text-sm text-zinc-400 hover:text-white transition-colors"
               >
-                Entrar
+                {language === 'pt-BR' ? 'Entrar' : 'Log in'}
               </button>
               <button
                 onClick={() => router.push('/login')}
                 className="text-sm bg-white text-zinc-900 hover:bg-zinc-200 px-4 py-1.5 rounded-lg font-medium transition-colors"
               >
-                Cadastrar
+                {language === 'pt-BR' ? 'Cadastrar' : 'Sign up'}
               </button>
             </>
           )}
@@ -140,10 +163,10 @@ export default function PricingPage() {
       {/* Hero */}
       <div className="text-center pt-24 pb-12 px-4">
         <h1 className="text-4xl md:text-[42px] leading-[1.1] font-semibold mb-4 text-white">
-          A IA que enxerga sua tela,<br />no plano certo pra você
+          {language === 'pt-BR' ? <>A IA que enxerga sua tela,<br />no plano certo pra você</> : <>AI that sees your screen,<br />on the right plan for you</>}
         </h1>
         <p className="text-zinc-400 text-[15px] mt-6 tracking-wide">
-          Garantia de 14 dias ou seu dinheiro de volta.
+          {language === 'pt-BR' ? 'Garantia de 14 dias ou seu dinheiro de volta.' : '14-day money-back guarantee.'}
         </p>
       </div>
 
@@ -189,7 +212,7 @@ export default function PricingPage() {
 
                 {/* Feature List */}
                 <div className="w-full relative z-10 flex-1">
-                  <p className="text-[13px] text-white mb-4">O que está incluído:</p>
+                  <p className="text-[13px] text-white mb-4">{language === 'pt-BR' ? 'O que está incluído:' : 'What is included:'}</p>
                   <ul className="space-y-4">
                     {plan.features.map((f, i) => (
                       <li key={i} className="flex items-start gap-3">

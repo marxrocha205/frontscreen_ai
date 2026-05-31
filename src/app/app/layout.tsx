@@ -426,8 +426,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 >
                   <PictureInPicture2 className={`w-4 h-4 ${floatingState !== 'none' ? 'text-blue-400' : ''}`} />
                   <span className="text-sm font-medium">
-                    {floatingState === 'none' && (language === 'pt-BR' ? 'Abrir Chat Flutuante' : 'Detach Chat (PiP)')}
-                    {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar (PiP Nativo)' : 'Restore (Native PiP)')}
+                    {floatingState === 'none' && (language === 'pt-BR' ? 'Abrir Chat Flutuante' : 'Detach Chat')}
+                    {floatingState === 'pip' && (language === 'pt-BR' ? 'Restaurar Chat' : 'Restore Chat')}
                     {floatingState === 'popup' && (language === 'pt-BR' ? 'Restaurar (Popup)' : 'Restore (Popup)')}
                   </span>
                 </Button>
