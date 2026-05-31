@@ -590,7 +590,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
       </div>
 
       <Dialog open={showMobileWarning} onOpenChange={setShowMobileWarning}>
-        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl">
           <DialogHeader className="flex flex-col items-center justify-center text-center">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-zinc-800 mb-2">
               <Laptop className="w-6 h-6 text-zinc-400" />
@@ -611,7 +611,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
       <Dialog open={showComingSoon} onOpenChange={setShowComingSoon}>
-        <DialogContent className="bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl max-w-sm mx-4">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-sm bg-[#1e1e1e] border-zinc-800 text-zinc-100 rounded-2xl">
           <DialogHeader className="flex flex-col items-center justify-center text-center">
             <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-500/10 mb-2">
               <Sparkles className="w-6 h-6 text-indigo-400" />
