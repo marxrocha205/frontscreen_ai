@@ -578,6 +578,42 @@ export function ChatInterface() {
   const placeholderText = !isEmptyChat
     ? (language === 'pt-BR' ? `Mensagem para o ${activeModelName}` : `Message for ${activeModelName}`)
     : t('app.send_message');
+  const openModelsDialog = () => {
+    setIsAgentsDialogOpen(false)
+    setIsModelsDialogOpen(true)
+  }
+  const openAgentsDialog = () => {
+    setIsModelsDialogOpen(false)
+    setIsAgentsDialogOpen(true)
+  }
+  const DialogModeSwitch = ({ active }: { active: 'models' | 'agents' }) => (
+    <div className="inline-flex max-w-full items-center gap-1 rounded-full border border-zinc-800/80 bg-zinc-900/60 p-1 text-xs font-bold text-zinc-400 shadow-md">
+      <button
+        type="button"
+        onClick={openModelsDialog}
+        aria-pressed={active === 'models'}
+        className={`flex h-7 items-center gap-2 rounded-full px-3 transition-colors sm:px-4 ${active === 'models'
+          ? 'bg-zinc-100 text-zinc-950 shadow-sm'
+          : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100'
+          }`}
+      >
+        <Image src="/chatgpt-logo.png" alt="" width={13} height={13} className={`shrink-0 ${active === 'models' ? 'opacity-80 invert' : 'opacity-70'}`} />
+        <span>{language === 'pt-BR' ? 'MODELOS' : 'MODELS'}</span>
+      </button>
+      <button
+        type="button"
+        onClick={openAgentsDialog}
+        aria-pressed={active === 'agents'}
+        className={`flex h-7 items-center gap-2 rounded-full px-3 transition-colors sm:px-4 ${active === 'agents'
+          ? 'bg-zinc-100 text-zinc-950 shadow-sm'
+          : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-zinc-100'
+          }`}
+      >
+        <AgentIconSvg className="h-3.5 w-3.5 shrink-0" />
+        <span>{language === 'pt-BR' ? 'AGENTES' : 'AGENTS'}</span>
+      </button>
+    </div>
+  )
 
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
@@ -586,11 +622,7 @@ export function ChatInterface() {
       <Dialog open={isModelsDialogOpen} onOpenChange={setIsModelsDialogOpen}>
         <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
           <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
-            {/* Elegant Header Title */}
-            <div className="flex items-center gap-2.5 px-5 py-1.5 rounded-full text-xs font-bold bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 shadow-md select-none">
-              <Image src="/chatgpt-logo.png" alt="OpenAI" width={14} height={14} className="opacity-80 shrink-0" />
-              <span>MODELOS DE IA</span>
-            </div>
+            <DialogModeSwitch active="models" />
           </DialogHeader>
 
           {/* Columns Grid */}
@@ -712,11 +744,7 @@ export function ChatInterface() {
       <Dialog open={isAgentsDialogOpen} onOpenChange={setIsAgentsDialogOpen}>
         <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
           <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
-            {/* Elegant Header Title */}
-            <div className="flex items-center gap-2.5 px-5 py-1.5 rounded-full text-xs font-bold bg-zinc-900/60 border border-zinc-800/80 text-zinc-100 shadow-md select-none">
-
-              <span>{language === 'pt-BR' ? 'AGENTES DE IA' : 'AI AGENTS'}</span>
-            </div>
+            <DialogModeSwitch active="agents" />
           </DialogHeader>
 
           {/* Grid of Agents */}
