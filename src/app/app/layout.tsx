@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Check, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Save, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video, Check, Loader2 } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -65,6 +65,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const [searchQuery, setSearchQuery] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState('')
+  const [isRenaming, setIsRenaming] = useState(false)
   const currentModel = AI_MODELS.find(m => m.id === selectedModel)
   const [showComingSoon, setShowComingSoon] = useState(false)
   
@@ -176,8 +177,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   const handleRenameSubmit = async (id: string) => {
+    if (isRenaming) return
     if (editingTitle.trim() && editingTitle.trim() !== conversations.find(c => c.id === id)?.title) {
+      setIsRenaming(true)
       await renameConversation(id, editingTitle.trim())
+      await new Promise(resolve => setTimeout(resolve, 800))
+      setIsRenaming(false)
     }
     setEditingId(null)
   }
@@ -467,20 +472,48 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                           )}
                         </button>
                         <div className="absolute right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                          <button
-                            onClick={(e) => startEditing(e, item.id, item.title)}
-                            className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                            title={language === 'pt-BR' ? "Renomear" : "Rename"}
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
-                            className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
-                            title={language === 'pt-BR' ? "Excluir" : "Delete"}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
+                          {editingId === item.id ? (
+                            <>
+                              <button
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={(e) => { e.stopPropagation(); handleRenameSubmit(item.id); }}
+                                className="p-1.5 text-zinc-500 hover:text-emerald-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                                title={language === 'pt-BR' ? "Salvar" : "Save"}
+                                disabled={isRenaming}
+                              >
+                                {isRenaming ? (
+                                  <Check className="w-3.5 h-3.5 text-emerald-400 animate-in zoom-in duration-200" />
+                                ) : (
+                                  <Save className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                onMouseDown={(e) => e.preventDefault()}
+                                onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+                                className="p-1.5 text-zinc-500 hover:text-zinc-200 rounded-md hover:bg-zinc-800/80 transition-colors"
+                                title={language === 'pt-BR' ? "Cancelar" : "Cancel"}
+                              >
+                                <X className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={(e) => startEditing(e, item.id, item.title)}
+                                className="p-1.5 text-zinc-500 hover:text-blue-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                                title={language === 'pt-BR' ? "Renomear" : "Rename"}
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); deleteConversation(item.id); }}
+                                className="p-1.5 text-zinc-500 hover:text-red-400 rounded-md hover:bg-zinc-800/80 transition-colors"
+                                title={language === 'pt-BR' ? "Excluir" : "Delete"}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))
