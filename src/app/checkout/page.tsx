@@ -7,34 +7,175 @@ import { ChevronLeft, Loader2, Zap, Paperclip, Image as ImageIcon, Brain, Credit
 import Image from 'next/image'
 import Link from 'next/link'
 import { config } from '@/lib/config'
+import { useI18n } from '@/context/i18n-context'
 
 /* ─── Plan data ─────────────────────────────────────────── */
-const plans = [
-  {
-    id: 2,
-    name: 'Plano PRO Mensal',
-    price: 97.90,
-    features: [
-      { text: 'Respostas mais inteligentes e rápidas', Icon: Zap, color: '#3b82f6' },
-      { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip, color: '#3b82f6' },
-      { text: 'Acesso a ScreenAI, Gemini e GPT-5', Icon: ImageIcon, color: '#818cf8' },
-      { text: 'Histórico completo entre sessões', Icon: Brain, color: '#818cf8' },
-    ],
-  },
-  {
-    id: 3,
-    name: 'Plano PRO Anual',
-    price: 797.90,
-    features: [
-      { text: 'Tudo do PRO e muito mais', Icon: Zap, color: '#3b82f6' },
-      { text: 'Janela de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
-      { text: 'Multi-IA Simultânea (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
-      { text: 'Suporte técnico prioritário 24h', Icon: Brain, color: '#818cf8' },
-    ],
-  },
-]
+type CheckoutLanguage = 'pt-BR' | 'en-US'
+type CheckoutPlan = {
+  id: number
+  name: string
+  price: number
+  features: { text: string; Icon: typeof Zap; color: string }[]
+}
+
+const getCheckoutPlans = (language: CheckoutLanguage): CheckoutPlan[] => language === 'pt-BR'
+  ? [
+      {
+        id: 2,
+        name: 'Plano PRO Mensal',
+        price: 97.90,
+        features: [
+          { text: 'Respostas mais inteligentes e rápidas', Icon: Zap, color: '#3b82f6' },
+          { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip, color: '#3b82f6' },
+          { text: 'Acesso a ScreenAI, Gemini e GPT-5', Icon: ImageIcon, color: '#818cf8' },
+          { text: 'Histórico completo entre sessões', Icon: Brain, color: '#818cf8' },
+        ],
+      },
+      {
+        id: 3,
+        name: 'Plano PRO Anual',
+        price: 797.90,
+        features: [
+          { text: 'Tudo do PRO e muito mais', Icon: Zap, color: '#3b82f6' },
+          { text: 'Janela de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
+          { text: 'Multi-IA Simultânea (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
+          { text: 'Suporte técnico prioritário 24h', Icon: Brain, color: '#818cf8' },
+        ],
+      },
+    ]
+  : [
+      {
+        id: 2,
+        name: 'PRO Monthly Plan',
+        price: 97.90,
+        features: [
+          { text: 'Smarter and faster responses', Icon: Zap, color: '#3b82f6' },
+          { text: 'Unlimited tokens with no interruptions', Icon: Paperclip, color: '#3b82f6' },
+          { text: 'Access to ScreenAI, Gemini, and GPT-5', Icon: ImageIcon, color: '#818cf8' },
+          { text: 'Full history across sessions', Icon: Brain, color: '#818cf8' },
+        ],
+      },
+      {
+        id: 3,
+        name: 'PRO Annual Plan',
+        price: 797.90,
+        features: [
+          { text: 'Everything in PRO and much more', Icon: Zap, color: '#3b82f6' },
+          { text: 'Giant context window', Icon: Paperclip, color: '#3b82f6' },
+          { text: 'Simultaneous multi-AI (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
+          { text: 'Priority 24/7 technical support', Icon: Brain, color: '#818cf8' },
+        ],
+      },
+    ]
 
 /* ─── Pix official icon ─────────────────────────────────── */
+const checkoutCopy = {
+  'pt-BR': {
+    paymentMethod: 'Método de pagamento',
+    card: 'Cartão',
+    cardNumber: 'Número do cartão',
+    expiration: 'Data de expiração',
+    cvv: 'Código CVV',
+    fullName: 'Nome completo',
+    document: 'CPF ou CNPJ',
+    phone: 'Celular (com DDD)',
+    billingAddress: 'Endereço de Cobrança',
+    zip: 'CEP',
+    street: 'Rua / Logradouro',
+    number: 'Número',
+    complement: 'Complemento',
+    neighborhood: 'Bairro',
+    city: 'Cidade',
+    state: 'UF',
+    qrNotice: 'Você verá um código QR para escanear e concluir sua compra.',
+    included: 'O que está incluído',
+    annualSubscription: 'Assinatura anual',
+    monthlySubscription: 'Assinatura mensal',
+    estimatedTaxes: 'Impostos estimados',
+    totalToday: 'Total hoje',
+    subscribeNow: 'Assinar agora',
+    waitingPayment: 'Aguardando Pagamento...',
+    copyPix: 'Copiar Código Pix',
+    pixCopied: 'Código Pix copiado!',
+    pixActivated: 'Após o pagamento, sua conta será ativada automaticamente em instantes.',
+    paymentError: 'Erro ao gerar pagamento.',
+    connectionError: 'Erro de conexão com o servidor.',
+    footer: (plan: CheckoutPlan) => `Renova ${plan.id === 3 ? 'anualmente' : 'mensalmente'} até ser cancelado. R$${plan.price.toFixed(2)}/${plan.id === 3 ? 'ano' : 'mês'} serão cobrados. Cancele a qualquer momento nas Configurações. Ao assinar, você concorda com nossos Termos de Uso e Termos de Crédito de Serviço, leu nossa Política de Privacidade, e autoriza a ScreenAI a armazenar e cobrar seu método de pagamento.`,
+    errors: {
+      fullNameRequired: 'Nome completo é obrigatório',
+      firstLastName: 'Por favor, digite seu nome e sobrenome',
+      fullNameLength: 'Nome completo deve ter pelo menos 4 caracteres',
+      documentRequired: 'CPF ou CNPJ é obrigatório',
+      documentComplete: 'Insira um CPF (11 dígitos) ou CNPJ (14 dígitos) completo',
+      documentCompleteShort: 'Insira um CPF ou CNPJ completo',
+      documentInvalid: 'CPF ou CNPJ inválido',
+      phoneRequired: 'Celular é obrigatório',
+      phoneInvalid: 'Celular inválido (mínimo 10 dígitos com DDD)',
+      zipRequired: 'CEP é obrigatório',
+      zipLength: 'CEP deve ter 8 dígitos',
+      streetRequired: 'Logradouro é obrigatório',
+      numberRequired: 'Número é obrigatório',
+      neighborhoodRequired: 'Bairro é obrigatório',
+      cityRequired: 'Cidade é obrigatória',
+      stateRequired: 'UF é obrigatória (2 letras)',
+      fieldRequired: 'Este campo é obrigatório',
+      zipNotFound: 'CEP não encontrado',
+    },
+  },
+  'en-US': {
+    paymentMethod: 'Payment method',
+    card: 'Card',
+    cardNumber: 'Card number',
+    expiration: 'Expiration date',
+    cvv: 'CVV code',
+    fullName: 'Full name',
+    document: 'CPF or CNPJ',
+    phone: 'Mobile phone (with area code)',
+    billingAddress: 'Billing Address',
+    zip: 'ZIP code',
+    street: 'Street / Address',
+    number: 'Number',
+    complement: 'Complement',
+    neighborhood: 'Neighborhood',
+    city: 'City',
+    state: 'State',
+    qrNotice: 'You will see a QR code to scan and complete your purchase.',
+    included: 'What is included',
+    annualSubscription: 'Annual subscription',
+    monthlySubscription: 'Monthly subscription',
+    estimatedTaxes: 'Estimated taxes',
+    totalToday: 'Total today',
+    subscribeNow: 'Subscribe now',
+    waitingPayment: 'Waiting for payment...',
+    copyPix: 'Copy Pix Code',
+    pixCopied: 'Pix code copied!',
+    pixActivated: 'After payment, your account will be activated automatically in a few moments.',
+    paymentError: 'Error generating payment.',
+    connectionError: 'Connection error with the server.',
+    footer: (plan: CheckoutPlan) => `Renews ${plan.id === 3 ? 'annually' : 'monthly'} until canceled. R$${plan.price.toFixed(2)}/${plan.id === 3 ? 'year' : 'month'} will be charged. Cancel anytime in Settings. By subscribing, you agree to our Terms of Use and Service Credit Terms, acknowledge our Privacy Policy, and authorize ScreenAI to store and charge your payment method.`,
+    errors: {
+      fullNameRequired: 'Full name is required',
+      firstLastName: 'Please enter your first and last name',
+      fullNameLength: 'Full name must be at least 4 characters',
+      documentRequired: 'CPF or CNPJ is required',
+      documentComplete: 'Enter a complete CPF (11 digits) or CNPJ (14 digits)',
+      documentCompleteShort: 'Enter a complete CPF or CNPJ',
+      documentInvalid: 'Invalid CPF or CNPJ',
+      phoneRequired: 'Mobile phone is required',
+      phoneInvalid: 'Invalid mobile phone (at least 10 digits with area code)',
+      zipRequired: 'ZIP code is required',
+      zipLength: 'ZIP code must have 8 digits',
+      streetRequired: 'Street is required',
+      numberRequired: 'Number is required',
+      neighborhoodRequired: 'Neighborhood is required',
+      cityRequired: 'City is required',
+      stateRequired: 'State is required (2 letters)',
+      fieldRequired: 'This field is required',
+      zipNotFound: 'ZIP code not found',
+    },
+  },
+}
+
 function PixIcon({ size = 16 }: { size?: number }) {
   return (
     <svg
@@ -84,7 +225,10 @@ function CardBrands() {
 function CheckoutContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { language } = useI18n()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
+  const plans = getCheckoutPlans(language)
+  const copy = checkoutCopy[language]
 
   const planId = searchParams.get('plan')
   const selectedPlan = plans.find(p => p.id === Number(planId)) || plans[0]
@@ -208,50 +352,50 @@ function CheckoutContent() {
 
     const nameParts = pixForm.name.trim().split(/\s+/).filter(Boolean);
     if (!pixForm.name.trim()) {
-      newErrors.name = 'Nome completo é obrigatório'
+      newErrors.name = copy.errors.fullNameRequired
     } else if (nameParts.length < 2) {
-      newErrors.name = 'Por favor, digite seu nome e sobrenome'
+      newErrors.name = copy.errors.firstLastName
     } else if (pixForm.name.trim().length < 4) {
-      newErrors.name = 'Nome completo deve ter pelo menos 4 caracteres'
+      newErrors.name = copy.errors.fullNameLength
     }
 
     const rawCpf = pixForm.cpf.replace(/\D/g, '')
     if (!rawCpf) {
-      newErrors.cpf = 'CPF ou CNPJ é obrigatório'
+      newErrors.cpf = copy.errors.documentRequired
     } else if (rawCpf.length !== 11 && rawCpf.length !== 14) {
-      newErrors.cpf = 'Insira um CPF (11 dígitos) ou CNPJ (14 dígitos) completo'
+      newErrors.cpf = copy.errors.documentComplete
     } else if (!validateCpfOrCnpj(pixForm.cpf)) {
-      newErrors.cpf = 'CPF ou CNPJ inválido'
+      newErrors.cpf = copy.errors.documentInvalid
     }
 
     const rawPhone = pixForm.phone.replace(/\D/g, '')
     if (!rawPhone) {
-      newErrors.phone = 'Celular é obrigatório'
+      newErrors.phone = copy.errors.phoneRequired
     } else if (rawPhone.length < 10 || rawPhone.length > 11) {
-      newErrors.phone = 'Celular inválido (mínimo 10 dígitos com DDD)'
+      newErrors.phone = copy.errors.phoneInvalid
     }
 
     if (isPersonalDataComplete) {
       const rawCep = pixForm.zip_code.replace(/\D/g, '')
       if (!rawCep) {
-        newErrors.zip_code = 'CEP é obrigatório'
+        newErrors.zip_code = copy.errors.zipRequired
       } else if (rawCep.length !== 8) {
-        newErrors.zip_code = 'CEP deve ter 8 dígitos'
+        newErrors.zip_code = copy.errors.zipLength
       }
       if (!pixForm.street_name.trim()) {
-        newErrors.street_name = 'Logradouro é obrigatório'
+        newErrors.street_name = copy.errors.streetRequired
       }
       if (!pixForm.number.trim()) {
-        newErrors.number = 'Número é obrigatório'
+        newErrors.number = copy.errors.numberRequired
       }
       if (!pixForm.neighborhood.trim()) {
-        newErrors.neighborhood = 'Bairro é obrigatório'
+        newErrors.neighborhood = copy.errors.neighborhoodRequired
       }
       if (!pixForm.city.trim()) {
-        newErrors.city = 'Cidade é obrigatória'
+        newErrors.city = copy.errors.cityRequired
       }
       if (!pixForm.state.trim() || pixForm.state.trim().length !== 2) {
-        newErrors.state = 'UF é obrigatória (2 letras)'
+        newErrors.state = copy.errors.stateRequired
       }
     }
 
@@ -266,11 +410,11 @@ function CheckoutContent() {
     if (field === 'name') {
       const nameParts = value.trim().split(/\s+/).filter(Boolean);
       if (!value.trim()) {
-        newErrors.name = 'Nome completo é obrigatório';
+        newErrors.name = copy.errors.fullNameRequired;
       } else if (nameParts.length < 2) {
-        newErrors.name = 'Por favor, digite seu nome e sobrenome';
+        newErrors.name = copy.errors.firstLastName;
       } else if (value.trim().length < 4) {
-        newErrors.name = 'Nome completo deve ter pelo menos 4 caracteres';
+        newErrors.name = copy.errors.fullNameLength;
       } else {
         delete newErrors.name;
       }
@@ -279,11 +423,11 @@ function CheckoutContent() {
     if (field === 'cpf') {
       const rawCpf = value.replace(/\D/g, '');
       if (!rawCpf) {
-        newErrors.cpf = 'CPF ou CNPJ é obrigatório';
+        newErrors.cpf = copy.errors.documentRequired;
       } else if (rawCpf.length !== 11 && rawCpf.length !== 14) {
-        newErrors.cpf = 'Insira um CPF ou CNPJ completo';
+        newErrors.cpf = copy.errors.documentCompleteShort;
       } else if (!validateCpfOrCnpj(value)) {
-        newErrors.cpf = 'CPF ou CNPJ inválido';
+        newErrors.cpf = copy.errors.documentInvalid;
       } else {
         delete newErrors.cpf;
       }
@@ -292,9 +436,9 @@ function CheckoutContent() {
     if (field === 'phone') {
       const rawPhone = value.replace(/\D/g, '');
       if (!rawPhone) {
-        newErrors.phone = 'Celular é obrigatório';
+        newErrors.phone = copy.errors.phoneRequired;
       } else if (rawPhone.length < 10 || rawPhone.length > 11) {
-        newErrors.phone = 'Celular inválido (mínimo 10 dígitos com DDD)';
+        newErrors.phone = copy.errors.phoneInvalid;
       } else {
         delete newErrors.phone;
       }
@@ -303,9 +447,9 @@ function CheckoutContent() {
     if (field === 'zip_code') {
       const rawCep = value.replace(/\D/g, '');
       if (!rawCep) {
-        newErrors.zip_code = 'CEP é obrigatório';
+        newErrors.zip_code = copy.errors.zipRequired;
       } else if (rawCep.length !== 8) {
-        newErrors.zip_code = 'CEP deve ter 8 dígitos';
+        newErrors.zip_code = copy.errors.zipLength;
       } else {
         delete newErrors.zip_code;
       }
@@ -313,7 +457,7 @@ function CheckoutContent() {
 
     if (['street_name', 'number', 'neighborhood', 'city', 'state'].includes(field)) {
       if (!value.trim()) {
-        newErrors[field] = 'Este campo é obrigatório';
+        newErrors[field] = copy.errors.fieldRequired;
       } else {
         delete newErrors[field];
       }
@@ -390,7 +534,7 @@ function CheckoutContent() {
             return copy
           })
         } else {
-          setErrors(prev => ({ ...prev, zip_code: 'CEP não encontrado' }))
+          setErrors(prev => ({ ...prev, zip_code: copy.errors.zipNotFound }))
         }
       } catch (error) {
         console.error("Erro ao buscar CEP:", error)
@@ -426,10 +570,10 @@ function CheckoutContent() {
       if (response.ok) {
         setPixData({ qrcode: data.pix_qrcode_url, copyPaste: data.pix_copy_paste })
       } else {
-        alert(data.detail || 'Erro ao gerar pagamento.')
+        alert(data.detail || copy.paymentError)
       }
     } catch {
-      alert('Erro de conexão com o servidor.')
+      alert(copy.connectionError)
     } finally {
       setIsLoading(false)
     }
@@ -533,7 +677,7 @@ function CheckoutContent() {
 
             {/* Payment method label */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <span style={{ fontSize: 14, fontWeight: 500, color: '#e5e7eb' }}>Método de pagamento</span>
+              <span style={{ fontSize: 14, fontWeight: 500, color: '#e5e7eb' }}>{copy.paymentMethod}</span>
 
             {/* Tabs */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
@@ -553,7 +697,7 @@ function CheckoutContent() {
                 }}
               >
                 <CreditCard size={16} />
-                Cartão
+                {copy.card}
               </button>
 
               {/* Pix tab */}
@@ -583,7 +727,7 @@ function CheckoutContent() {
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
-                    placeholder="Número do cartão"
+                    placeholder={copy.cardNumber}
                     style={inputStyle}
                   />
                   <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}>
@@ -595,13 +739,13 @@ function CheckoutContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <input
                     type="text"
-                    placeholder="Data de expiração"
+                    placeholder={copy.expiration}
                     style={inputStyle}
                   />
                   <div style={{ position: 'relative' }}>
                     <input
                       type="text"
-                      placeholder="Código CVV"
+                      placeholder={copy.cvv}
                       maxLength={4}
                       inputMode="numeric"
                       style={inputStyle}
@@ -623,7 +767,7 @@ function CheckoutContent() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <input
                       type="text"
-                      placeholder="Nome completo"
+                      placeholder={copy.fullName}
                       value={pixForm.name}
                       onChange={handleNameChange}
                       onBlur={() => handleBlur('name')}
@@ -642,7 +786,7 @@ function CheckoutContent() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <input
                       type="text"
-                      placeholder="CPF ou CNPJ"
+                      placeholder={copy.document}
                       value={pixForm.cpf}
                       onChange={handleCpfChange}
                       onBlur={() => handleBlur('cpf')}
@@ -661,7 +805,7 @@ function CheckoutContent() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <input
                       type="text"
-                      placeholder="Celular (com DDD)"
+                      placeholder={copy.phone}
                       value={pixForm.phone}
                       onChange={handlePhoneChange}
                       onBlur={() => handleBlur('phone')}
@@ -691,7 +835,7 @@ function CheckoutContent() {
                     gap: 6,
                     transition: 'color 0.3s ease'
                   }}>
-                    <span>Endereço de Cobrança</span>
+                    <span>{copy.billingAddress}</span>
 
                   </p>
                 </div>
@@ -704,7 +848,7 @@ function CheckoutContent() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <input
                           type="text"
-                          placeholder="CEP"
+                          placeholder={copy.zip}
                           value={pixForm.zip_code}
                           onChange={handleCepChange}
                           onBlur={() => handleBlur('zip_code')}
@@ -724,7 +868,7 @@ function CheckoutContent() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <input
                           type="text"
-                          placeholder="Rua / Logradouro"
+                          placeholder={copy.street}
                           value={pixForm.street_name}
                           onChange={e => {
                             setPixForm({ ...pixForm, street_name: e.target.value })
@@ -751,7 +895,7 @@ function CheckoutContent() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <input
                             type="text"
-                            placeholder="Número"
+                            placeholder={copy.number}
                             value={pixForm.number}
                             onChange={e => {
                               setPixForm({ ...pixForm, number: e.target.value })
@@ -776,7 +920,7 @@ function CheckoutContent() {
 
                         <input
                           type="text"
-                          placeholder="Complemento"
+                          placeholder={copy.complement}
                           value={pixForm.complement}
                           onChange={e => setPixForm({ ...pixForm, complement: e.target.value })}
                           style={inputStyle}
@@ -786,7 +930,7 @@ function CheckoutContent() {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <input
                           type="text"
-                          placeholder="Bairro"
+                          placeholder={copy.neighborhood}
                           value={pixForm.neighborhood}
                           onChange={e => {
                             setPixForm({ ...pixForm, neighborhood: e.target.value })
@@ -813,7 +957,7 @@ function CheckoutContent() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <input
                             type="text"
-                            placeholder="Cidade"
+                            placeholder={copy.city}
                             value={pixForm.city}
                             onChange={e => {
                               setPixForm({ ...pixForm, city: e.target.value })
@@ -839,7 +983,7 @@ function CheckoutContent() {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                           <input
                             type="text"
-                            placeholder="UF"
+                            placeholder={copy.state}
                             value={pixForm.state}
                             onChange={e => {
                               setPixForm({ ...pixForm, state: e.target.value })
@@ -888,7 +1032,7 @@ function CheckoutContent() {
                     </svg>
                   </div>
                   <p style={{ margin: 0, fontSize: 13, color: '#9ca3af', lineHeight: 1.5 }}>
-                    Você verá um código QR para escanear e concluir sua compra.
+                    {copy.qrNotice}
                   </p>
                 </div>
 
@@ -917,7 +1061,7 @@ function CheckoutContent() {
 
             {/* Top features label */}
             <p style={{ margin: '0 0 16px', fontSize: 12, color: '#9ca3af', fontWeight: 500 }}>
-              O que está incluído
+              {copy.included}
             </p>
 
             {/* Features list */}
@@ -936,15 +1080,15 @@ function CheckoutContent() {
             {/* Price breakdown */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
-                <span>{selectedPlan.id === 3 ? 'Assinatura anual' : 'Assinatura mensal'}</span>
+                <span>{selectedPlan.id === 3 ? copy.annualSubscription : copy.monthlySubscription}</span>
                 <span style={{ color: '#d1d5db' }}>R${selectedPlan.price.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
-                <span>Impostos estimados</span>
+                <span>{copy.estimatedTaxes}</span>
                 <span style={{ color: '#d1d5db' }}>R$0,00</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 6 }}>
-                <span>Total hoje</span>
+                <span>{copy.totalToday}</span>
                 <span>R${selectedPlan.price.toFixed(2)}</span>
               </div>
             </div>
@@ -972,7 +1116,7 @@ function CheckoutContent() {
               onMouseEnter={e => { if (!isLoading && !pixData) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
               onMouseLeave={e => { if (!pixData) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? 'Aguardando Pagamento...' : 'Assinar agora')}
+              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? copy.waitingPayment : copy.subscribeNow)}
             </button>
 
             {/* Pix QR Code Display */}
@@ -994,7 +1138,7 @@ function CheckoutContent() {
                 <button
                   onClick={() => {
                     navigator.clipboard.writeText(pixData.copyPaste)
-                    alert('Código Pix copiado!')
+                    alert(copy.pixCopied)
                   }}
                   style={{
                     width: '100%',
@@ -1012,10 +1156,10 @@ function CheckoutContent() {
                   }}
                 >
                   <Paperclip size={14} />
-                  Copiar Código Pix
+                  {copy.copyPix}
                 </button>
                 <p style={{ fontSize: 11, color: '#9ca3af', textAlign: 'center', margin: 0 }}>
-                  Após o pagamento, sua conta será ativada automaticamente em instantes.
+                  {copy.pixActivated}
                 </p>
               </div>
             )}
@@ -1025,17 +1169,7 @@ function CheckoutContent() {
         </main>
 
         {/* Footer disclaimer */}
-        <p className="checkout-disclaimer">
-          Renova {selectedPlan.id === 3 ? 'anualmente' : 'mensalmente'} até ser cancelado. R${selectedPlan.price.toFixed(2)}/{selectedPlan.id === 3 ? 'ano' : 'mês'} serão cobrados.{' '}
-          Cancele a qualquer momento{' '}
-          nas Configurações. Ao assinar, você concorda com nossos{' '}
-          Termos de Uso{' '}
-          e{' '}
-          Termos de Crédito de Serviço
-          , leu nossa{' '}
-          Política de Privacidade
-          , e autoriza a ScreenAI a armazenar e cobrar seu método de pagamento.
-        </p>
+        <p className="checkout-disclaimer">{copy.footer(selectedPlan)}</p>
       </div>
     </div>
   )
