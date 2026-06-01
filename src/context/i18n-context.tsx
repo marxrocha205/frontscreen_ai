@@ -25,7 +25,9 @@ const getLanguageSnapshot = (): Language => {
   }
 
   const browserLang = navigator.language.split('-')[0]
-  return browserLang === 'pt' ? 'pt-BR' : 'en-US'
+  if (browserLang === 'pt') return 'pt-BR'
+  if (browserLang === 'es') return 'es-ES'
+  return 'en-US'
 }
 
 const subscribeToLanguageChanges = (callback: () => void) => {

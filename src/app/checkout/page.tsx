@@ -1,16 +1,19 @@
 "use client"
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
-import { ChevronLeft, Loader2, Zap, Paperclip, Image as ImageIcon, Brain, CreditCard } from 'lucide-react'
+import { ChevronLeft, Loader2, Zap, Paperclip, Image as ImageIcon, Brain, CreditCard, CheckCircle } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { config } from '@/lib/config'
 import { useI18n } from '@/context/i18n-context'
+import { loadStripe, Stripe } from '@stripe/stripe-js'
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
 /* ─── Plan data ─────────────────────────────────────────── */
-type CheckoutLanguage = 'pt-BR' | 'en-US'
+import { Language } from '@/locales'
+
 type CheckoutPlan = {
   id: number
   name: string
@@ -18,55 +21,115 @@ type CheckoutPlan = {
   features: { text: string; Icon: typeof Zap; color: string }[]
 }
 
-const getCheckoutPlans = (language: CheckoutLanguage): CheckoutPlan[] => language === 'pt-BR'
-  ? [
-      {
-        id: 2,
-        name: 'Plano PRO Mensal',
-        price: 97.90,
-        features: [
-          { text: 'Respostas mais inteligentes e rápidas', Icon: Zap, color: '#3b82f6' },
-          { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip, color: '#3b82f6' },
-          { text: 'Acesso a ScreenAI, Gemini e GPT-5', Icon: ImageIcon, color: '#818cf8' },
-          { text: 'Histórico completo entre sessões', Icon: Brain, color: '#818cf8' },
-        ],
-      },
-      {
-        id: 3,
-        name: 'Plano PRO Anual',
-        price: 797.90,
-        features: [
-          { text: 'Tudo do PRO e muito mais', Icon: Zap, color: '#3b82f6' },
-          { text: 'Janela de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
-          { text: 'Multi-IA Simultânea (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
-          { text: 'Suporte técnico prioritário 24h', Icon: Brain, color: '#818cf8' },
-        ],
-      },
-    ]
-  : [
-      {
-        id: 2,
-        name: 'PRO Monthly Plan',
-        price: 97.90,
-        features: [
-          { text: 'Smarter and faster responses', Icon: Zap, color: '#3b82f6' },
-          { text: 'Unlimited tokens with no interruptions', Icon: Paperclip, color: '#3b82f6' },
-          { text: 'Access to ScreenAI, Gemini, and GPT-5', Icon: ImageIcon, color: '#818cf8' },
-          { text: 'Full history across sessions', Icon: Brain, color: '#818cf8' },
-        ],
-      },
-      {
-        id: 3,
-        name: 'PRO Annual Plan',
-        price: 797.90,
-        features: [
-          { text: 'Everything in PRO and much more', Icon: Zap, color: '#3b82f6' },
-          { text: 'Giant context window', Icon: Paperclip, color: '#3b82f6' },
-          { text: 'Simultaneous multi-AI (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
-          { text: 'Priority 24/7 technical support', Icon: Brain, color: '#818cf8' },
-        ],
-      },
-    ]
+const getCheckoutPlans = (language: Language): CheckoutPlan[] => {
+  switch (language) {
+    case 'pt-BR':
+      return [
+        {
+          id: 2,
+          name: 'Plano PRO Mensal',
+          price: 97.90,
+          features: [
+            { text: 'Respostas mais inteligentes e rápidas', Icon: Zap, color: '#3b82f6' },
+            { text: 'Tokens ilimitados e sem interrupções', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Acesso a ScreenAI, Gemini e GPT-5', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Histórico completo entre sessões', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+        {
+          id: 3,
+          name: 'Plano PRO Anual',
+          price: 797.90,
+          features: [
+            { text: 'Tudo do PRO e muito mais', Icon: Zap, color: '#3b82f6' },
+            { text: 'Janela de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Multi-IA Simultânea (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Suporte técnico prioritário 24h', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+      ]
+    case 'es-ES':
+      return [
+        {
+          id: 2,
+          name: 'Plan PRO Mensual',
+          price: 19.90,
+          features: [
+            { text: 'Respuestas más inteligentes y rápidas', Icon: Zap, color: '#3b82f6' },
+            { text: 'Tokens ilimitados y sin interrupciones', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Acceso a ScreenAI, Gemini y GPT-5', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Historial completo entre sesiones', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+        {
+          id: 3,
+          name: 'Plan PRO Anual',
+          price: 149.90,
+          features: [
+            { text: 'Todo lo de PRO y mucho más', Icon: Zap, color: '#3b82f6' },
+            { text: 'Ventana de contexto gigante', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Multi-IA Simultánea (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Soporte técnico prioritario 24h', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+      ]
+    case 'en-US':
+    default:
+      return [
+        {
+          id: 2,
+          name: 'PRO Monthly Plan',
+          price: 19.90,
+          features: [
+            { text: 'Smarter and faster responses', Icon: Zap, color: '#3b82f6' },
+            { text: 'Unlimited tokens with no interruptions', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Access to ScreenAI, Gemini, and GPT-5', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Full history across sessions', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+        {
+          id: 3,
+          name: 'PRO Annual Plan',
+          price: 149.90,
+          features: [
+            { text: 'Everything in PRO and much more', Icon: Zap, color: '#3b82f6' },
+            { text: 'Giant context window', Icon: Paperclip, color: '#3b82f6' },
+            { text: 'Simultaneous multi-AI (Claude/GPT/Gemini)', Icon: ImageIcon, color: '#818cf8' },
+            { text: 'Priority 24/7 technical support', Icon: Brain, color: '#818cf8' },
+          ],
+        },
+      ]
+  }
+}
+
+/* ─── Multi-currency pricing ─────────────────────────────── */
+type CurrencyCode = 'BRL' | 'EUR' | 'USD'
+
+const CURRENCY_SYMBOLS: Record<CurrencyCode, string> = {
+  BRL: 'R$',
+  EUR: '€',
+  USD: '$',
+}
+
+const CARD_PRICES: Record<number, Record<CurrencyCode, number>> = {
+  2: { BRL: 97.90, EUR: 19.90, USD: 19.90 },
+  3: { BRL: 797.90, EUR: 149.90, USD: 149.90 },
+}
+
+/* ─── Stripe Element Styles (tema escuro) ───────────────── */
+const STRIPE_ELEMENT_STYLE = {
+  base: {
+    fontSize: '16px',
+    color: '#ffffff',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    fontSmoothing: 'antialiased',
+    '::placeholder': { color: '#6b7280' },
+  },
+  invalid: {
+    color: '#ef4444',
+    iconColor: '#ef4444',
+  },
+}
 
 /* ─── Pix official icon ─────────────────────────────────── */
 const checkoutCopy = {
@@ -174,6 +237,58 @@ const checkoutCopy = {
       zipNotFound: 'ZIP code not found',
     },
   },
+  'es-ES': {
+    paymentMethod: 'Método de pago',
+    card: 'Tarjeta',
+    cardNumber: 'Número de tarjeta',
+    expiration: 'Fecha de caducidad',
+    cvv: 'Código CVV',
+    fullName: 'Nombre completo',
+    document: 'Documento (DNI/NIF/NIE)',
+    phone: 'Teléfono móvil',
+    billingAddress: 'Dirección de facturación',
+    zip: 'Código Postal',
+    street: 'Calle / Dirección',
+    number: 'Número',
+    complement: 'Complemento',
+    neighborhood: 'Barrio',
+    city: 'Ciudad',
+    state: 'Estado/Provincia',
+    qrNotice: 'Verás un código QR para escanear y completar tu compra.',
+    included: 'Qué incluye',
+    annualSubscription: 'Suscripción anual',
+    monthlySubscription: 'Suscripción mensual',
+    estimatedTaxes: 'Impuestos estimados',
+    totalToday: 'Total hoy',
+    subscribeNow: 'Suscribirse ahora',
+    waitingPayment: 'Esperando pago...',
+    copyPix: 'Copiar código Pix',
+    pixCopied: '¡Código Pix copiado!',
+    pixActivated: 'Después del pago, tu cuenta se activará automáticamente en unos momentos.',
+    paymentError: 'Error al generar el pago.',
+    connectionError: 'Error de conexión con el servidor.',
+    footer: (plan: CheckoutPlan) => `Se renueva ${plan.id === 3 ? 'anualmente' : 'mensualmente'} hasta que se cancele. Se cobrarán ${CURRENCY_SYMBOLS['EUR']}${plan.price.toFixed(2)} al ${plan.id === 3 ? 'año' : 'mes'}. Cancela en cualquier momento en Configuración. Al suscribirte, aceptas nuestros Términos de uso y Políticas de privacidad.`,
+    errors: {
+      fullNameRequired: 'El nombre completo es obligatorio',
+      firstLastName: 'Por favor, introduce tu nombre y apellido',
+      fullNameLength: 'El nombre completo debe tener al menos 4 caracteres',
+      documentRequired: 'El documento es obligatorio',
+      documentComplete: 'Introduce un documento completo',
+      documentCompleteShort: 'Introduce un documento completo',
+      documentInvalid: 'Documento no válido',
+      phoneRequired: 'El teléfono es obligatorio',
+      phoneInvalid: 'Teléfono no válido',
+      zipRequired: 'El código postal es obligatorio',
+      zipLength: 'El código postal debe ser válido',
+      streetRequired: 'La calle es obligatoria',
+      numberRequired: 'El número es obligatorio',
+      neighborhoodRequired: 'El barrio es obligatorio',
+      cityRequired: 'La ciudad es obligatoria',
+      stateRequired: 'El estado es obligatorio',
+      fieldRequired: 'Este campo es obligatorio',
+      zipNotFound: 'Código postal no encontrado',
+    },
+  },
 }
 
 function PixIcon({ size = 16 }: { size?: number }) {
@@ -230,11 +345,37 @@ function CheckoutContent() {
   const plans = getCheckoutPlans(language)
   const copy = checkoutCopy[language]
 
+  const stripe = useStripe()
+  const elements = useElements()
+
   const planId = searchParams.get('plan')
   const selectedPlan = plans.find(p => p.id === Number(planId)) || plans[0]
 
   const [paymentMethod, setPaymentMethod] = useState<'card' | 'pix'>('card')
   const [isLoading, setIsLoading] = useState(false)
+  const currency: CurrencyCode = language === 'pt-BR' ? 'BRL' : (language === 'es-ES' ? 'EUR' : 'USD')
+
+  const [cardSubmissionLock, setCardSubmissionLock] = useState(false)
+  const [cardPaymentSuccess, setCardPaymentSuccess] = useState(false)
+  const [cardError, setCardError] = useState<string | null>(null)
+  const [cardNumberComplete, setCardNumberComplete] = useState(false)
+  const [cardExpiryComplete, setCardExpiryComplete] = useState(false)
+  const [cardCvcComplete, setCardCvcComplete] = useState(false)
+
+  // Formulário de dados pessoais para Cartão (mesmos campos do PIX)
+  const [cardForm, setCardForm] = useState({
+    name: '',
+    cpf: '',
+    phone: '',
+    zip_code: '',
+    street_name: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+  })
+
   const [pixForm, setPixForm] = useState({
     cpf: '',
     name: '',
@@ -249,6 +390,14 @@ function CheckoutContent() {
   })
   const [pixData, setPixData] = useState<{ qrcode: string; copyPaste: string } | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Preço exibido baseado na moeda selecionada (para cartão) ou BRL (para PIX)
+  const displayPrice = paymentMethod === 'card'
+    ? (CARD_PRICES[selectedPlan.id]?.[currency] ?? selectedPlan.price)
+    : selectedPlan.price
+  const displaySymbol = paymentMethod === 'card' ? CURRENCY_SYMBOLS[currency] : 'R$'
+
+  const isCardComplete = cardNumberComplete && cardExpiryComplete && cardCvcComplete
 
   // Form masking functions
   const maskCPF = (value: string) => {
@@ -495,18 +644,34 @@ function CheckoutContent() {
     })
   }
 
+
   useEffect(() => {
     syncFromStorage()
   }, [syncFromStorage])
 
   useEffect(() => {
-    if (hasHydrated && !isLoggedIn) router.push('/login')
-  }, [hasHydrated, isLoggedIn, router])
+    if (hasHydrated && !isLoggedIn) {
+      const returnUrl = `/checkout?plan=${planId}`
+      router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
+    }
+  }, [hasHydrated, isLoggedIn, router, planId])
 
-  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  useEffect(() => {
+    if (hasHydrated) {
+      console.log(`[Checkout] Idioma detectado: ${language} | Moeda aplicada: ${currency}`)
+    }
+  }, [hasHydrated, language, currency])
+
+  const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'pix' | 'card' = 'pix') => {
     const masked = maskCEP(e.target.value)
     const cep = masked.replace(/\D/g, '')
-    setPixForm(prev => ({ ...prev, zip_code: masked }))
+
+    if (formType === 'card') {
+      setCardForm(prev => ({ ...prev, zip_code: masked }))
+    } else {
+      setPixForm(prev => ({ ...prev, zip_code: masked }))
+    }
+
     if (errors.zip_code) setErrors(prev => {
       const copy = { ...prev }
       delete copy.zip_code
@@ -518,13 +683,17 @@ function CheckoutContent() {
         const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
         const data = await res.json()
         if (!data.erro) {
-          setPixForm(prev => ({
-            ...prev,
+          const addressData = {
             street_name: data.logradouro || '',
             neighborhood: data.bairro || '',
             city: data.localidade || '',
-            state: data.uf || ''
-          }))
+            state: data.uf || '',
+          }
+          if (formType === 'card') {
+            setCardForm(prev => ({ ...prev, ...addressData }))
+          } else {
+            setPixForm(prev => ({ ...prev, ...addressData }))
+          }
           setErrors(prev => {
             const copy = { ...prev }
             delete copy.street_name
@@ -542,6 +711,7 @@ function CheckoutContent() {
     }
   }
 
+  /* ── Handler: Pagamento PIX ── */
   const handlePixSubmit = async () => {
     if (!validateForm()) {
       return
@@ -574,6 +744,109 @@ function CheckoutContent() {
       }
     } catch {
       alert(copy.connectionError)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  /* ── Handler: Pagamento Cartão de Crédito (Stripe + AlphaPay) ── */
+  const handleCardSubmit = async () => {
+    if (cardSubmissionLock || cardPaymentSuccess) {
+      console.warn('[Checkout] Bloqueado: tentativa de submissão duplicada.')
+      return
+    }
+
+    if (!stripe || !elements) {
+      setCardError(language === 'pt-BR' ? 'O sistema de pagamento não está pronto.' : 'The payment system is not ready.')
+      return
+    }
+
+    if (!isCardComplete) {
+      setCardError(language === 'pt-BR' ? 'Preencha todos os dados do cartão.' : 'Please fill in all card details.')
+      return
+    }
+
+    // Validar dados pessoais do formulário de cartão
+    const nameParts = cardForm.name.trim().split(/\s+/).filter(Boolean)
+    if (nameParts.length < 2 || cardForm.name.trim().length < 4) {
+      setCardError(copy.errors.firstLastName)
+      return
+    }
+    const rawCpf = cardForm.cpf.replace(/\D/g, '')
+    if (!rawCpf || (rawCpf.length !== 11 && rawCpf.length !== 14) || !validateCpfOrCnpj(cardForm.cpf)) {
+      setCardError(copy.errors.documentInvalid)
+      return
+    }
+    const rawPhone = cardForm.phone.replace(/\D/g, '')
+    if (rawPhone.length < 10) {
+      setCardError(copy.errors.phoneInvalid)
+      return
+    }
+    if (!cardForm.zip_code.replace(/\D/g, '') || !cardForm.street_name.trim() || !cardForm.number.trim() || !cardForm.neighborhood.trim() || !cardForm.city.trim() || !cardForm.state.trim()) {
+      setCardError(language === 'pt-BR' ? 'Preencha o endereço de cobrança completo.' : 'Please fill in the complete billing address.')
+      return
+    }
+
+    setCardSubmissionLock(true)
+    setIsLoading(true)
+    setCardError(null)
+
+    try {
+      const cardNumberElement = elements.getElement(CardNumberElement)
+      if (!cardNumberElement) throw new Error('Card element not found')
+
+      // 1. Tokenizar o cartão no Stripe
+      const { error: stripeError, paymentMethod: pm } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardNumberElement,
+        billing_details: { name: cardForm.name },
+      })
+
+      if (stripeError) {
+        setCardError(stripeError.message || 'Erro ao processar o cartão.')
+        setCardSubmissionLock(false)
+        setIsLoading(false)
+        return
+      }
+
+      console.log('[Checkout] Stripe PaymentMethod criado:', pm.id)
+
+      // 2. Enviar para o backend
+      const token = localStorage.getItem('access_token')
+      const response = await fetch(`${config.apiUrl}/api/payments/checkout-card`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          plan_id: selectedPlan.id,
+          currency: currency,
+          card_token: pm.id,
+          full_name: cardForm.name,
+          document: cardForm.cpf.replace(/\D/g, ''),
+          phone: cardForm.phone.replace(/\D/g, ''),
+          street_name: cardForm.street_name,
+          number: cardForm.number,
+          complement: cardForm.complement,
+          neighborhood: cardForm.neighborhood,
+          city: cardForm.city,
+          state: cardForm.state,
+          zip_code: cardForm.zip_code.replace(/\D/g, ''),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && (data.status === 'success' || data.status === 'pending')) {
+        setCardPaymentSuccess(true)
+        // Redirecionar para a app após 2s
+        setTimeout(() => router.push('/app'), 2000)
+      } else {
+        setCardError(data.detail || copy.paymentError)
+        setCardSubmissionLock(false)
+      }
+    } catch (err) {
+      console.error('[Checkout] Card error:', err)
+      setCardError(copy.connectionError)
+      setCardSubmissionLock(false)
     } finally {
       setIsLoading(false)
     }
@@ -720,40 +993,160 @@ function CheckoutContent() {
               </button>
             </div>
 
-            {/* ── CARD FIELDS ── */}
+            {/* ── CARD FIELDS (Stripe Elements + Dados Pessoais) ── */}
             {paymentMethod === 'card' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
-                {/* Card number */}
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    placeholder={copy.cardNumber}
-                    style={inputStyle}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
+
+                {/* Stripe Card Number */}
+                <div style={{
+                  position: 'relative',
+                  background: '#2a2a2a',
+                  borderRadius: 10,
+                  padding: '18px 20px',
+                  border: cardError ? '1.5px solid #ef4444' : '1.5px solid transparent',
+                }}>
+                  <CardNumberElement
+                    options={{ style: STRIPE_ELEMENT_STYLE, showIcon: true }}
+                    onChange={e => {
+                      setCardNumberComplete(e.complete)
+                      if (e.error) setCardError(e.error.message)
+                      else if (cardError) setCardError(null)
+                    }}
                   />
                   <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}>
                     <CardBrands />
                   </div>
                 </div>
 
-                {/* Expiration + Security */}
+                {/* Expiration + CVV */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <input
-                    type="text"
-                    placeholder={copy.expiration}
-                    style={inputStyle}
-                  />
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type="text"
-                      placeholder={copy.cvv}
-                      maxLength={4}
-                      inputMode="numeric"
-                      style={inputStyle}
+                  <div style={{
+                    background: '#2a2a2a',
+                    borderRadius: 10,
+                    padding: '18px 20px',
+                    border: '1.5px solid transparent',
+                  }}>
+                    <CardExpiryElement
+                      options={{ style: STRIPE_ELEMENT_STYLE }}
+                      onChange={e => {
+                        setCardExpiryComplete(e.complete)
+                        if (e.error) setCardError(e.error.message)
+                        else if (cardError) setCardError(null)
+                      }}
+                    />
+                  </div>
+                  <div style={{
+                    background: '#2a2a2a',
+                    borderRadius: 10,
+                    padding: '18px 20px',
+                    border: '1.5px solid transparent',
+                    position: 'relative',
+                  }}>
+                    <CardCvcElement
+                      options={{ style: STRIPE_ELEMENT_STYLE }}
+                      onChange={e => {
+                        setCardCvcComplete(e.complete)
+                        if (e.error) setCardError(e.error.message)
+                        else if (cardError) setCardError(null)
+                      }}
                     />
                     <CreditCard
-                      size={18}
+                      size={16}
                       style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }}
                     />
+                  </div>
+                </div>
+
+                {cardError && (
+                  <span style={{ fontSize: 11, color: '#ef4444', paddingLeft: 4 }}>{cardError}</span>
+                )}
+
+                {/* Dados pessoais para Cartão */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  <input
+                    type="text"
+                    placeholder={copy.fullName}
+                    value={cardForm.name}
+                    onChange={e => setCardForm(prev => ({ ...prev, name: e.target.value }))}
+                    style={inputStyle}
+                  />
+                  <input
+                    type="text"
+                    placeholder={copy.document}
+                    value={cardForm.cpf}
+                    onChange={e => setCardForm(prev => ({ ...prev, cpf: maskCPF(e.target.value) }))}
+                    style={inputStyle}
+                  />
+                  <input
+                    type="text"
+                    placeholder={copy.phone}
+                    value={cardForm.phone}
+                    onChange={e => setCardForm(prev => ({ ...prev, phone: maskPhone(e.target.value) }))}
+                    style={inputStyle}
+                  />
+                </div>
+
+                {/* Endereço de cobrança para Cartão */}
+                <div style={{ marginTop: 4 }}>
+                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#9ca3af', fontWeight: 500, paddingLeft: 4 }}>
+                    {copy.billingAddress}
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <input
+                      type="text"
+                      placeholder={copy.zip}
+                      value={cardForm.zip_code}
+                      onChange={e => handleCepChange(e, 'card')}
+                      maxLength={9}
+                      style={inputStyle}
+                    />
+                    <input
+                      type="text"
+                      placeholder={copy.street}
+                      value={cardForm.street_name}
+                      onChange={e => setCardForm(prev => ({ ...prev, street_name: e.target.value }))}
+                      style={inputStyle}
+                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder={copy.number}
+                        value={cardForm.number}
+                        onChange={e => setCardForm(prev => ({ ...prev, number: e.target.value }))}
+                        style={inputStyle}
+                      />
+                      <input
+                        type="text"
+                        placeholder={copy.complement}
+                        value={cardForm.complement}
+                        onChange={e => setCardForm(prev => ({ ...prev, complement: e.target.value }))}
+                        style={inputStyle}
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      placeholder={copy.neighborhood}
+                      value={cardForm.neighborhood}
+                      onChange={e => setCardForm(prev => ({ ...prev, neighborhood: e.target.value }))}
+                      style={inputStyle}
+                    />
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
+                      <input
+                        type="text"
+                        placeholder={copy.city}
+                        value={cardForm.city}
+                        onChange={e => setCardForm(prev => ({ ...prev, city: e.target.value }))}
+                        style={inputStyle}
+                      />
+                      <input
+                        type="text"
+                        placeholder={copy.state}
+                        value={cardForm.state}
+                        onChange={e => setCardForm(prev => ({ ...prev, state: e.target.value }))}
+                        maxLength={2}
+                        style={inputStyle}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1081,42 +1474,50 @@ function CheckoutContent() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
                 <span>{selectedPlan.id === 3 ? copy.annualSubscription : copy.monthlySubscription}</span>
-                <span style={{ color: '#d1d5db' }}>R${selectedPlan.price.toFixed(2)}</span>
+                <span style={{ color: '#d1d5db' }}>{displaySymbol}{displayPrice.toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, color: '#9ca3af' }}>
                 <span>{copy.estimatedTaxes}</span>
-                <span style={{ color: '#d1d5db' }}>R$0,00</span>
+                <span style={{ color: '#d1d5db' }}>{displaySymbol}0,00</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 14, fontWeight: 700, color: '#fff', marginTop: 6 }}>
                 <span>{copy.totalToday}</span>
-                <span>R${selectedPlan.price.toFixed(2)}</span>
+                <span>{displaySymbol}{displayPrice.toFixed(2)}</span>
               </div>
             </div>
 
             {/* Subscribe button */}
             <button
-              onClick={paymentMethod === 'pix' ? handlePixSubmit : undefined}
-              disabled={isLoading || !!pixData}
+              onClick={paymentMethod === 'pix' ? handlePixSubmit : handleCardSubmit}
+              disabled={isLoading || !!pixData || cardPaymentSuccess}
               style={{
                 marginTop: 20,
                 width: '100%',
                 height: 48,
-                background: pixData ? '#10b981' : '#5c5cfc',
+                background: (pixData || cardPaymentSuccess) ? '#10b981' : '#5c5cfc',
                 border: 'none',
                 borderRadius: 9999,
                 color: '#fff',
                 fontSize: 16,
                 fontWeight: 600,
-                cursor: isLoading ? 'wait' : (pixData ? 'default' : 'pointer'),
+                cursor: isLoading ? 'wait' : ((pixData || cardPaymentSuccess) ? 'default' : 'pointer'),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
+                gap: 8,
                 transition: 'background 0.15s',
               }}
-              onMouseEnter={e => { if (!isLoading && !pixData) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
-              onMouseLeave={e => { if (!pixData) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
+              onMouseEnter={e => { if (!isLoading && !pixData && !cardPaymentSuccess) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
+              onMouseLeave={e => { if (!pixData && !cardPaymentSuccess) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
             >
-              {isLoading ? <Loader2 size={20} className="animate-spin" /> : (pixData ? copy.waitingPayment : copy.subscribeNow)}
+              {isLoading
+                ? <Loader2 size={20} className="animate-spin" />
+                : cardPaymentSuccess
+                  ? <><CheckCircle size={20} /> {language === 'pt-BR' ? 'Pagamento Aprovado!' : 'Payment Approved!'}</>
+                  : pixData
+                    ? copy.waitingPayment
+                    : copy.subscribeNow
+              }
             </button>
 
             {/* Pix QR Code Display */}
@@ -1176,13 +1577,48 @@ function CheckoutContent() {
 }
 
 export default function CheckoutPage() {
+  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
+  const [stripeLoading, setStripeLoading] = useState(true)
+
+  useEffect(() => {
+    async function initStripe() {
+      try {
+        const res = await fetch(`${config.apiUrl}/api/payments/config`)
+        if (!res.ok) throw new Error('Falha ao carregar config do Stripe')
+        const data = await res.json()
+        if (data.stripe_public_key && data.stripe_connect_id) {
+          setStripePromise(
+            loadStripe(data.stripe_public_key, {
+              stripeAccount: data.stripe_connect_id,
+            })
+          )
+        }
+      } catch (err) {
+        console.error('[Stripe Init]', err)
+      } finally {
+        setStripeLoading(false)
+      }
+    }
+    initStripe()
+  }, [])
+
+  if (stripeLoading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Loader2 size={40} style={{ color: '#fff', animation: 'spin 1s linear infinite' }} />
+      </div>
+    )
+  }
+
   return (
     <Suspense fallback={
       <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 size={40} style={{ color: '#fff', animation: 'spin 1s linear infinite' }} />
       </div>
     }>
-      <CheckoutContent />
+      <Elements stripe={stripePromise}>
+        <CheckoutContent />
+      </Elements>
     </Suspense>
   )
 }
