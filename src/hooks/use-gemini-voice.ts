@@ -34,8 +34,6 @@ export function useGeminiVoice(
   silenceTimeout: number = 1500,
   events: VoiceEvents = {}
 ) {
-  // Obtém o idioma atual da aplicação (detectado do navegador/sistema ou salvo pelo usuário)
-  const { language } = useI18n()
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([]) // Mudado para Blob[] para melhor tipagem
@@ -128,9 +126,7 @@ export function useGeminiVoice(
 
       if (SpeechRecognitionCtor) {
         const recognition = new SpeechRecognitionCtor()
-        // Usa o idioma da aplicação (detectado do navegador/sistema ou escolhido pelo usuário).
-        // Isso garante que o reconhecimento de voz sempre corresponda ao idioma em uso.
-        recognition.lang = language
+        recognition.lang = document.documentElement.lang || 'pt-BR'
         recognition.continuous = true
         recognition.interimResults = true
         recognition.maxAlternatives = 1
@@ -146,20 +142,9 @@ export function useGeminiVoice(
             else interimTranscript += text
           }
 
-          // Apenas resultados FINAIS são acumulados no ref.
-          // Resultados intermediários (interim) são exibidos temporariamente
-          // mas NÃO são salvos no ref, evitando duplicação ao concatenar.
-          if (finalTranscript) {
-            const separator = transcriptRef.current ? ' ' : ''
-            transcriptRef.current = `${transcriptRef.current}${separator}${finalTranscript}`.trim()
-          }
-
-          // Exibe: texto final acumulado + interim atual (sem salvar o interim)
-          const displayed = interimTranscript
-            ? `${transcriptRef.current}${transcriptRef.current ? ' ' : ''}${interimTranscript}`.trim()
-            : transcriptRef.current
-
-          events.onTranscript?.(displayed)
+          const combined = `${transcriptRef.current}${finalTranscript || interimTranscript}`.trim()
+          transcriptRef.current = combined
+          events.onTranscript?.(combined)
         }
 
         recognition.onerror = (event) => {

@@ -8,6 +8,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useI18n } from '@/context/i18n-context'
 
+import { Language } from '@/locales'
+
 type PricingPlan = {
   id: number
   name: string
@@ -18,63 +20,98 @@ type PricingPlan = {
   features: string[]
 }
 
-const getPlans = (language: 'pt-BR' | 'en-US'): PricingPlan[] => language === 'pt-BR'
-  ? [
-      {
-        id: 1,
-        name: 'FREE',
-        tagline: 'Experimente o poder da IA que enxerga sua tela.',
-        price: 'R$0',
-        cta: 'Começar Grátis',
-        features: ['Créditos limitados diariamente', 'Acesso ao ScreenAI básico', 'Análise de tela em tempo real', 'Suporte via comunidade'],
-      },
-      {
-        id: 2,
-        name: 'PRO MENSAL',
-        tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
-        price: 'R$97,90/mês',
-        cta: 'Assinar PRO',
-        badge: 'Mais Flexível',
-        features: ['Tokens ilimitados: Trabalhe o dia todo sem interrupções.', 'Acesso Ilimitado a ScreenAI, Gemini e GPT-5.', 'Análise avançada de código, planilhas e design', 'Histórico completo entre sessões', 'Voz humanizada, diálogos fluidos', 'IA que destrava qualquer tarefa, da programação ao cotidiano'],
-      },
-      {
-        id: 3,
-        name: 'PRO ANUAL',
-        tagline: 'Poder Absoluto com o melhor custo-benefício.',
-        price: 'R$797,90/ano',
-        cta: 'Assinar ANUAL',
-        badge: 'Melhor Valor',
-        features: ['Tudo do PRO Mensal e mais', 'Economia de R$376 por ano', 'Janela de Contexto Gigante: Analise documentos longos.', 'Multi-IA Simultânea: Claude, GPT-5 e Gemini Pro.', 'Suporte 24h prioritário via WhatsApp'],
-      },
-    ]
-  : [
-      {
-        id: 1,
-        name: 'FREE',
-        tagline: 'Try the power of AI that can see your screen.',
-        price: '$0',
-        cta: 'Start Free',
-        features: ['Limited daily credits', 'Access to basic ScreenAI', 'Real-time screen analysis', 'Community support'],
-      },
-      {
-        id: 2,
-        name: 'PRO MONTHLY',
-        tagline: 'Your work routine will never feel the same.',
-        price: 'R$97.90/month',
-        cta: 'Subscribe to PRO',
-        badge: 'Most Flexible',
-        features: ['Unlimited tokens: work all day without interruptions.', 'Unlimited access to ScreenAI, Gemini, and GPT-5.', 'Advanced analysis for code, spreadsheets, and design', 'Full history across sessions', 'Human-like voice and fluid conversations', 'AI that unblocks any task, from coding to everyday work'],
-      },
-      {
-        id: 3,
-        name: 'PRO ANNUAL',
-        tagline: 'Maximum power with the best value.',
-        price: 'R$797.90/year',
-        cta: 'Subscribe Annually',
-        badge: 'Best Value',
-        features: ['Everything in PRO Monthly, plus', 'Save R$376 per year', 'Giant context window: analyze long documents.', 'Simultaneous multi-AI: Claude, GPT-5, and Gemini Pro.', 'Priority 24/7 support via WhatsApp'],
-      },
-    ]
+const getPlans = (language: Language): PricingPlan[] => {
+  switch (language) {
+    case 'pt-BR':
+      return [
+        {
+          id: 1,
+          name: 'FREE',
+          tagline: 'Experimente o poder da IA que enxerga sua tela.',
+          price: 'R$0',
+          cta: 'Começar Grátis',
+          features: ['Créditos limitados diariamente', 'Acesso ao ScreenAI básico', 'Análise de tela em tempo real', 'Suporte via comunidade'],
+        },
+        {
+          id: 2,
+          name: 'PRO MENSAL',
+          tagline: 'Sua rotina de trabalho nunca mais será a mesma.',
+          price: 'R$97,90/mês',
+          cta: 'Assinar PRO',
+          badge: 'Mais Flexível',
+          features: ['Tokens ilimitados: Trabalhe o dia todo sem interrupções.', 'Acesso Ilimitado a ScreenAI, Gemini e GPT-5.', 'Análise avançada de código, planilhas e design', 'Histórico completo entre sessões', 'Voz humanizada, diálogos fluidos', 'IA que destrava qualquer tarefa, da programação ao cotidiano'],
+        },
+        {
+          id: 3,
+          name: 'PRO ANUAL',
+          tagline: 'Poder Absoluto com o melhor custo-benefício.',
+          price: 'R$797,90/ano',
+          cta: 'Assinar ANUAL',
+          badge: 'Melhor Valor',
+          features: ['Tudo do PRO Mensal e mais', 'Economia de R$376 por ano', 'Janela de Contexto Gigante: Analise documentos longos.', 'Multi-IA Simultânea: Claude, GPT-5 e Gemini Pro.', 'Suporte 24h prioritário via WhatsApp'],
+        },
+      ]
+    case 'es-ES':
+      return [
+        {
+          id: 1,
+          name: 'GRATIS',
+          tagline: 'Prueba el poder de la IA que ve tu pantalla.',
+          price: '€0',
+          cta: 'Empezar Gratis',
+          features: ['Créditos diarios limitados', 'Acceso a ScreenAI básico', 'Análisis de pantalla en tiempo real', 'Soporte comunitario'],
+        },
+        {
+          id: 2,
+          name: 'PRO MENSUAL',
+          tagline: 'Tu rutina de trabajo nunca será la misma.',
+          price: '€19,90/mes',
+          cta: 'Suscribirse a PRO',
+          badge: 'Más Flexible',
+          features: ['Tokens ilimitados: trabaja todo el día sin interrupciones.', 'Acceso Ilimitado a ScreenAI, Gemini y GPT-5.', 'Análisis avanzado de código, hojas de cálculo y diseño', 'Historial completo entre sesiones', 'Voz humanizada, diálogos fluidos', 'IA que desbloquea cualquier tarea, desde programación hasta trabajo diario'],
+        },
+        {
+          id: 3,
+          name: 'PRO ANUAL',
+          tagline: 'Poder absoluto con el mejor valor.',
+          price: '€149,90/año',
+          cta: 'Suscripción Anual',
+          badge: 'Mejor Valor',
+          features: ['Todo lo del PRO Mensual, más', 'Ahorra €88 por año', 'Ventana de contexto gigante: analiza documentos largos.', 'Multi-IA simultánea: Claude, GPT-5 y Gemini Pro.', 'Soporte prioritario 24/7 vía WhatsApp'],
+        },
+      ]
+    case 'en-US':
+    default:
+      return [
+        {
+          id: 1,
+          name: 'FREE',
+          tagline: 'Try the power of AI that can see your screen.',
+          price: '$0',
+          cta: 'Start Free',
+          features: ['Limited daily credits', 'Access to basic ScreenAI', 'Real-time screen analysis', 'Community support'],
+        },
+        {
+          id: 2,
+          name: 'PRO MONTHLY',
+          tagline: 'Your work routine will never feel the same.',
+          price: '$19.90/month',
+          cta: 'Subscribe to PRO',
+          badge: 'Most Flexible',
+          features: ['Unlimited tokens: work all day without interruptions.', 'Unlimited access to ScreenAI, Gemini, and GPT-5.', 'Advanced analysis for code, spreadsheets, and design', 'Full history across sessions', 'Human-like voice and fluid conversations', 'AI that unblocks any task, from coding to everyday work'],
+        },
+        {
+          id: 3,
+          name: 'PRO ANNUAL',
+          tagline: 'Maximum power with the best value.',
+          price: '$149.90/year',
+          cta: 'Subscribe Annually',
+          badge: 'Best Value',
+          features: ['Everything in PRO Monthly, plus', 'Save $88 per year', 'Giant context window: analyze long documents.', 'Simultaneous multi-AI: Claude, GPT-5, and Gemini Pro.', 'Priority 24/7 support via WhatsApp'],
+        },
+      ]
+  }
+}
 
 export default function PricingPage() {
   const router = useRouter()
