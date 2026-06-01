@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { stopAllAudio } from './use-websocket'
+import { useI18n } from '@/context/i18n-context'
 
 /**
  * Hook para gerenciar a gravação de voz e conversão para Base64.

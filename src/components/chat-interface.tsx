@@ -538,19 +538,33 @@ export function ChatInterface() {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
         const token = localStorage.getItem('access_token') || ''
 
+        // Mensagem exibida no chat para o usuário
+        const fileLabel = language === 'pt-BR'
+          ? `📎 Arquivo anexado: **${selectedFile.name}**`
+          : `📎 Attached file: **${selectedFile.name}**`
+        const userDisplayMessage = textToSend
+          ? `${textToSend}\n\n${fileLabel}`
+          : fileLabel
+
         addMessage({
           id: Date.now().toString(),
           role: 'user',
-          content: textToSend || (language === 'pt-BR' ? `[Arquivo: ${selectedFile.name}]` : `[File: ${selectedFile.name}]`)
+          content: userDisplayMessage
         })
 
         setIsStreaming(true)
         const fileToSend = selectedFile
         setSelectedFile(null)
 
+        // Texto enviado à IA: se o usuário não digitou nada, envia instrução padrão
+        // para que o backend saiba que deve analisar o arquivo
+        const textForApi = textToSend || (language === 'pt-BR'
+          ? `Analise o arquivo "${fileToSend.name}" que estou enviando.`
+          : `Please analyze the file "${fileToSend.name}" I'm sending.`)
+
         const formData = new FormData()
         formData.append('token', token)
-        if (textToSend) formData.append('text', textToSend)
+        formData.append('text', textForApi)
         formData.append('file', fileToSend)
         if (activeId) formData.append('session_id', activeId)
         if (selectedModel) formData.append('model', selectedModel)

@@ -190,7 +190,10 @@ export function useGeminiLive() {
         })
       });
 
-      if (!response.ok) return;
+      if (!response.ok) {
+        console.error(`[Gemini Live] Falha ao persistir mensagem (${response.status}):`, await response.text().catch(() => ''));
+        return;
+      }
 
       const data = await response.json();
       if (data.session_id) {
