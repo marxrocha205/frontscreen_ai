@@ -146,9 +146,20 @@ export function useGeminiVoice(
             else interimTranscript += text
           }
 
-          const combined = `${transcriptRef.current}${finalTranscript || interimTranscript}`.trim()
-          transcriptRef.current = combined
-          events.onTranscript?.(combined)
+          // Apenas resultados FINAIS são acumulados no ref.
+          // Resultados intermediários (interim) são exibidos temporariamente
+          // mas NÃO são salvos no ref, evitando duplicação ao concatenar.
+          if (finalTranscript) {
+            const separator = transcriptRef.current ? ' ' : ''
+            transcriptRef.current = `${transcriptRef.current}${separator}${finalTranscript}`.trim()
+          }
+
+          // Exibe: texto final acumulado + interim atual (sem salvar o interim)
+          const displayed = interimTranscript
+            ? `${transcriptRef.current}${transcriptRef.current ? ' ' : ''}${interimTranscript}`.trim()
+            : transcriptRef.current
+
+          events.onTranscript?.(displayed)
         }
 
         recognition.onerror = (event) => {
