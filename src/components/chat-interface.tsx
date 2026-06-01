@@ -81,6 +81,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
 import { UpgradePlanDialog } from '@/components/upgrade-plan-dialog'
+import { UpsellChatCard } from '@/components/upsell-chat-card'
 import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
@@ -315,6 +316,9 @@ export function ChatInterface() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
 
+  // Nota: inlineUpsell e setInlineUpsell vêm do useChatStore (abaixo)
+  // para que o WebSocket também possa disparar o upsell inline
+
   const [isAgentsDialogOpen, setIsAgentsDialogOpen] = useState(false)
   const [showCreditsTooltip, setShowCreditsTooltip] = useState(false)
 
@@ -354,7 +358,7 @@ export function ChatInterface() {
   const [phraseIndex, setPhraseIndex] = useState(0)
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
-  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan, selectedModel, setSelectedModel, selectedAgentId, setSelectedAgentId } = useChatStore()
+  const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan, selectedModel, setSelectedModel, selectedAgentId, setSelectedAgentId, inlineUpsell, setInlineUpsell } = useChatStore()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
 
   const handleModelSelect = (modelId: string) => {
@@ -537,6 +541,9 @@ export function ChatInterface() {
         textareaRef.current.style.height = 'auto'
       }
 
+      // Descarta o card de upsell ao enviar nova mensagem
+      setInlineUpsell(null)
+
       if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
         const token = localStorage.getItem('access_token') || ''
@@ -605,9 +612,13 @@ export function ChatInterface() {
           if (data.remaining_credits !== undefined) {
             setCredits(data.remaining_credits)
           }
+          // Upsell inline: aparece como card no chat, não como popup
           if (data.upsell?.message) {
-            setUpgradeDialogMessage(data.upsell.message)
-            setIsUpgradeDialogOpen(true)
+            setInlineUpsell({
+              message: data.upsell.message,
+              remainingCredits: data.upsell.remaining_credits ?? data.remaining_credits,
+              threshold: data.upsell.threshold,
+            })
           }
         } catch (error) {
           console.error('Erro ao enviar arquivo via REST:', error)
@@ -1146,6 +1157,20 @@ export function ChatInterface() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ─── UPSELL INLINE ─────────────────────────────────────────────────
+              Aparece como card no chat após a última resposta da IA.
+              Só exibe quando não está em streaming e há uma oferta ativa.
+          ──────────────────────────────────────────────────────────────────── */}
+          {!isStreaming && inlineUpsell && (
+            <UpsellChatCard
+              message={inlineUpsell.message}
+              remainingCredits={inlineUpsell.remainingCredits}
+              threshold={inlineUpsell.threshold}
+              language={language}
+              onDismiss={() => setInlineUpsell(null)}
+            />
           )}
 
           {/* Espaçador físico garantido no final do chat para afastar o texto da barra de input */}

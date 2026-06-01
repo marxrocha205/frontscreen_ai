@@ -49,6 +49,13 @@ export interface Message {
 // Tipo discriminado para os 3 estados possíveis do chat flutuante
 export type FloatingState = 'none' | 'pip' | 'popup'
 
+// Payload do upsell inline (aparece como card no chat)
+export interface InlineUpsellPayload {
+  message: string
+  remainingCredits?: number
+  threshold?: number
+}
+
 interface ChatState {
   messages: Message[]
   isStreaming: boolean
@@ -62,6 +69,9 @@ interface ChatState {
   setIsUpgradeDialogOpen: (open: boolean) => void
   upgradeDialogMessage: string | null
   setUpgradeDialogMessage: (message: string | null) => void
+  // Upsell inline — card no chat, não popup
+  inlineUpsell: InlineUpsellPayload | null
+  setInlineUpsell: (payload: InlineUpsellPayload | null) => void
 
 
   addMessage: (message: Message) => void
@@ -147,6 +157,8 @@ export const useChatStore = create<ChatState>((set) => ({
   closeFloatingMode: () => set({ floatingState: 'none', pipWindow: null }),
   setIsUpgradeDialogOpen: (open) => set({ isUpgradeDialogOpen: open }),
   setUpgradeDialogMessage: (message) => set({ upgradeDialogMessage: message }),
+  inlineUpsell: null,
+  setInlineUpsell: (payload) => set({ inlineUpsell: payload }),
   toggleSound: () => set((state) => ({ isSoundEnabled: !state.isSoundEnabled })),
   setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
 }))

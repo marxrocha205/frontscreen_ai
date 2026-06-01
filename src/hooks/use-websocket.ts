@@ -88,7 +88,7 @@ function markGenerationCancelled() {
 }
 
 export function useWebsocket() {
-  const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage } = useChatStore()
+  const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage, setInlineUpsell } = useChatStore()
   const { isLoggedIn, syncFromStorage } = useAuth()
   const wsRef = useRef<WebSocket | null>(null)
   const [isConnected, setIsConnected] = useState(false)
@@ -297,6 +297,15 @@ export function useWebsocket() {
           if (data.remaining_credits !== undefined) {
             setCredits(data.remaining_credits)
           }
+
+          // Upsell inline: dispara card no chat quando o backend envia oferta contextual
+          if (data.upsell?.message) {
+            setInlineUpsell({
+              message: data.upsell.message,
+              remainingCredits: data.upsell.remaining_credits ?? data.remaining_credits,
+              threshold: data.upsell.threshold,
+            })
+          }
           break;
 
         case 'transcription':
@@ -327,7 +336,7 @@ export function useWebsocket() {
         wsRef.current = null
       }
     }
-  }, [isLoggedIn, reconnectKey, syncFromStorage, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage])
+  }, [isLoggedIn, reconnectKey, syncFromStorage, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage, setInlineUpsell])
 
   // Função para enviar o Payload Multimodal
   const sendMessage = useCallback((payload: { text?: string, image_base64?: string, audio_base64?: string }) => {
