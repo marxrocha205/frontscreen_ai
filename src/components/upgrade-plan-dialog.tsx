@@ -10,9 +10,10 @@ interface UpgradePlanDialogProps {
   onOpenChange: (open: boolean) => void
   message: string | null
   title?: string
+  ctaLabel?: string
 }
 
-export function UpgradePlanDialog({ open, onOpenChange, message, title }: UpgradePlanDialogProps) {
+export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel }: UpgradePlanDialogProps) {
   const router = useRouter()
 
   // Detecta se é um bloqueio de modelo (não de créditos) pela mensagem
@@ -90,7 +91,7 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title }: Upgrad
                 : 'bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-black hover:from-amber-400 hover:to-yellow-500 shadow-lg shadow-amber-500/20 border-none'
             }`}
           >
-            Fazer Upgrade
+            {ctaLabel || 'Fazer Upgrade'}
           </Button>
         </DialogFooter>
       </DialogContent>
