@@ -17,6 +17,9 @@ interface BillingData {
     remaining_credits: number
 }
 
+const getErrorMessage = (error: unknown) =>
+    error instanceof Error ? error.message : "Erro inesperado"
+
 export function BillingTab() {
     const [accounts, setAccounts] = useState<BillingData[]>([])
     const [loading, setLoading] = useState(true)
@@ -53,8 +56,8 @@ export function BillingTab() {
         // 2. Os dados já vêm perfeitamente estruturados e reais da base de dados
         setAccounts(data.data)
         
-      } catch (err: any) {
-        if (err.name !== 'AbortError') setError(err.message)
+      } catch (err: unknown) {
+        if (!(err instanceof DOMException && err.name === 'AbortError')) setError(getErrorMessage(err))
       } finally {
         setLoading(false)
       }
@@ -97,8 +100,8 @@ export function BillingTab() {
             setIsDialogOpen(false)
             setAmount(0)
             setReason("")
-        } catch (err: any) {
-            alert(err.message)
+        } catch (err: unknown) {
+            alert(getErrorMessage(err))
         } finally {
             setIsSubmitting(false)
         }

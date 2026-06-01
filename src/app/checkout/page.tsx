@@ -505,7 +505,7 @@ function CheckoutContent() {
 
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const masked = maskCEP(e.target.value)
-    let cep = masked.replace(/\D/g, '')
+    const cep = masked.replace(/\D/g, '')
     setPixForm(prev => ({ ...prev, zip_code: masked }))
     if (errors.zip_code) setErrors(prev => {
       const copy = { ...prev }

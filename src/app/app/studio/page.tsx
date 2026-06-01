@@ -25,6 +25,9 @@ import { FloatingDock } from '@/components/ui/floating-dock'
 type StudioMode = 'image' | 'video' | 'utilities'
 type ResultType = 'image' | 'video' | 'text' | null
 
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Erro ao conectar com o servidor."
+
 function StudioContent() {
   const { language } = useI18n()
   const { isLoggedIn, syncFromStorage } = useAuth()
@@ -181,9 +184,9 @@ function StudioContent() {
         setIsLoading(false)
       }
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      setErrorMessage(error.message || "Erro ao conectar com o servidor.")
+      setErrorMessage(getErrorMessage(error))
       setIsLoading(false)
     }
   }

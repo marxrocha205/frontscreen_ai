@@ -48,9 +48,32 @@ const INITIAL_STATE = {
   }
 }
 
+const generate24hTrends = () => {
+  const data: TrendData[] = []
+  const now = new Date()
+  for (let i = 23; i >= 0; i--) {
+    const d = new Date(now)
+    d.setHours(d.getHours() - i)
+    const hour = d.getHours()
+    
+    let baseActivity = 5
+    if (hour >= 19 && hour <= 23) baseActivity = 15 + ((hour - 19) * 5)
+    else if (hour >= 0 && hour <= 2) baseActivity = 35 - (hour * 10)
+    else if (hour > 2 && hour < 7) baseActivity = 3
+    else baseActivity = 8 + (Math.random() * 4)
+
+    const finalActivity = Math.floor(baseActivity * (0.8 + (Math.random() * 0.4)))
+    data.push({
+      time: `${hour.toString().padStart(2, '0')}:00`,
+      sessions: finalActivity,
+      messages: Math.floor(finalActivity * (2 + Math.random() * 3))
+    })
+  }
+  return data
+}
+
 export function DashboardTab() {
-  const [loading, setLoading] = useState(true)
-  const [trends, setTrends] = useState<TrendData[]>([])
+  const [trends] = useState<TrendData[]>(generate24hTrends)
 
   const [liveData, setLiveData] = useState({
     online_users: 11,
@@ -67,33 +90,6 @@ export function DashboardTab() {
   })
 
   useEffect(() => {
-    const generate24hTrends = () => {
-      const data: TrendData[] = []
-      const now = new Date()
-      for (let i = 23; i >= 0; i--) {
-        const d = new Date(now)
-        d.setHours(d.getHours() - i)
-        const hour = d.getHours()
-        
-        let baseActivity = 5
-        if (hour >= 19 && hour <= 23) baseActivity = 15 + ((hour - 19) * 5)
-        else if (hour >= 0 && hour <= 2) baseActivity = 35 - (hour * 10)
-        else if (hour > 2 && hour < 7) baseActivity = 3
-        else baseActivity = 8 + (Math.random() * 4)
-
-        const finalActivity = Math.floor(baseActivity * (0.8 + (Math.random() * 0.4)))
-        data.push({
-          time: `${hour.toString().padStart(2, '0')}:00`,
-          sessions: finalActivity,
-          messages: Math.floor(finalActivity * (2 + Math.random() * 3))
-        })
-      }
-      return data
-    }
-
-    setTrends(generate24hTrends())
-    setLoading(false)
-
     const socketInterval = setInterval(() => {
       setLiveData(prev => {
         const userChange = Math.floor(Math.random() * 3) - 1
@@ -140,8 +136,6 @@ export function DashboardTab() {
 
     return () => clearInterval(socketInterval)
   }, [])
-
-  if (loading) return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -249,7 +243,7 @@ export function DashboardTab() {
                 <Pie data={liveData.cost_by_model} dataKey="cost_brl" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} isAnimationActive={false}>
                   {liveData.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(value: any) => formatBRL(Number(value))} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
+                <Tooltip formatter={(value: number | string) => formatBRL(Number(value))} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
               </PieChart>
             </ResponsiveContainer>

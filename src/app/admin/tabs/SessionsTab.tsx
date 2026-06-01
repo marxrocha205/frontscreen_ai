@@ -15,21 +15,19 @@ interface SessionData {
   created_at: Date
 }
 
+const generateInitialSessions = (): SessionData[] =>
+  Array.from({ length: 8 }).map(() => ({
+    id: Math.random().toString(36).substring(7),
+    user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
+    created_at: new Date(Date.now() - (Math.random() * 86400000))
+  })).sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
+
 export function SessionsTab() {
-  const [sessions, setSessions] = useState<SessionData[]>([])
+  const [sessions, setSessions] = useState<SessionData[]>(generateInitialSessions)
   const [syncData, setSyncData] = useState({ active_sessions: 0, total_messages: 0 })
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // Apenas 8 sessões recentes no histórico base
-    const initialSessions = Array.from({ length: 8 }).map((_, i) => ({
-      id: Math.random().toString(36).substring(7),
-      user_email: sampleEmails[Math.floor(Math.random() * sampleEmails.length)],
-      created_at: new Date(Date.now() - (Math.random() * 86400000))
-    })).sort((a, b) => b.created_at.getTime() - a.created_at.getTime())
-    
-    setSessions(initialSessions)
-
     const syncInterval = setInterval(() => {
       const storedData = localStorage.getItem('shared_live_data')
       if (storedData) {

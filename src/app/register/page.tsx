@@ -11,8 +11,16 @@ import { useState, Suspense, useEffect } from 'react'
 import { config } from '@/lib/config'
 import Cookies from 'js-cookie'
 import { GoogleLogin } from '@react-oauth/google'
+import type { CredentialResponse } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
 import { Loader2, ArrowLeft } from 'lucide-react'
+
+interface GoogleJwtPayload {
+  email?: string
+}
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : 'Erro inesperado'
 
 function RegisterForm() {
   const { t } = useI18n()
@@ -43,7 +51,7 @@ function RegisterForm() {
     return () => clearInterval(interval)
   }, [resendTimer])
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setIsGoogleLoading(true)
     setError('')
     try {
@@ -64,7 +72,7 @@ function RegisterForm() {
 
         let userEmail = ''
         try {
-          const decoded: any = jwtDecode(credentialResponse.credential)
+          const decoded = jwtDecode<GoogleJwtPayload>(credentialResponse.credential || '')
           userEmail = decoded.email || ''
         } catch (e) {
           console.error("Falha ao ler o email do token", e)
@@ -125,7 +133,7 @@ function RegisterForm() {
         }
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro ao enviar código:', err)
       setError('Erro de conexão ao enviar o código.')
     } finally {
@@ -192,9 +200,9 @@ function RegisterForm() {
         router.push('/login')
       }
 
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro de registo:', err)
-      setError(err.message)
+      setError(getErrorMessage(err))
     } finally {
       setIsLoading(false)
     }

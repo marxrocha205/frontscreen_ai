@@ -13,6 +13,14 @@ export interface Conversation {
   updated_at: string
 }
 
+interface ConversationMessage {
+  id?: string
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  model?: string
+  agent_id?: string
+}
+
 interface ConversationsState {
   conversations: Conversation[]
   activeId: string | null
@@ -90,7 +98,7 @@ export const useConversations = create<ConversationsState>((set, get) => ({
       if (res.ok) {
         const messages = await res.json()
         
-        messages.forEach((msg: any) => {
+        messages.forEach((msg: ConversationMessage) => {
           addMessage({
             id: msg.id || Date.now().toString() + Math.random(),
             role: msg.role,

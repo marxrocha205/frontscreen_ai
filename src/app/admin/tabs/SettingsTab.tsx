@@ -6,8 +6,15 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
+interface SystemSetting {
+  key: string
+  value: string
+  description: string
+  updated_at: string
+}
+
 export function SettingsTab() {
-  const [settings, setSettings] = useState<any[]>([])
+  const [settings, setSettings] = useState<SystemSetting[]>([])
   const [loading, setLoading] = useState(true)
   const [savingKey, setSavingKey] = useState<string | null>(null)
 

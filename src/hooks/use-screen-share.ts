@@ -61,7 +61,7 @@ let intervalRef: NodeJS.Timeout | null = null;
 export const useScreenShare = create<ScreenShareState>((set, get) => ({
   isSharing: false,
   stream: null,
-  startSharing: async (intervalMs: number | any = 3000) => {
+  startSharing: async (intervalMs: unknown = 3000) => {
     // Impede que o objeto 'SyntheticEvent' do React entre como intervalo numérico
     const delay = typeof intervalMs === 'number' ? intervalMs : 3000;
     

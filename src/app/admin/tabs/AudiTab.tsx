@@ -5,8 +5,18 @@ import { ShieldCheck, Loader2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
+interface AuditLog {
+  id: string | number
+  created_at: string
+  admin_email: string
+  action: string
+  target_entity: string
+  target_id: string | number
+  details: string
+}
+
 export function AuditTab() {
-  const [logs, setLogs] = useState<any[]>([])
+  const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
