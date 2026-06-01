@@ -122,6 +122,8 @@ export function useGeminiLive() {
   const lastUserTranscriptRef = useRef<string>("");
   const liveConversationIdRef = useRef<string | null>(null);
   const hasSyncedLiveConversationRef = useRef(false);
+  const voiceSessionIdRef = useRef<string | null>(null);
+  const hasChargedVoiceSessionRef = useRef(false);
 
   const { isSharing, stream } = useScreenShare();
 
@@ -290,6 +292,8 @@ export function useGeminiLive() {
     currentUserTranscriptRef.current = "";
     lastUserMessageIdRef.current = null;
     lastUserTranscriptRef.current = "";
+    voiceSessionIdRef.current = null;
+    hasChargedVoiceSessionRef.current = false;
     if (activeLiveOwner === liveOwnerRef.current) {
       activeLiveOwner = null;
       stopActiveGeminiLiveSession = null;
@@ -480,6 +484,8 @@ export function useGeminiLive() {
     hasStartedRecorderRef.current = false;
     const activeConversationId = useConversations.getState().activeId;
     liveConversationIdRef.current = activeConversationId || createLiveSessionId();
+    voiceSessionIdRef.current = liveConversationIdRef.current;
+    hasChargedVoiceSessionRef.current = false;
     hasSyncedLiveConversationRef.current = Boolean(activeConversationId);
     lastUserMessageIdRef.current = null;
     lastUserTranscriptRef.current = "";
@@ -538,6 +544,10 @@ REGRAS CRÍTICAS:
           }
         }
       }));
+
+      if (!hasChargedVoiceSessionRef.current && voiceSessionIdRef.current) {
+        hasChargedVoiceSessionRef.current = true;
+      }
     };
 
     ws.onmessage = (event) => processIncomingMessage(event.data, sessionId);

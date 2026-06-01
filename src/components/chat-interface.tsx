@@ -588,6 +588,10 @@ export function ChatInterface() {
           if (data.remaining_credits !== undefined) {
             setCredits(data.remaining_credits)
           }
+          if (data.upsell?.message) {
+            setUpgradeDialogMessage(data.upsell.message)
+            setIsUpgradeDialogOpen(true)
+          }
         } catch (error) {
           console.error('Erro ao enviar arquivo via REST:', error)
           setIsStreaming(false)
@@ -640,6 +644,7 @@ export function ChatInterface() {
   return (
     <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
+      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} ctaLabel={language === 'pt-BR' ? 'Continuar com Pro' : 'Continue with Pro'} />
 
       <Dialog open={isModelsDialogOpen} onOpenChange={setIsModelsDialogOpen}>
         <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
