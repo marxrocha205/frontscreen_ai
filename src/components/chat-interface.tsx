@@ -1326,9 +1326,6 @@ export function ChatInterface() {
                 >
                   <AudioLines className="w-4.5 h-4.5" />
                 </Button>
-<<<<<<< HEAD
-                <Button id="tour-mic-btn" size="icon" onClick={isVoiceActive ? handleSend : startRecording} className={`rounded-full w-8 h-8 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-400 hover:bg-zinc-800/80'}`}>
-=======
                 <Button
                   id="tour-mic-btn"
                   size="icon"
@@ -1343,10 +1340,9 @@ export function ChatInterface() {
                   title={!recognitionSupported ? (language === 'pt-BR' ? 'Reconhecimento de voz indisponível neste navegador' : 'Voice recognition is unavailable in this browser') : undefined}
                   className={`rounded-full w-9 h-9 transition-all ${isVoiceActive ? 'bg-red-500 text-white animate-pulse' : 'bg-transparent text-zinc-400 hover:bg-zinc-800/80'} ${!recognitionSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
->>>>>>> 55516c7 (fix(front): voz agora desconta e descreve no chat)
                   <Mic className="w-4.5 h-4.5" />
                 </Button>
-                <Button size="icon" onClick={handleSend} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-8 h-8 transition-colors">
+                <Button size="icon" onClick={() => handleSend()} disabled={!inputValue.trim() && !isScreenShared && !isVoiceActive && !selectedFile} className="rounded-full bg-zinc-200 text-zinc-900 hover:bg-white disabled:bg-zinc-800 disabled:text-zinc-600 w-8 h-8 transition-colors">
                   <Navigation className="w-4.5 h-4.5" />
                 </Button>
               </div>

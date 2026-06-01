@@ -14,21 +14,13 @@ export function CookieBanner() {
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-<<<<<<< HEAD
-    const timer = window.setTimeout(() => {
-      const consent = Cookies.get(COOKIE_CONSENT_KEY) as ConsentValue | undefined
-      setIsVisible(!consent)
-      setPortalRoot(document.body)
-    }, 0)
-
-    return () => window.clearTimeout(timer)
-=======
     const consent = Cookies.get(COOKIE_CONSENT_KEY) as ConsentValue | undefined
+    setPortalRoot(document.body)
+
     if (!consent) {
       const raf = window.requestAnimationFrame(() => setIsVisible(true))
       return () => window.cancelAnimationFrame(raf)
     }
->>>>>>> 55516c7 (fix(front): voz agora desconta e descreve no chat)
   }, [])
 
   const handleConsent = (value: ConsentValue) => {
