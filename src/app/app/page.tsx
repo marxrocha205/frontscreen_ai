@@ -25,9 +25,12 @@ export default function ChatPage() {
         setPortalContainer(pipWindow.document.body)
       }, 0)
       return () => clearTimeout(timer)
-    } else {
-      setPortalContainer(null)
     }
+
+    const timer = setTimeout(() => {
+      setPortalContainer(null)
+    }, 0)
+    return () => clearTimeout(timer)
   }, [floatingState, pipWindow])
 
   const chatUI = <ChatInterface />

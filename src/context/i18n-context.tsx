@@ -1,6 +1,6 @@
 "use client"
 
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useEffect, useSyncExternalStore } from 'react'
 import { translations, Language, TranslationKey } from '@/locales'
 
 interface I18nContextType {
@@ -11,28 +11,47 @@ interface I18nContextType {
 
 const I18nContext = createContext<I18nContextType | undefined>(undefined)
 
-export function I18nProvider({ children }: { children: React.ReactNode }) {
-  const [language, setLanguage] = useState<Language>('pt-BR')
+const LANGUAGE_STORAGE_KEY = 'screenai-lang'
+const LANGUAGE_CHANGE_EVENT = 'screenai-language-change'
 
-  // Optional: load from localStorage or detect browser lang
-  useEffect(() => {
-    const saved = localStorage.getItem('screenai-lang') as Language
-    if (saved && translations[saved]) {
-      setLanguage(saved)
-    } else {
-      const browserLang = navigator.language.split('-')[0] // e.g. "pt" from "pt-BR"
-      if (browserLang === 'pt') setLanguage('pt-BR')
-      else setLanguage('en-US')
-    }
-  }, [])
+const getServerLanguageSnapshot = (): Language => 'pt-BR'
+
+const getLanguageSnapshot = (): Language => {
+  try {
+    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY) as Language | null
+    if (saved && translations[saved]) return saved
+  } catch {
+    return getServerLanguageSnapshot()
+  }
+
+  const browserLang = navigator.language.split('-')[0]
+  return browserLang === 'pt' ? 'pt-BR' : 'en-US'
+}
+
+const subscribeToLanguageChanges = (callback: () => void) => {
+  window.addEventListener('storage', callback)
+  window.addEventListener(LANGUAGE_CHANGE_EVENT, callback)
+
+  return () => {
+    window.removeEventListener('storage', callback)
+    window.removeEventListener(LANGUAGE_CHANGE_EVENT, callback)
+  }
+}
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const language = useSyncExternalStore(
+    subscribeToLanguageChanges,
+    getLanguageSnapshot,
+    getServerLanguageSnapshot
+  )
 
   useEffect(() => {
     document.documentElement.lang = language
   }, [language])
 
   const handleSetLanguage = (lang: Language) => {
-    setLanguage(lang)
-    localStorage.setItem('screenai-lang', lang)
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, lang)
+    window.dispatchEvent(new Event(LANGUAGE_CHANGE_EVENT))
   }
 
   const t = (key: TranslationKey): string => {

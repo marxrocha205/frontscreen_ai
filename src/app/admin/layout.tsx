@@ -65,7 +65,7 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
     <Suspense fallback={<div className="h-screen w-screen bg-zinc-950" />}>
-      <AdminLayoutContent children={children} />
+      <AdminLayoutContent>{children}</AdminLayoutContent>
     </Suspense>
   )
 }

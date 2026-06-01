@@ -13,7 +13,7 @@ interface SocketEvent {
   latency: number
 }
 
-const eventTypes = ["CONNECT", "DISCONNECT", "MSG_RECV", "MSG_RECV", "AUDIO_CHUNK", "SYSTEM"]
+const eventTypes: SocketEvent["type"][] = ["CONNECT", "DISCONNECT", "MSG_RECV", "MSG_RECV", "AUDIO_CHUNK", "SYSTEM"]
 
 export function WebsocketsTab() {
   const [events, setEvents] = useState<SocketEvent[]>([])
@@ -30,7 +30,7 @@ export function WebsocketsTab() {
     }, 2000)
 
     const generateNetworkTraffic = () => {
-      const randType = eventTypes[Math.floor(Math.random() * eventTypes.length)] as any
+      const randType = eventTypes[Math.floor(Math.random() * eventTypes.length)]
       const mockIp = `192.168.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
       
       const newEvent: SocketEvent = {

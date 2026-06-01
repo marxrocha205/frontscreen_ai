@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import type { MotionValue } from "framer-motion";
 import Link from "next/link";
 import { useRef, useState } from "react";
 
@@ -25,7 +26,7 @@ const FloatingDockDesktop = ({
   items: { title: string; icon: React.ReactNode; href: string; onClick?: () => void }[];
   className?: string;
 }) => {
-  let mouseX = useMotionValue(Infinity);
+  const mouseX = useMotionValue(Infinity);
   return (
     <motion.div
       onMouseMove={(e) => mouseX.set(e.pageX)}
@@ -46,28 +47,28 @@ function IconContainer({
   href,
   onClick
 }: {
-  mouseX: any;
+  mouseX: MotionValue<number>;
   title: string;
   icon: React.ReactNode;
   href: string;
   onClick?: () => void;
 }) {
-  let ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
 
-  let distance = useTransform(mouseX, (val: number) => {
-    let bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
+  const distance = useTransform(mouseX, (val: number) => {
+    const bounds = ref.current?.getBoundingClientRect() ?? { x: 0, width: 0 };
     return val - bounds.x - bounds.width / 2;
   });
 
-  let widthTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-  let heightTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
-  let widthTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
-  let heightTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
+  const widthTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
+  const heightTransform = useTransform(distance, [-150, 0, 150], [40, 80, 40]);
+  const widthTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
+  const heightTransformIcon = useTransform(distance, [-150, 0, 150], [20, 40, 20]);
 
-  let width = useSpring(widthTransform, { mass: 0.1, stiffness: 150, damping: 12 });
-  let height = useSpring(heightTransform, { mass: 0.1, stiffness: 150, damping: 12 });
-  let widthIcon = useSpring(widthTransformIcon, { mass: 0.1, stiffness: 150, damping: 12 });
-  let heightIcon = useSpring(heightTransformIcon, { mass: 0.1, stiffness: 150, damping: 12 });
+  const width = useSpring(widthTransform, { mass: 0.1, stiffness: 150, damping: 12 });
+  const height = useSpring(heightTransform, { mass: 0.1, stiffness: 150, damping: 12 });
+  const widthIcon = useSpring(widthTransformIcon, { mass: 0.1, stiffness: 150, damping: 12 });
+  const heightIcon = useSpring(heightTransformIcon, { mass: 0.1, stiffness: 150, damping: 12 });
 
   const [hovered, setHovered] = useState(false);
 

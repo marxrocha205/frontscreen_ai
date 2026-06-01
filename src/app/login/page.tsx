@@ -11,7 +11,12 @@ import { useState } from 'react'
 import Cookies from 'js-cookie'
 import { config } from '@/lib/config'
 import { GoogleLogin } from '@react-oauth/google'
+import type { CredentialResponse } from '@react-oauth/google'
 import { jwtDecode } from 'jwt-decode'
+
+interface GoogleJwtPayload {
+  email?: string
+}
 
 export default function LoginPage() {
   const { t } = useI18n()
@@ -24,7 +29,7 @@ export default function LoginPage() {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const handleGoogleSuccess = async (credentialResponse: any) => {
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
     setIsGoogleLoading(true)
     setError('')
     try {
@@ -45,7 +50,7 @@ export default function LoginPage() {
         
         let userEmail = ''
         try {
-          const decoded: any = jwtDecode(credentialResponse.credential)
+          const decoded = jwtDecode<GoogleJwtPayload>(credentialResponse.credential || '')
           userEmail = decoded.email || ''
         } catch (e) {
           console.error("Falha ao ler o email do token", e)
