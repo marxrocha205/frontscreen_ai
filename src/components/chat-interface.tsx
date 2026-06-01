@@ -110,6 +110,8 @@ const CopyIconSvg = ({ className = "w-4 h-4" }: { className?: string }) => (
   </svg>
 );
 
+import { Language } from '@/locales'
+
 type AppLanguage = 'pt-BR' | 'en-US'
 type LocalizedText = Record<AppLanguage, string>
 type LocalizedAgent = { id: string; label: LocalizedText; description: LocalizedText }
@@ -142,7 +144,7 @@ const getAgents = (language: AppLanguage) =>
 
 interface DialogModeSwitchProps {
   active: 'models' | 'agents'
-  language: AppLanguage
+  language: Language
   onOpenModels: () => void
   onOpenAgents: () => void
 }
@@ -305,8 +307,9 @@ const normalizeModelId = (id: string | undefined): string => {
 
 export function ChatInterface() {
   const { t, language } = useI18n()
-  const agents = getAgents(language)
-  const modelDescriptions = MODEL_DESCRIPTIONS[language]
+  const appLang: AppLanguage = (language === 'pt-BR' || language === 'en-US') ? language : 'en-US'
+  const agents = getAgents(appLang)
+  const modelDescriptions = MODEL_DESCRIPTIONS[appLang]
   const [inputValue, setInputValue] = useState('')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
