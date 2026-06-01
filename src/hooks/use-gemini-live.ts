@@ -6,6 +6,8 @@ import { useVoiceConfig } from './use-voice-config';
 import { useConversations } from './use-conversations';
 import { config } from '@/lib/config';
 
+const LOW_CREDIT_THRESHOLD = 8;
+
 const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
 
@@ -67,6 +69,32 @@ const updateMessageContent = (messageId: string, content: string) => {
       message.id === messageId ? { ...message, content } : message
     )
   });
+};
+
+const maybeShowLowCreditWarning = async () => {
+  try {
+    const store = useChatStore.getState();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) return;
+
+    const response = await fetch(`${config.apiUrl}/users/me/credits`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!response.ok) return;
+
+    const data = await response.json();
+    const remaining = Number(data.remaining_credits ?? 0);
+    if (remaining > LOW_CREDIT_THRESHOLD) return;
+
+    const message = remaining <= 2
+      ? 'Seus créditos estão quase no fim. O Pro mantém a sessão ativa sem interrupções e libera modelos premium para concluir a tarefa.'
+      : 'Seus créditos estão baixos. O Pro evita interrupções e libera modelos premium para continuar o que você já começou.';
+
+    store.setUpgradeDialogMessage(message);
+    store.setIsUpgradeDialogOpen(true);
+  } catch (error) {
+    console.error('Erro ao verificar créditos baixos no Gemini Live:', error);
+  }
 };
 
 const upsertLiveConversationPreview = (sessionId: string, title: string) => {
@@ -157,7 +185,8 @@ export function useGeminiLive() {
           session_id: sessionId,
           message_id: messageId,
           role,
-          content: trimmedContent
+          content: trimmedContent,
+          voice_session_id: voiceSessionIdRef.current
         })
       });
 
@@ -173,6 +202,13 @@ export function useGeminiLive() {
         }
         if (shouldRefreshConversations) {
           await fetchConversations();
+        }
+      }
+
+      if (data.remaining_credits !== undefined) {
+        useChatStore.getState().setCredits(Number(data.remaining_credits));
+        if (Number(data.remaining_credits) <= LOW_CREDIT_THRESHOLD) {
+          await maybeShowLowCreditWarning();
         }
       }
     } catch (error) {
@@ -544,6 +580,8 @@ REGRAS CRÍTICAS:
           }
         }
       }));
+
+      void maybeShowLowCreditWarning();
 
       if (!hasChargedVoiceSessionRef.current && voiceSessionIdRef.current) {
         hasChargedVoiceSessionRef.current = true;
