@@ -32,7 +32,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${inter.className} dark h-[100dvh] overflow-hidden overscroll-none antialiased bg-black`}
       suppressHydrationWarning
     >

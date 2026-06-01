@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { stopAllAudio } from './use-websocket'
+import { useI18n } from '@/context/i18n-context'
 
 /**
  * Hook para gerenciar a gravação de voz e conversão para Base64.
@@ -33,6 +34,8 @@ export function useGeminiVoice(
   silenceTimeout: number = 1500,
   events: VoiceEvents = {}
 ) {
+  // Obtém o idioma atual da aplicação (detectado do navegador/sistema ou salvo pelo usuário)
+  const { language } = useI18n()
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([]) // Mudado para Blob[] para melhor tipagem
@@ -125,7 +128,9 @@ export function useGeminiVoice(
 
       if (SpeechRecognitionCtor) {
         const recognition = new SpeechRecognitionCtor()
-        recognition.lang = document.documentElement.lang || 'pt-BR'
+        // Usa o idioma da aplicação (detectado do navegador/sistema ou escolhido pelo usuário).
+        // Isso garante que o reconhecimento de voz sempre corresponda ao idioma em uso.
+        recognition.lang = language
         recognition.continuous = true
         recognition.interimResults = true
         recognition.maxAlternatives = 1
