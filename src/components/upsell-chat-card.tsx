@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation'
 import { Zap, X, ArrowRight, Sparkles } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import type { Language } from '@/locales'
 
 interface UpsellChatCardProps {
   /** Mensagem contextual gerada pelo backend (suporta Markdown) */
@@ -25,7 +26,7 @@ interface UpsellChatCardProps {
   /** Callback ao clicar em "Agora não" */
   onDismiss: () => void
   /** Idioma da interface */
-  language?: 'pt-BR' | 'en-US'
+  language?: Language
 }
 
 export function UpsellChatCard({
