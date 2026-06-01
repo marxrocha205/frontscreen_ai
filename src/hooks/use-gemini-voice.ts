@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { stopAllAudio } from './use-websocket'
 
 /**
@@ -8,7 +8,31 @@ import { stopAllAudio } from './use-websocket'
  * @param threshold Sensibilidade (reservado para lógica futura de VAD)
  * @param silenceTimeout Tempo de silêncio (reservado para lógica futura de auto-stop)
  */
-export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1500) {
+type VoiceEvents = {
+  onTranscript?: (text: string) => void
+  onStop?: () => void
+}
+
+type SpeechRecognitionLike = {
+  lang: string
+  continuous: boolean
+  interimResults: boolean
+  maxAlternatives: number
+  onresult: ((event: any) => void) | null
+  onerror: ((event: any) => void) | null
+  onend: (() => void) | null
+  onstart: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognitionLike
+
+export function useGeminiVoice(
+  threshold: number = 5,
+  silenceTimeout: number = 1500,
+  events: VoiceEvents = {}
+) {
   const [isRecording, setIsRecording] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioChunksRef = useRef<Blob[]>([]) // Mudado para Blob[] para melhor tipagem
@@ -16,6 +40,30 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
   const hasSpeechRef = useRef(false)
   const audioContextRef = useRef<AudioContext | null>(null)
   const animationFrameRef = useRef<number | null>(null)
+  const transcriptRef = useRef('')
+  const [recognitionSupported, setRecognitionSupported] = useState(true)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
+
+  const cleanupRecognition = useCallback(() => {
+    const recognition = recognitionRef.current
+    if (recognition) {
+      recognition.onresult = null
+      recognition.onerror = null
+      recognition.onend = null
+      recognition.onstart = null
+      try {
+        recognition.stop()
+      } catch {}
+    }
+    recognitionRef.current = null
+  }, [])
+
+  useEffect(() => {
+    const speechWindow = window as Window & typeof globalThis & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
+    const SpeechRecognitionCtor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition
+
+    setRecognitionSupported(Boolean(SpeechRecognitionCtor))
+  }, [])
 
   const startRecording = useCallback(async () => {
     // Limpeza de segurança caso já exista uma gravação rodando
@@ -43,6 +91,7 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
       audioChunksRef.current = []
       startedAtRef.current = Date.now()
       hasSpeechRef.current = false
+      transcriptRef.current = ''
 
       const audioContext = new AudioContext()
       const source = audioContext.createMediaStreamSource(stream)
@@ -71,6 +120,53 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
       }
       detectSpeech()
 
+      const speechWindow = window as Window & typeof globalThis & { SpeechRecognition?: SpeechRecognitionCtor; webkitSpeechRecognition?: SpeechRecognitionCtor }
+      const SpeechRecognitionCtor = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition
+
+      if (SpeechRecognitionCtor) {
+        const recognition = new SpeechRecognitionCtor()
+        recognition.lang = document.documentElement.lang || 'pt-BR'
+        recognition.continuous = true
+        recognition.interimResults = true
+        recognition.maxAlternatives = 1
+
+        recognition.onresult = (event) => {
+          let finalTranscript = ''
+          let interimTranscript = ''
+
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const result = event.results[i]
+            const text = result[0]?.transcript || ''
+            if (result.isFinal) finalTranscript += text
+            else interimTranscript += text
+          }
+
+          const combined = `${transcriptRef.current}${finalTranscript || interimTranscript}`.trim()
+          transcriptRef.current = combined
+          events.onTranscript?.(combined)
+        }
+
+        recognition.onerror = (event) => {
+          console.error('[VoiceError] Erro no reconhecimento de voz:', event.error)
+        }
+
+        recognition.onend = () => {
+          if (mediaRecorderRef.current?.state === 'recording') {
+            try {
+              recognition.start()
+            } catch {}
+          }
+        }
+
+        recognitionRef.current = recognition
+
+        try {
+          recognition.start()
+        } catch (error) {
+          console.error('[VoiceError] Não foi possível iniciar o reconhecimento de voz:', error)
+        }
+      }
+
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data)
@@ -85,7 +181,7 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
       console.error("[VoiceError] Erro ao acessar o microfone:", error)
       alert("Por favor, permita o acesso ao microfone no seu navegador.")
     }
-  }, [threshold, silenceTimeout])
+  }, [events, threshold, silenceTimeout])
 
   const stopRecording = useCallback((): Promise<string | undefined> => {
     return new Promise((resolve) => {
@@ -110,7 +206,9 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
         }
         audioContextRef.current?.close().catch(() => {})
         audioContextRef.current = null
+        cleanupRecognition()
         setIsRecording(false)
+        events.onStop?.()
 
         if (!hasEnoughAudio) {
           audioChunksRef.current = []
@@ -131,7 +229,7 @@ export function useGeminiVoice(threshold: number = 5, silenceTimeout: number = 1
 
       recorder.stop()
     })
-  }, [])
+  }, [cleanupRecognition, events])
 
-  return { isRecording, startRecording, stopRecording }
+  return { isRecording, startRecording, stopRecording, recognitionSupported }
 }
