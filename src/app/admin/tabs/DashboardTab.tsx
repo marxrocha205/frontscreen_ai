@@ -243,7 +243,7 @@ export function DashboardTab() {
                 <Pie data={liveData.cost_by_model} dataKey="cost_brl" nameKey="model" cx="50%" cy="50%" innerRadius={60} outerRadius={80} paddingAngle={5} isAnimationActive={false}>
                   {liveData.cost_by_model.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />)}
                 </Pie>
-                <Tooltip formatter={(value: number | string) => formatBRL(Number(value))} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
+                <Tooltip formatter={(value) => formatBRL(Number(value ?? 0))} contentStyle={{ backgroundColor: '#18181b', borderColor: '#27272a', color: '#f4f4f5', borderRadius: '8px' }} />
                 <Legend wrapperStyle={{ fontSize: '12px', color: '#a1a1aa' }} />
               </PieChart>
             </ResponsiveContainer>
