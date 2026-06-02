@@ -43,30 +43,18 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel
       <DialogContent className="sm:max-w-md bg-zinc-950/90 border border-zinc-800/80 text-zinc-100 p-8 rounded-3xl shadow-2xl backdrop-blur-xl focus:outline-none overflow-hidden">
         
         {/* Efeitos de brilho dinâmico em degradê ultra-sutil no fundo */}
-        <div className={`absolute -top-24 -left-24 w-48 h-48 rounded-full filter blur-3xl opacity-[0.10] pointer-events-none ${
-          isModelLock ? 'bg-indigo-500/30' : 'bg-amber-500/30'
-        }`} />
-        <div className={`absolute -bottom-24 -right-24 w-48 h-48 rounded-full filter blur-3xl opacity-[0.06] pointer-events-none ${
-          isModelLock ? 'bg-violet-500/20' : 'bg-yellow-500/20'
-        }`} />
+        <div className="absolute -top-24 -left-24 w-48 h-48 rounded-full filter blur-3xl opacity-[0.10] pointer-events-none bg-indigo-500/30" />
+        <div className="absolute -bottom-24 -right-24 w-48 h-48 rounded-full filter blur-3xl opacity-[0.06] pointer-events-none bg-violet-500/20" />
 
         <DialogHeader className="flex flex-col items-center gap-4 mb-2 relative z-10">
-          <div className={`p-4 rounded-full flex items-center justify-center border transition-all duration-300 ${
-            isModelLock 
-              ? 'bg-gradient-to-tr from-indigo-600/20 to-violet-600/20 border-indigo-500/30 shadow-[0_0_24px_rgba(99,102,241,0.2)]' 
-              : 'bg-gradient-to-tr from-amber-600/20 to-yellow-600/20 border-amber-500/30 shadow-[0_0_24px_rgba(245,158,11,0.2)]'
-          }`}>
+          <div className="p-4 rounded-full flex items-center justify-center border transition-all duration-300 bg-gradient-to-tr from-indigo-600/20 to-violet-600/20 border-indigo-500/30 shadow-[0_0_24px_rgba(99,102,241,0.2)]">
             {isModelLock
               ? <Lock className="w-8 h-8 text-indigo-400 animate-pulse" />
-              : <Zap className="w-8 h-8 text-amber-400 animate-pulse" />
+              : <Zap className="w-8 h-8 text-indigo-400 animate-pulse" />
             }
           </div>
           
-          <DialogTitle className={`text-2xl font-bold tracking-tight text-center bg-gradient-to-b bg-clip-text text-transparent ${
-            isModelLock
-              ? 'from-white via-zinc-100 to-indigo-200'
-              : 'from-white via-zinc-100 to-amber-200'
-          }`}>
+          <DialogTitle className="text-2xl font-bold tracking-tight text-center bg-gradient-to-b bg-clip-text text-transparent from-white via-zinc-100 to-indigo-200">
             {cleanTitle}
           </DialogTitle>
           
@@ -85,11 +73,7 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel
           </Button>
           <Button 
             onClick={handleUpgrade} 
-            className={`flex-1 rounded-xl h-12 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] ${
-              isModelLock
-                ? 'bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/20 border-none'
-                : 'bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 text-black hover:from-amber-400 hover:to-yellow-500 shadow-lg shadow-amber-500/20 border-none'
-            }`}
+            className="flex-1 rounded-xl h-12 font-bold transition-all hover:scale-[1.02] active:scale-[0.98] bg-gradient-to-r from-indigo-500 via-indigo-600 to-violet-600 text-white hover:from-indigo-400 hover:to-violet-500 shadow-lg shadow-indigo-500/20 border-none"
           >
             {ctaLabel || 'Fazer Upgrade'}
           </Button>

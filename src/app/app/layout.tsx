@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useConversations } from '@/hooks/use-conversations'
 import { useRouter, usePathname } from 'next/navigation' // <-- Adicionado usePathname
 import Link from 'next/link'
+import { SettingsSideMenu } from '@/components/settings-side-menu'
 import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
@@ -541,28 +542,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   </div>
                 )}
 
-                {hasHydrated && isLoggedIn ? (
-                  <SettingsDialog trigger={
-                    <Button id="tour-settings" variant="ghost" className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group">
-                      <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-                      <span className="text-sm">{t('app.settings')}</span>
-                    </Button>
-                  } />
-                ) : (
-                  <Button
-                    id="tour-settings"
-                    variant="ghost"
-                    onClick={() => handleAuthAction(() => { })}
-                    className="w-full justify-start gap-2.5 h-12 px-3 hover:bg-zinc-800/50 rounded-lg group"
-                  >
-                    <SettingsIcon className="w-4 h-4 text-zinc-400 group-hover:text-zinc-300" />
-                    <span className="text-sm">{t('app.settings')}</span>
-                  </Button>
-                )}
+
 
                 {hasHydrated && isLoggedIn && (
-                  <SettingsDialog
-                    defaultTab="account"
+                  <SettingsSideMenu
                     trigger={
                       <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
                         <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
