@@ -67,8 +67,13 @@ export const useScreenShare = create<ScreenShareState>((set, get) => ({
     
     try {
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ 
-        video: { displaySurface: "monitor" }
-      })
+        video: { 
+          displaySurface: "monitor",
+          width: { ideal: 3840 },
+          height: { ideal: 2160 },
+          frameRate: { ideal: 30 }
+        }
+      } as any)
 
       // Conecta o stream ao vídeo oculto global (para captura)
       const video = getCaptureVideo()

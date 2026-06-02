@@ -8,9 +8,6 @@ import { config } from '@/lib/config';
 
 const LOW_CREDIT_THRESHOLD = 8;
 
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-const URL = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
-
 const createLiveMessageId = (role: 'user' | 'assistant') =>
   `live-${role}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
@@ -72,29 +69,17 @@ const updateMessageContent = (messageId: string, content: string) => {
 };
 
 const maybeShowLowCreditWarning = async () => {
-  try {
-    const store = useChatStore.getState();
-    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    if (!token) return;
+  const store = useChatStore.getState();
+  const remaining = Number(store.credits ?? 0);
+  
+  if (remaining > LOW_CREDIT_THRESHOLD) return;
 
-    const response = await fetch(`${config.apiUrl}/users/me/credits`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!response.ok) return;
+  const message = remaining <= 2
+    ? 'Seus créditos estão quase no fim. O Pro mantém a sessão ativa sem interrupções e libera modelos premium para concluir a tarefa.'
+    : 'Seus créditos estão baixos. O Pro evita interrupções e libera modelos premium para continuar o que você já começou.';
 
-    const data = await response.json();
-    const remaining = Number(data.remaining_credits ?? 0);
-    if (remaining > LOW_CREDIT_THRESHOLD) return;
-
-    const message = remaining <= 2
-      ? 'Seus créditos estão quase no fim. O Pro mantém a sessão ativa sem interrupções e libera modelos premium para concluir a tarefa.'
-      : 'Seus créditos estão baixos. O Pro evita interrupções e libera modelos premium para continuar o que você já começou.';
-
-    store.setUpgradeDialogMessage(message);
-    store.setIsUpgradeDialogOpen(true);
-  } catch (error) {
-    console.error('Erro ao verificar créditos baixos no Gemini Live:', error);
-  }
+  store.setUpgradeDialogMessage(message);
+  store.setIsUpgradeDialogOpen(true);
 };
 
 const upsertLiveConversationPreview = (sessionId: string, title: string) => {
@@ -134,6 +119,7 @@ export function useGeminiLive() {
   const assistantActivityTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFrameTimeRef = useRef<number>(0);
   const isStartingRef = useRef(false);
+  const isStoppingRef = useRef(false);
   const activeSessionIdRef = useRef(0);
   const hasStartedRecorderRef = useRef(false);
   const liveOwnerRef = useRef(Symbol('gemini-live-owner'));
@@ -191,6 +177,16 @@ export function useGeminiLive() {
       });
 
       if (!response.ok) {
+        if (response.status === 402) {
+          if (!isStoppingRef.current) {
+            console.warn("[Gemini Live] Créditos esgotados detectados via 402.");
+            const store = useChatStore.getState();
+            store.setUpgradeDialogMessage("Seus créditos acabaram. Faça o upgrade para o Pro para continuar usando o Gemini Live sem interrupções.");
+            store.setIsUpgradeDialogOpen(true);
+            stopSession();
+          }
+          return;
+        }
         console.error(`[Gemini Live] Falha ao persistir mensagem (${response.status}):`, await response.text().catch(() => ''));
         return;
       }
@@ -292,11 +288,15 @@ export function useGeminiLive() {
   }, [stream, isSharing]);
 
   const stopSession = useCallback(() => {
+    if (isStoppingRef.current) return;
+    isStoppingRef.current = true;
     console.log("🛑 Encerrando sessão Gemini Live...");
+    
     activeSessionIdRef.current += 1;
     isStartingRef.current = false;
     hasStartedRecorderRef.current = false;
     emitLiveState({ isActive: false, isConnected: false, isStarting: false, phase: 'idle', audioLevel: 0 });
+    
     if (videoIntervalRef.current) {
       clearInterval(videoIntervalRef.current);
       videoIntervalRef.current = null;
@@ -357,6 +357,17 @@ export function useGeminiLive() {
 
       const setupComplete = response.setup_complete || response.setupComplete;
       const serverContent = response.server_content || response.serverContent;
+      const errorMessage = response.message;
+
+      if (response.type === 'error' || errorMessage) {
+        if (!isStoppingRef.current) {
+          const store = useChatStore.getState();
+          store.setUpgradeDialogMessage(errorMessage || "Sessão encerrada por falta de créditos.");
+          store.setIsUpgradeDialogOpen(true);
+          stopSession();
+        }
+        return;
+      }
 
       if (setupComplete) {
         if (hasStartedRecorderRef.current) return;
@@ -509,7 +520,9 @@ export function useGeminiLive() {
 
   const startSession = useCallback(async () => {
     
-    if (!GEMINI_API_KEY) return alert("Configure a API Key");
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
+
     if (
       isLiveSessionOpen() ||
       isStartingRef.current ||
@@ -520,6 +533,7 @@ export function useGeminiLive() {
     }
 
     isStartingRef.current = true;
+    isStoppingRef.current = false;
     hasStartedRecorderRef.current = false;
     const activeConversationId = useConversations.getState().activeId;
     liveConversationIdRef.current = activeConversationId || createLiveSessionId();
@@ -544,7 +558,9 @@ export function useGeminiLive() {
     await audioPlayerRef.current.beep();
     if (activeSessionIdRef.current !== sessionId) return;
 
-    const ws = new WebSocket(URL);
+    // Conecta ao Proxy do Backend em vez do Google diretamente
+    const PROXY_URL = `${config.wsUrl}/ws/gemini-live?token=${token}`;
+    const ws = new WebSocket(PROXY_URL);
     wsRef.current = ws;
 
     const { voiceType } = useVoiceConfig.getState();
@@ -572,14 +588,9 @@ export function useGeminiLive() {
           },
           output_audio_transcription: {},
           input_audio_transcription: {},
+          // O backend irá injetar/sobrescrever o system_instruction por segurança e controle de prompt
           system_instruction: { 
-            parts: [{ text: `Você é o ScreenAI.
-Sua visão da tela depende do botão de compartilhamento (ícone de monitor).
-REGRAS CRÍTICAS:
-1. Se o usuário perguntar sobre a tela e você NÃO recebeu frames recentemente, você DEVE dizer o equivalente a: 'Por favor, clique no botão de compartilhamento de tela (ícone do monitor) para que eu possa ver.' no idioma dele.
-2. NUNCA diga que está vendo a 'área de trabalho' ou qualquer outra coisa se não houver vídeo chegando.
-3. Se o vídeo parar de chegar, assuma que o usuário desligou o compartilhamento.
-4. Responda SEMPRE no mesmo idioma em que o usuário falar com você. Se ele falar em português, responda em português. Se ele falar em inglês, responda em inglês. Seja breve e natural.` }] 
+            parts: [{ text: "Iniciando sessão..." }] 
           }
         }
       }));
