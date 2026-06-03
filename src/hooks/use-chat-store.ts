@@ -49,6 +49,13 @@ export interface Message {
 // Tipo discriminado para os 3 estados possíveis do chat flutuante
 export type FloatingState = 'none' | 'pip' | 'popup'
 
+// Payload do upsell inline (aparece como card no chat)
+export interface InlineUpsellPayload {
+  message: string
+  remainingCredits?: number
+  threshold?: number
+}
+
 interface ChatState {
   messages: Message[]
   isStreaming: boolean
