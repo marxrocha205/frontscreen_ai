@@ -60,7 +60,7 @@ export const translations = {
     'settings.theme_light': 'Claro',
     'settings.theme_system': 'Sistema',
     'settings.language': 'Idioma',
-    'settings.voice_assistant': 'Voz da ScreenAI Live',
+    'settings.voice_assistant': 'Voz da Gemini Live',
     
     'settings.mic_sensitivity': 'Sensibilidade ao som',
     'settings.mic_pause': 'Pausa antes de parar',
@@ -135,8 +135,8 @@ export const translations = {
     'settings.theme_light': 'Light',
     'settings.theme_system': 'System',
     'settings.language': 'Language',
-    'settings.voice_assistant': 'ScreenAI Live Voice',
-    
+    'settings.voice_assistant': 'Gemini Live Voice',
+
     'settings.mic_sensitivity': 'Sound sensitivity',
     'settings.mic_pause': 'Pause before stopping',
     'settings.voice_precision': 'Profile precision',
@@ -210,7 +210,7 @@ export const translations = {
     'settings.theme_light': 'Claro',
     'settings.theme_system': 'Sistema',
     'settings.language': 'Idioma',
-    'settings.voice_assistant': 'Voz de ScreenAI Live',
+    'settings.voice_assistant': 'Voz de Gemini Live',
     
     'settings.mic_sensitivity': 'Sensibilidad al sonido',
     'settings.mic_pause': 'Pausa antes de detener',
@@ -228,3 +228,4 @@ export const translations = {
 
 export type Language = 'pt-BR' | 'en-US' | 'es-ES'
 export type TranslationKey = keyof typeof translations['pt-BR']
+

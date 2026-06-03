@@ -49,7 +49,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const { conversations, fetchConversations, loadConversation, deleteConversation, renameConversation, activeId, isLoading, createNewConversation } = useConversations()
 
   // Puxamos o floatingState para saber qual label / cor mostrar no botão
-  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, isSidebarOpen, setIsSidebarOpen } = useChatStore()
+  const { messages, clearMessages, selectedModel, setSelectedModel, floatingState, userPlan, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, upgradeDialogTitle, isSidebarOpen, setIsSidebarOpen } = useChatStore()
   const { openChat } = useFloatingChat()
   const { isSharing: isScreenShared, startSharing, stopSharing } = useScreenShare()
 
@@ -617,7 +617,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
-      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} />
+      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} title={upgradeDialogTitle} />
     </div>
   )
 }

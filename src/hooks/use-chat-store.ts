@@ -69,9 +69,8 @@ interface ChatState {
   setIsUpgradeDialogOpen: (open: boolean) => void
   upgradeDialogMessage: string | null
   setUpgradeDialogMessage: (message: string | null) => void
-  // Upsell inline — card no chat, não popup
-  inlineUpsell: InlineUpsellPayload | null
-  setInlineUpsell: (payload: InlineUpsellPayload | null) => void
+  upgradeDialogTitle: string | null
+  setUpgradeDialogTitle: (title: string | null) => void
 
 
   addMessage: (message: Message) => void
@@ -101,6 +100,7 @@ export const useChatStore = create<ChatState>((set) => ({
   pipWindow: null,
   isUpgradeDialogOpen: false,
   upgradeDialogMessage: null,
+  upgradeDialogTitle: null,
   isSoundEnabled: false,
   isSidebarOpen: false,
 
@@ -157,8 +157,7 @@ export const useChatStore = create<ChatState>((set) => ({
   closeFloatingMode: () => set({ floatingState: 'none', pipWindow: null }),
   setIsUpgradeDialogOpen: (open) => set({ isUpgradeDialogOpen: open }),
   setUpgradeDialogMessage: (message) => set({ upgradeDialogMessage: message }),
-  inlineUpsell: null,
-  setInlineUpsell: (payload) => set({ inlineUpsell: payload }),
+  setUpgradeDialogTitle: (title) => set({ upgradeDialogTitle: title }),
   toggleSound: () => set((state) => ({ isSoundEnabled: !state.isSoundEnabled })),
   setIsSidebarOpen: (open) => set({ isSidebarOpen: open }),
 }))
