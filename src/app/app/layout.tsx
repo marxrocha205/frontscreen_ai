@@ -617,7 +617,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </DialogContent>
       </Dialog>
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
-      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} title={upgradeDialogTitle} />
+      <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} title={upgradeDialogTitle ?? undefined} />
     </div>
   )
 }
