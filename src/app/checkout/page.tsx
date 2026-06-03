@@ -8,6 +8,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { config } from '@/lib/config'
 import { useI18n } from '@/context/i18n-context'
+import { StripeCardForm } from './StripeCardForm'
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -345,9 +346,6 @@ function CheckoutContent() {
   const plans = getCheckoutPlans(language)
   const copy = checkoutCopy[language]
 
-  const stripe = useStripe()
-  const elements = useElements()
-
   const planId = searchParams.get('plan')
   const selectedPlan = plans.find(p => p.id === Number(planId)) || plans[0]
 
@@ -355,9 +353,6 @@ function CheckoutContent() {
   const [isLoading, setIsLoading] = useState(false)
   const currency: CurrencyCode = language === 'pt-BR' ? 'BRL' : (language === 'es-ES' ? 'EUR' : 'USD')
 
-  const [cardSubmissionLock, setCardSubmissionLock] = useState(false)
-  const [cardPaymentSuccess, setCardPaymentSuccess] = useState(false)
-  const [cardError, setCardError] = useState<string | null>(null)
   const [cardNumberComplete, setCardNumberComplete] = useState(false)
   const [cardExpiryComplete, setCardExpiryComplete] = useState(false)
   const [cardCvcComplete, setCardCvcComplete] = useState(false)
@@ -749,110 +744,10 @@ function CheckoutContent() {
     }
   }
 
-  /* ── Handler: Pagamento Cartão de Crédito (Stripe + AlphaPay) ── */
-  const handleCardSubmit = async () => {
-    if (cardSubmissionLock || cardPaymentSuccess) {
-      console.warn('[Checkout] Bloqueado: tentativa de submissão duplicada.')
-      return
-    }
-
-    if (!stripe || !elements) {
-      setCardError(language === 'pt-BR' ? 'O sistema de pagamento não está pronto.' : 'The payment system is not ready.')
-      return
-    }
-
-    if (!isCardComplete) {
-      setCardError(language === 'pt-BR' ? 'Preencha todos os dados do cartão.' : 'Please fill in all card details.')
-      return
-    }
-
-    // Validar dados pessoais do formulário de cartão
-    const nameParts = cardForm.name.trim().split(/\s+/).filter(Boolean)
-    if (nameParts.length < 2 || cardForm.name.trim().length < 4) {
-      setCardError(copy.errors.firstLastName)
-      return
-    }
-    const rawCpf = cardForm.cpf.replace(/\D/g, '')
-    if (!rawCpf || (rawCpf.length !== 11 && rawCpf.length !== 14) || !validateCpfOrCnpj(cardForm.cpf)) {
-      setCardError(copy.errors.documentInvalid)
-      return
-    }
-    const rawPhone = cardForm.phone.replace(/\D/g, '')
-    if (rawPhone.length < 10) {
-      setCardError(copy.errors.phoneInvalid)
-      return
-    }
-    if (!cardForm.zip_code.replace(/\D/g, '') || !cardForm.street_name.trim() || !cardForm.number.trim() || !cardForm.neighborhood.trim() || !cardForm.city.trim() || !cardForm.state.trim()) {
-      setCardError(language === 'pt-BR' ? 'Preencha o endereço de cobrança completo.' : 'Please fill in the complete billing address.')
-      return
-    }
-
-    setCardSubmissionLock(true)
-    setIsLoading(true)
-    setCardError(null)
-
-    try {
-      const cardNumberElement = elements.getElement(CardNumberElement)
-      if (!cardNumberElement) throw new Error('Card element not found')
-
-      // 1. Tokenizar o cartão no Stripe
-      const { error: stripeError, paymentMethod: pm } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardNumberElement,
-        billing_details: { name: cardForm.name },
-      })
-
-      if (stripeError) {
-        setCardError(stripeError.message || 'Erro ao processar o cartão.')
-        setCardSubmissionLock(false)
-        setIsLoading(false)
-        return
-      }
-
-      console.log('[Checkout] Stripe PaymentMethod criado:', pm.id)
-
-      // 2. Enviar para o backend
-      const token = localStorage.getItem('access_token')
-      const response = await fetch(`${config.apiUrl}/api/payments/checkout-card`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          plan_id: selectedPlan.id,
-          currency: currency,
-          card_token: pm.id,
-          full_name: cardForm.name,
-          document: cardForm.cpf.replace(/\D/g, ''),
-          phone: cardForm.phone.replace(/\D/g, ''),
-          street_name: cardForm.street_name,
-          number: cardForm.number,
-          complement: cardForm.complement,
-          neighborhood: cardForm.neighborhood,
-          city: cardForm.city,
-          state: cardForm.state,
-          zip_code: cardForm.zip_code.replace(/\D/g, ''),
-        }),
-      })
-
-      const data = await response.json()
-
-      if (response.ok && (data.status === 'success' || data.status === 'pending')) {
-        setCardPaymentSuccess(true)
-        // Redirecionar para a app após 2s
-        setTimeout(() => router.push('/app'), 2000)
-      } else {
-        setCardError(data.detail || copy.paymentError)
-        setCardSubmissionLock(false)
-      }
-    } catch (err) {
-      console.error('[Checkout] Card error:', err)
-      setCardError(copy.connectionError)
-      setCardSubmissionLock(false)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  /* ── shared input style ── */
+  
+  // O processamento de cartão agora ocorre totalmente dentro de <StripeCardForm />
+  // handleCardSubmit e estados relacionados foram delegados.
+/* ── shared input style ── */
   const inputStyle: React.CSSProperties = {
     width: '100%',
     background: '#2a2a2a',
@@ -993,162 +888,15 @@ function CheckoutContent() {
               </button>
             </div>
 
-            {/* ── CARD FIELDS (Stripe Elements + Dados Pessoais) ── */}
+            
+            {/* ── CARD FIELDS (Stripe PaymentElement) ── */}
             {paymentMethod === 'card' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 4 }}>
-
-                {/* Stripe Card Number */}
-                <div style={{
-                  position: 'relative',
-                  background: '#2a2a2a',
-                  borderRadius: 10,
-                  padding: '18px 20px',
-                  border: cardError ? '1.5px solid #ef4444' : '1.5px solid transparent',
-                }}>
-                  <CardNumberElement
-                    options={{ style: STRIPE_ELEMENT_STYLE, showIcon: true }}
-                    onChange={e => {
-                      setCardNumberComplete(e.complete)
-                      if (e.error) setCardError(e.error.message)
-                      else if (cardError) setCardError(null)
-                    }}
-                  />
-                  <div style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)' }}>
-                    <CardBrands />
-                  </div>
-                </div>
-
-                {/* Expiration + CVV */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  <div style={{
-                    background: '#2a2a2a',
-                    borderRadius: 10,
-                    padding: '18px 20px',
-                    border: '1.5px solid transparent',
-                  }}>
-                    <CardExpiryElement
-                      options={{ style: STRIPE_ELEMENT_STYLE }}
-                      onChange={e => {
-                        setCardExpiryComplete(e.complete)
-                        if (e.error) setCardError(e.error.message)
-                        else if (cardError) setCardError(null)
-                      }}
-                    />
-                  </div>
-                  <div style={{
-                    background: '#2a2a2a',
-                    borderRadius: 10,
-                    padding: '18px 20px',
-                    border: '1.5px solid transparent',
-                    position: 'relative',
-                  }}>
-                    <CardCvcElement
-                      options={{ style: STRIPE_ELEMENT_STYLE }}
-                      onChange={e => {
-                        setCardCvcComplete(e.complete)
-                        if (e.error) setCardError(e.error.message)
-                        else if (cardError) setCardError(null)
-                      }}
-                    />
-                    <CreditCard
-                      size={16}
-                      style={{ position: 'absolute', right: 16, top: '50%', transform: 'translateY(-50%)', color: '#6b7280' }}
-                    />
-                  </div>
-                </div>
-
-                {cardError && (
-                  <span style={{ fontSize: 11, color: '#ef4444', paddingLeft: 4 }}>{cardError}</span>
-                )}
-
-                {/* Dados pessoais para Cartão */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-                  <input
-                    type="text"
-                    placeholder={copy.fullName}
-                    value={cardForm.name}
-                    onChange={e => setCardForm(prev => ({ ...prev, name: e.target.value }))}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="text"
-                    placeholder={copy.document}
-                    value={cardForm.cpf}
-                    onChange={e => setCardForm(prev => ({ ...prev, cpf: maskCPF(e.target.value) }))}
-                    style={inputStyle}
-                  />
-                  <input
-                    type="text"
-                    placeholder={copy.phone}
-                    value={cardForm.phone}
-                    onChange={e => setCardForm(prev => ({ ...prev, phone: maskPhone(e.target.value) }))}
-                    style={inputStyle}
-                  />
-                </div>
-
-                {/* Endereço de cobrança para Cartão */}
-                <div style={{ marginTop: 4 }}>
-                  <p style={{ margin: '0 0 8px', fontSize: 13, color: '#9ca3af', fontWeight: 500, paddingLeft: 4 }}>
-                    {copy.billingAddress}
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <input
-                      type="text"
-                      placeholder={copy.zip}
-                      value={cardForm.zip_code}
-                      onChange={e => handleCepChange(e, 'card')}
-                      maxLength={9}
-                      style={inputStyle}
-                    />
-                    <input
-                      type="text"
-                      placeholder={copy.street}
-                      value={cardForm.street_name}
-                      onChange={e => setCardForm(prev => ({ ...prev, street_name: e.target.value }))}
-                      style={inputStyle}
-                    />
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                      <input
-                        type="text"
-                        placeholder={copy.number}
-                        value={cardForm.number}
-                        onChange={e => setCardForm(prev => ({ ...prev, number: e.target.value }))}
-                        style={inputStyle}
-                      />
-                      <input
-                        type="text"
-                        placeholder={copy.complement}
-                        value={cardForm.complement}
-                        onChange={e => setCardForm(prev => ({ ...prev, complement: e.target.value }))}
-                        style={inputStyle}
-                      />
-                    </div>
-                    <input
-                      type="text"
-                      placeholder={copy.neighborhood}
-                      value={cardForm.neighborhood}
-                      onChange={e => setCardForm(prev => ({ ...prev, neighborhood: e.target.value }))}
-                      style={inputStyle}
-                    />
-                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 8 }}>
-                      <input
-                        type="text"
-                        placeholder={copy.city}
-                        value={cardForm.city}
-                        onChange={e => setCardForm(prev => ({ ...prev, city: e.target.value }))}
-                        style={inputStyle}
-                      />
-                      <input
-                        type="text"
-                        placeholder={copy.state}
-                        value={cardForm.state}
-                        onChange={e => setCardForm(prev => ({ ...prev, state: e.target.value }))}
-                        maxLength={2}
-                        style={inputStyle}
-                      />
-                    </div>
-                  </div>
-                </div>
+              <div style={{ marginTop: 4 }}>
+                <StripeCardForm 
+                  planId={selectedPlan.id} 
+                  currency={currency} 
+                  language={language} 
+                />
               </div>
             )}
 
@@ -1486,39 +1234,40 @@ function CheckoutContent() {
               </div>
             </div>
 
-            {/* Subscribe button */}
-            <button
-              onClick={paymentMethod === 'pix' ? handlePixSubmit : handleCardSubmit}
-              disabled={isLoading || !!pixData || cardPaymentSuccess}
-              style={{
-                marginTop: 20,
-                width: '100%',
-                height: 48,
-                background: (pixData || cardPaymentSuccess) ? '#10b981' : '#5c5cfc',
-                border: 'none',
-                borderRadius: 9999,
-                color: '#fff',
-                fontSize: 16,
-                fontWeight: 600,
-                cursor: isLoading ? 'wait' : ((pixData || cardPaymentSuccess) ? 'default' : 'pointer'),
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                transition: 'background 0.15s',
-              }}
-              onMouseEnter={e => { if (!isLoading && !pixData && !cardPaymentSuccess) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
-              onMouseLeave={e => { if (!pixData && !cardPaymentSuccess) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
-            >
-              {isLoading
-                ? <Loader2 size={20} className="animate-spin" />
-                : cardPaymentSuccess
-                  ? <><CheckCircle size={20} /> {language === 'pt-BR' ? 'Pagamento Aprovado!' : 'Payment Approved!'}</>
+            
+            {/* Subscribe button (Apenas para PIX, pois Cartão tem seu próprio botão) */}
+            {paymentMethod === 'pix' && (
+              <button
+                onClick={handlePixSubmit}
+                disabled={isLoading || !!pixData}
+                style={{
+                  marginTop: 20,
+                  width: '100%',
+                  height: 48,
+                  background: pixData ? '#10b981' : '#5c5cfc',
+                  border: 'none',
+                  borderRadius: 9999,
+                  color: '#fff',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: isLoading ? 'wait' : (pixData ? 'default' : 'pointer'),
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 8,
+                  transition: 'background 0.15s',
+                }}
+                onMouseEnter={e => { if (!isLoading && !pixData) (e.currentTarget as HTMLButtonElement).style.background = '#4848e8' }}
+                onMouseLeave={e => { if (!pixData) (e.currentTarget as HTMLButtonElement).style.background = '#5c5cfc' }}
+              >
+                {isLoading
+                  ? <Loader2 size={20} className="animate-spin" />
                   : pixData
                     ? copy.waitingPayment
                     : copy.subscribeNow
-              }
-            </button>
+                }
+              </button>
+            )}
 
             {/* Pix QR Code Display */}
             {pixData && (
@@ -1576,49 +1325,15 @@ function CheckoutContent() {
   )
 }
 
+
 export default function CheckoutPage() {
-  const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
-  const [stripeLoading, setStripeLoading] = useState(true)
-
-  useEffect(() => {
-    async function initStripe() {
-      try {
-        const res = await fetch(`${config.apiUrl}/api/payments/config`)
-        if (!res.ok) throw new Error('Falha ao carregar config do Stripe')
-        const data = await res.json()
-        if (data.stripe_public_key && data.stripe_connect_id) {
-          setStripePromise(
-            loadStripe(data.stripe_public_key, {
-              stripeAccount: data.stripe_connect_id,
-            })
-          )
-        }
-      } catch (err) {
-        console.error('[Stripe Init]', err)
-      } finally {
-        setStripeLoading(false)
-      }
-    }
-    initStripe()
-  }, [])
-
-  if (stripeLoading) {
-    return (
-      <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Loader2 size={40} style={{ color: '#fff', animation: 'spin 1s linear infinite' }} />
-      </div>
-    )
-  }
-
   return (
     <Suspense fallback={
       <div style={{ minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <Loader2 size={40} style={{ color: '#fff', animation: 'spin 1s linear infinite' }} />
       </div>
     }>
-      <Elements stripe={stripePromise}>
-        <CheckoutContent />
-      </Elements>
+      <CheckoutContent />
     </Suspense>
   )
 }
