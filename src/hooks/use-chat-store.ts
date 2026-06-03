@@ -71,7 +71,8 @@ interface ChatState {
   setUpgradeDialogMessage: (message: string | null) => void
   upgradeDialogTitle: string | null
   setUpgradeDialogTitle: (title: string | null) => void
-
+  inlineUpsell: InlineUpsellPayload | null
+  setInlineUpsell: (upsell: InlineUpsellPayload | null) => void
 
   addMessage: (message: Message) => void
   updateLastAssistantMessage: (content: string) => void
@@ -98,6 +99,8 @@ export const useChatStore = create<ChatState>((set) => ({
   selectedAgentId: '',
   floatingState: 'none',
   pipWindow: null,
+  inlineUpsell: null,
+  setInlineUpsell: (upsell) => set({ inlineUpsell: upsell }),
   isUpgradeDialogOpen: false,
   upgradeDialogMessage: null,
   upgradeDialogTitle: null,
