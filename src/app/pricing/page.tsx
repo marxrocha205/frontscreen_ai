@@ -17,6 +17,7 @@ type ProPlanDetails = {
     price: string
     cta: string
     tagline: string
+    badge?: string
   }
   annual: {
     id: number
