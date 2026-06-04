@@ -71,7 +71,7 @@ const updateMessageContent = (messageId: string, content: string) => {
 const maybeShowLowCreditWarning = async () => {
   const store = useChatStore.getState();
   const remaining = Number(store.credits ?? 0);
-  
+
   if (remaining > LOW_CREDIT_THRESHOLD) return;
 
   const message = remaining <= 2
@@ -111,7 +111,7 @@ export function useGeminiLive() {
   const [isConnected, setIsConnected] = useState(liveState.isConnected);
   const [phase, setPhase] = useState(liveState.phase);
   const [audioLevel, setAudioLevel] = useState(liveState.audioLevel);
-  
+
   const wsRef = useRef<WebSocket | null>(null);
   const audioRecorderRef = useRef<AudioRecorder | null>(null);
   const audioPlayerRef = useRef<AudioPlayer | null>(null);
@@ -123,7 +123,7 @@ export function useGeminiLive() {
   const activeSessionIdRef = useRef(0);
   const hasStartedRecorderRef = useRef(false);
   const liveOwnerRef = useRef(Symbol('gemini-live-owner'));
-  
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -246,25 +246,25 @@ export function useGeminiLive() {
     const now = Date.now();
     if (now - lastFrameTimeRef.current < 800) return;
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
-    
+
     // Se não estiver compartilhando, não enviamos frames, mas a IA já foi instruída sobre isso no setup
     if (!isSharing || !stream) return;
-    
+
     if (!videoRef.current) {
-        const v = document.createElement('video');
-        v.autoplay = true; v.muted = true; v.playsInline = true;
-        v.style.position = 'fixed'; v.style.top = '-10000px';
-        document.body.appendChild(v);
-        videoRef.current = v;
+      const v = document.createElement('video');
+      v.autoplay = true; v.muted = true; v.playsInline = true;
+      v.style.position = 'fixed'; v.style.top = '-10000px';
+      document.body.appendChild(v);
+      videoRef.current = v;
     }
-    
+
     if (videoRef.current.srcObject !== stream) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play().catch(() => {});
+      videoRef.current.srcObject = stream;
+      videoRef.current.play().catch(() => { });
     }
 
     const video = videoRef.current;
-    if (video.readyState < 2) return; 
+    if (video.readyState < 2) return;
 
     if (!canvasRef.current) canvasRef.current = document.createElement('canvas');
     const canvas = canvasRef.current;
@@ -280,7 +280,7 @@ export function useGeminiLive() {
 
     ctx.drawImage(video, 0, 0, width, height);
     const base64Image = canvas.toDataURL('image/jpeg', 1).split(',')[1];
-    
+
     wsRef.current?.send(JSON.stringify({
       realtimeInput: { video: { mimeType: "image/jpeg", data: base64Image } }
     }));
@@ -291,12 +291,12 @@ export function useGeminiLive() {
     if (isStoppingRef.current) return;
     isStoppingRef.current = true;
     console.log("🛑 Encerrando sessão Gemini Live...");
-    
+
     activeSessionIdRef.current += 1;
     isStartingRef.current = false;
     hasStartedRecorderRef.current = false;
     emitLiveState({ isActive: false, isConnected: false, isStarting: false, phase: 'idle', audioLevel: 0 });
-    
+
     if (videoIntervalRef.current) {
       clearInterval(videoIntervalRef.current);
       videoIntervalRef.current = null;
@@ -321,9 +321,9 @@ export function useGeminiLive() {
     audioPlayerRef.current?.stop();
     audioPlayerRef.current = null;
     if (videoRef.current) {
-        videoRef.current.srcObject = null;
-        videoRef.current.remove();
-        videoRef.current = null;
+      videoRef.current.srcObject = null;
+      videoRef.current.remove();
+      videoRef.current = null;
     }
     currentAssistantMessageIdRef.current = null;
     currentAssistantTranscriptRef.current = "";
@@ -341,9 +341,9 @@ export function useGeminiLive() {
 
   useEffect(() => {
     if (isConnected) {
-        if (videoIntervalRef.current) clearInterval(videoIntervalRef.current);
-        // Mantemos o loop ativo sempre, mas ele só envia se isSharing for true (checado dentro da função)
-        videoIntervalRef.current = setInterval(captureAndSendFrame, 1000);
+      if (videoIntervalRef.current) clearInterval(videoIntervalRef.current);
+      // Mantemos o loop ativo sempre, mas ele só envia se isSharing for true (checado dentro da função)
+      videoIntervalRef.current = setInterval(captureAndSendFrame, 1000);
     }
     return () => { if (videoIntervalRef.current) clearInterval(videoIntervalRef.current); };
   }, [isConnected, captureAndSendFrame]);
@@ -447,7 +447,7 @@ export function useGeminiLive() {
               markAssistantActivity(sessionId);
               audioPlayerRef.current?.playChunk(part.inline_data.data);
             }
-            
+
             if (part.text && !outputTranscription?.text) {
               markAssistantActivity(sessionId);
               console.log("🤖 IA Texto:", part.text);
@@ -522,7 +522,7 @@ export function useGeminiLive() {
   }, [addMessage, captureAndSendFrame, markAssistantActivity, persistLiveMessage, stopSession]);
 
   const startSession = useCallback(async () => {
-    
+
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
 
@@ -588,7 +588,7 @@ export function useGeminiLive() {
       ws.send(JSON.stringify({
         setup: {
           model: "models/gemini-3.1-flash-live-preview",
-          generation_config: { 
+          generation_config: {
             response_modalities: ["AUDIO"],
             speech_config: {
               voice_config: {
@@ -601,8 +601,8 @@ export function useGeminiLive() {
           output_audio_transcription: {},
           input_audio_transcription: {},
           // O backend irá injetar/sobrescrever o system_instruction por segurança e controle de prompt
-          system_instruction: { 
-            parts: [{ text: "Iniciando sessão..." }] 
+          system_instruction: {
+            parts: [{ text: "Iniciando sessão..." }]
           }
         }
       }));
