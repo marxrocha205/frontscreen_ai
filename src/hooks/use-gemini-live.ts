@@ -390,12 +390,15 @@ export function useGeminiLive() {
           }
         );
         try {
+          console.log("[Gemini Live] Tentando iniciar gravação de áudio...");
           await audioRecorderRef.current.start();
+          console.log("[Gemini Live] Gravação de áudio iniciada com sucesso.");
           if (activeSessionIdRef.current !== sessionId) {
+            console.log("[Gemini Live] Sessão mudou durante a inicialização do áudio. Parando.");
             audioRecorderRef.current?.stop();
           }
         } catch (error) {
-          console.error("Erro ao iniciar microfone no Gemini Live:", error);
+          console.error("[Gemini Live] EXCEÇÃO ao iniciar microfone:", error);
           if (activeSessionIdRef.current === sessionId) stopSession();
         }
         return;
@@ -523,7 +526,11 @@ export function useGeminiLive() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
 
+    console.log("[Gemini Live] Iniciando startSession. Ambiente tem navigator.mediaDevices?", !!navigator.mediaDevices);
+    console.log("[Gemini Live] Tem getUserMedia?", !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
+
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      console.error("[Gemini Live] ERRO FATAL: navigator.mediaDevices ou getUserMedia ausente. Isso ocorre se o site não estiver em HTTPS (ou localhost).");
       alert("Acesso ao microfone não suportado. Verifique se o site está usando HTTPS (ambiente seguro).");
       return;
     }
