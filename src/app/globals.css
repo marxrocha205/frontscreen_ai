@@ -436,3 +436,12 @@
     opacity: 0;
   }
 }
+
+@keyframes slow-scale-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+.animate-slow-scale-pulse {
+  animation: slow-scale-pulse 2s ease-in-out infinite;
+}

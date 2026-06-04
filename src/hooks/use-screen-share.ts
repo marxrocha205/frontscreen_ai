@@ -65,6 +65,11 @@ export const useScreenShare = create<ScreenShareState>((set, get) => ({
     // Impede que o objeto 'SyntheticEvent' do React entre como intervalo numérico
     const delay = typeof intervalMs === 'number' ? intervalMs : 3000;
     
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert("Compartilhamento de tela não suportado. Verifique se o site está usando HTTPS (ambiente seguro).");
+      return;
+    }
+
     try {
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({ 
         video: { 

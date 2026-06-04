@@ -34,6 +34,14 @@ export class AudioRecorder {
     if (this.audioContext.state === 'suspended') await this.audioContext.resume();
 
     this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    if (!this.audioContext) {
+      // O stop() foi chamado enquanto esperávamos a permissão do microfone
+      this.stream.getTracks().forEach(track => track.stop());
+      this.stream = null;
+      return;
+    }
+    
     const source = this.audioContext.createMediaStreamSource(this.stream);
     this.processor = this.audioContext.createScriptProcessor(2048, 1, 1);
     source.connect(this.processor);
