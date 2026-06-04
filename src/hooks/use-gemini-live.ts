@@ -523,6 +523,11 @@ export function useGeminiLive() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
 
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert("Acesso ao microfone não suportado. Verifique se o site está usando HTTPS (ambiente seguro).");
+      return;
+    }
+
     if (
       isLiveSessionOpen() ||
       isStartingRef.current ||
