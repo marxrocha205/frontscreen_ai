@@ -94,14 +94,14 @@ function IconContainer({
         )}
       </AnimatePresence>
       <motion.div style={{ width: widthIcon, height: heightIcon }} className="flex items-center justify-center">
-        {icon}
+        {icon}S
       </motion.div>
     </motion.div>
   );
 
   return href && href !== "#" ? (
     <Link href={href}>{content}</Link>
-  ) : (
+   ) : (
     content
   );
 }
