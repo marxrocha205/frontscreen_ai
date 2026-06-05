@@ -628,7 +628,8 @@ export function useGeminiLive() {
 
       ws.send(JSON.stringify({
         setup: {
-          model: "models/gemini-3.1-flash-live-preview",
+          // O backend sobrescreve este modelo por um modelo válido da Live API.
+          model: "models/gemini-2.0-flash-live-001",
           generation_config: {
             response_modalities: ["AUDIO"],
             speech_config: {
@@ -650,7 +651,7 @@ export function useGeminiLive() {
 
       logLiveDebug('setup enviado para o Gemini Live', {
         sessionId,
-        model: 'models/gemini-3.1-flash-live-preview',
+        model: 'models/gemini-2.0-flash-live-001',
         voiceType
       });
 
@@ -662,25 +663,31 @@ export function useGeminiLive() {
     };
 
     ws.onmessage = (event) => processIncomingMessage(event.data, sessionId);
-    ws.onclose = () => {
+    ws.onclose = (event) => {
       if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
         logLiveDebug('ws.onclose disparado para sessão ativa', {
           sessionId,
           currentSessionId: activeSessionIdRef.current,
-          readyState: ws.readyState
+          readyState: ws.readyState,
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean
         });
-        console.log('[Gemini Live] WebSocket fechado pelo navegador ou pelo servidor');
+        console.log(
+          `[Gemini Live] WebSocket fechado. Code: ${event.code}, Reason: ${event.reason || '(vazio)'}, Limpo: ${event.wasClean}`
+        );
         stopSession();
       }
     };
-    ws.onerror = () => {
+    ws.onerror = (event) => {
       if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
         logLiveDebug('ws.onerror disparado para sessão ativa', {
           sessionId,
           currentSessionId: activeSessionIdRef.current,
-          readyState: ws.readyState
+          readyState: ws.readyState,
+          event
         });
-        console.error('[Gemini Live] Erro no WebSocket da sessão atual');
+        console.error('[Gemini Live] Erro no WebSocket da sessão atual', event);
         stopSession();
       }
     };
