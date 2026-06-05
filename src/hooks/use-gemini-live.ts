@@ -629,7 +629,7 @@ export function useGeminiLive() {
       ws.send(JSON.stringify({
         setup: {
           // O backend sobrescreve este modelo por um modelo válido da Live API.
-          model: "models/gemini-2.0-flash-live-001",
+          model: "models/gemini-2.0-flash-exp",
           generation_config: {
             response_modalities: ["AUDIO"],
             speech_config: {
@@ -651,7 +651,7 @@ export function useGeminiLive() {
 
       logLiveDebug('setup enviado para o Gemini Live', {
         sessionId,
-        model: 'models/gemini-2.0-flash-live-001',
+        model: 'models/gemini-2.0-flash-exp',
         voiceType
       });
 
