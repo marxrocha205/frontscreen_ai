@@ -38,6 +38,10 @@ const emitLiveState = (partial: Partial<LiveState>) => {
   liveStateListeners.forEach((listener) => listener(liveState));
 };
 
+const logLiveDebug = (...args: unknown[]) => {
+  console.log('[Gemini Live][Debug]', ...args);
+};
+
 const isLiveSessionOpen = () => (
   liveState.isActive ||
   liveState.isConnected ||
@@ -290,6 +294,14 @@ export function useGeminiLive() {
   const stopSession = useCallback(() => {
     if (isStoppingRef.current) return;
     isStoppingRef.current = true;
+    logLiveDebug('stopSession chamado', {
+      activeSessionId: activeSessionIdRef.current,
+      isStarting: isStartingRef.current,
+      hasStartedRecorder: hasStartedRecorderRef.current,
+      hasWs: Boolean(wsRef.current),
+      wsReadyState: wsRef.current?.readyState,
+      liveOwnerMatches: activeLiveOwner === liveOwnerRef.current
+    });
     console.log("🛑 Encerrando sessão Gemini Live...");
 
     activeSessionIdRef.current += 1;
@@ -314,6 +326,9 @@ export function useGeminiLive() {
     const ws = wsRef.current;
     wsRef.current = null;
     if (ws) {
+      logLiveDebug('Fechando WebSocket em stopSession', {
+        readyStateBeforeClose: ws.readyState
+      });
       ws.onopen = null;
       ws.onmessage = null;
       ws.onclose = null;
@@ -559,6 +574,15 @@ export function useGeminiLive() {
     const sessionId = activeSessionIdRef.current + 1;
     activeSessionIdRef.current = sessionId;
 
+    logLiveDebug('startSession iniciado', {
+      sessionId,
+      activeConversationId,
+      currentLiveConversationId: liveConversationIdRef.current,
+      voiceSessionId: voiceSessionIdRef.current,
+      isLiveSessionOpen: isLiveSessionOpen(),
+      wsReadyState: wsRef.current?.readyState
+    });
+
     emitLiveState({ isActive: true, isConnected: false, isStarting: true, phase: 'connecting', audioLevel: 0 });
     audioPlayerRef.current = new AudioPlayer((isPlaying) => {
       if (activeSessionIdRef.current !== sessionId) return;
@@ -575,10 +599,27 @@ export function useGeminiLive() {
     const ws = new WebSocket(PROXY_URL);
     wsRef.current = ws;
 
+    logLiveDebug('WebSocket criado', {
+      sessionId,
+      url: PROXY_URL,
+      readyState: ws.readyState
+    });
+
     const { voiceType } = useVoiceConfig.getState();
 
     ws.onopen = () => {
+      logLiveDebug('ws.onopen disparado', {
+        sessionId,
+        currentSessionId: activeSessionIdRef.current,
+        wsMatchesRef: wsRef.current === ws,
+        readyState: ws.readyState
+      });
       if (activeSessionIdRef.current !== sessionId || wsRef.current !== ws) {
+        logLiveDebug('ws.onopen ignorado por sessão obsoleta', {
+          sessionId,
+          currentSessionId: activeSessionIdRef.current,
+          wsMatchesRef: wsRef.current === ws
+        });
         ws.close();
         return;
       }
@@ -607,6 +648,12 @@ export function useGeminiLive() {
         }
       }));
 
+      logLiveDebug('setup enviado para o Gemini Live', {
+        sessionId,
+        model: 'models/gemini-3.1-flash-live-preview',
+        voiceType
+      });
+
       void maybeShowLowCreditWarning();
 
       if (!hasChargedVoiceSessionRef.current && voiceSessionIdRef.current) {
@@ -617,12 +664,22 @@ export function useGeminiLive() {
     ws.onmessage = (event) => processIncomingMessage(event.data, sessionId);
     ws.onclose = () => {
       if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
+        logLiveDebug('ws.onclose disparado para sessão ativa', {
+          sessionId,
+          currentSessionId: activeSessionIdRef.current,
+          readyState: ws.readyState
+        });
         console.log('[Gemini Live] WebSocket fechado pelo navegador ou pelo servidor');
         stopSession();
       }
     };
     ws.onerror = () => {
       if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
+        logLiveDebug('ws.onerror disparado para sessão ativa', {
+          sessionId,
+          currentSessionId: activeSessionIdRef.current,
+          readyState: ws.readyState
+        });
         console.error('[Gemini Live] Erro no WebSocket da sessão atual');
         stopSession();
       }
