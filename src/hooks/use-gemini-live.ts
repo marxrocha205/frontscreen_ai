@@ -295,6 +295,10 @@ export function useGeminiLive() {
     activeSessionIdRef.current += 1;
     isStartingRef.current = false;
     hasStartedRecorderRef.current = false;
+    if (activeLiveOwner === liveOwnerRef.current) {
+      activeLiveOwner = null;
+      stopActiveGeminiLiveSession = null;
+    }
     emitLiveState({ isActive: false, isConnected: false, isStarting: false, phase: 'idle', audioLevel: 0 });
 
     if (videoIntervalRef.current) {
@@ -333,10 +337,6 @@ export function useGeminiLive() {
     lastUserTranscriptRef.current = "";
     voiceSessionIdRef.current = null;
     hasChargedVoiceSessionRef.current = false;
-    if (activeLiveOwner === liveOwnerRef.current) {
-      activeLiveOwner = null;
-      stopActiveGeminiLiveSession = null;
-    }
   }, []);
 
   useEffect(() => {
@@ -616,10 +616,16 @@ export function useGeminiLive() {
 
     ws.onmessage = (event) => processIncomingMessage(event.data, sessionId);
     ws.onclose = () => {
-      if (activeSessionIdRef.current === sessionId && wsRef.current === ws) stopSession();
+      if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
+        console.log('[Gemini Live] WebSocket fechado pelo navegador ou pelo servidor');
+        stopSession();
+      }
     };
     ws.onerror = () => {
-      if (activeSessionIdRef.current === sessionId && wsRef.current === ws) stopSession();
+      if (activeSessionIdRef.current === sessionId && wsRef.current === ws) {
+        console.error('[Gemini Live] Erro no WebSocket da sessão atual');
+        stopSession();
+      }
     };
   }, [stopSession, processIncomingMessage]);
 
