@@ -132,18 +132,27 @@ export function useGeminiVoice(
         recognition.maxAlternatives = 1
 
         recognition.onresult = (event) => {
-          let finalTranscript = ''
-          let interimTranscript = ''
+          let newFinal = ''
+          let newInterim = ''
 
           for (let i = event.resultIndex; i < event.results.length; i += 1) {
             const result = event.results[i]
             const text = result[0]?.transcript || ''
-            if (result.isFinal) finalTranscript += text
-            else interimTranscript += text
+            
+            if (result.isFinal) {
+              newFinal += text
+            } else {
+              newInterim += text
+            }
           }
 
-          const combined = `${transcriptRef.current}${finalTranscript || interimTranscript}`.trim()
-          transcriptRef.current = combined
+          // Atualiza a memória definitiva APENAS com as palavras já confirmadas
+          if (newFinal) {
+            transcriptRef.current += newFinal
+          }
+
+          // Envia para a caixa de texto a memória confirmada + a palavra temporária atual
+          const combined = `${transcriptRef.current}${newInterim}`.trim()
           events.onTranscript?.(combined)
         }
 
