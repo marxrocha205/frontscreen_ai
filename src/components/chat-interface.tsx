@@ -294,6 +294,21 @@ const InputModelIcon = ({ id }: { id: string }) => {
 const normalizeModelId = (id: string | undefined): string => {
   if (!id) return 'screen-ai-1.2';
 
+  // Find exact match first
+  if (AI_MODELS.some(m => m.id === id)) return id;
+
+  // The backend uses OpenRouter, which prefixes models with 'openrouter/'
+  const strippedId = id.replace(/^openrouter\//, '');
+  if (AI_MODELS.some(m => m.id === strippedId)) return strippedId;
+
+  // Try to find a model ID that ends with the given id (e.g. 'o4-mini' -> 'openai/o4-mini')
+  const exactSuffixMatch = AI_MODELS.find(m => m.id.endsWith('/' + id) || m.id.endsWith('/' + strippedId));
+  if (exactSuffixMatch) return exactSuffixMatch.id;
+
+  // Try to find if the given id ends with a known model ID
+  const idEndsWithMatch = AI_MODELS.find(m => id.endsWith(m.id) || strippedId.endsWith(m.id));
+  if (idEndsWithMatch) return idEndsWithMatch.id;
+
   if (id.includes('gpt-4o-mini')) return 'openai/gpt-4o-mini';
   if (id.includes('gpt-4o')) return 'openai/gpt-4o';
   if (id.includes('claude-3.5-sonnet') || id.includes('claude-3-5-sonnet')) return 'anthropic/claude-3-5-sonnet-20241022';
@@ -302,6 +317,10 @@ const normalizeModelId = (id: string | undefined): string => {
   if (id.includes('deepseek-chat') || id.includes('deepseek/deepseek-chat')) return 'openrouter/deepseek/deepseek-chat';
   if (id.includes('deepseek-r1') || id.includes('deepseek/deepseek-r1')) return 'openrouter/deepseek/deepseek-r1';
   if (id.includes('llama-3.3-70b-instruct') || id.includes('llama-3.3-70b')) return 'openrouter/meta-llama/llama-3.3-70b-instruct';
+
+  // Fallback if partial include works
+  const partialMatch = AI_MODELS.find(m => m.id.includes(id) || id.includes(m.id));
+  if (partialMatch) return partialMatch.id;
 
   return id;
 };

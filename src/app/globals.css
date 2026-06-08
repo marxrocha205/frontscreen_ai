@@ -206,11 +206,20 @@
 .empty-chat-prompt__text {
   display: inline-block;
   background: linear-gradient(110deg, #f4f4f5 0%, #f4f4f5 34%, #9ca3ff 48%, #ffffff 56%, #f4f4f5 72%, #f4f4f5 100%);
-  background-size: 240% 100%;
+  background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
-  background-position: 50% 50%;
+  animation: gradient-shift 6s ease-in-out infinite alternate;
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 100% center;
+  }
 }
 
 @keyframes empty-prompt-enter {
