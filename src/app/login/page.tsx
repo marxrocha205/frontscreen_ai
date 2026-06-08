@@ -146,7 +146,6 @@ export default function LoginPage() {
                 shape="pill"
                 width="352"
                 ux_mode="popup"
-                locale={language}
                 text="continue_with"
               />
             </div>
