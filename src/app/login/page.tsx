@@ -19,7 +19,7 @@ interface GoogleJwtPayload {
 }
 
 export default function LoginPage() {
-  const { t } = useI18n()
+  const { t, language } = useI18n()
   const router = useRouter()
   const { login } = useAuth()
   
@@ -116,13 +116,15 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-zinc-950">
-      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4">
+      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4 animate-enter-fade-zoom">
         <div className="flex justify-center mb-2">
-          <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-10 w-auto object-contain drop-shadow-md" />
+          <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-14 w-auto object-contain drop-shadow-md" />
         </div>
         
         <div className="text-center space-y-2 mb-2">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">{t('login.title')}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight empty-chat-prompt">
+            <span className="empty-chat-prompt__text">{t('login.title')}</span>
+          </h1>
           <p className="text-sm text-zinc-400 max-w-[280px] leading-relaxed mx-auto">
             {t('login.subtitle')}
           </p>
@@ -144,6 +146,8 @@ export default function LoginPage() {
                 shape="pill"
                 width="352"
                 ux_mode="popup"
+                locale={language}
+                text="continue_with"
               />
             </div>
 
