@@ -1133,7 +1133,7 @@ export function ChatInterface() {
                               img: ({ src, alt }) => (
                                 <span
                                   className="mt-2 mb-4 relative rounded-xl overflow-hidden border border-zinc-700/50 shadow-sm max-w-sm cursor-pointer inline-block"
-                                  onClick={() => src && setLightboxImage(src)}
+                                  onClick={() => typeof src === 'string' && setLightboxImage(src)}
                                 >
                                   <img src={src} alt={alt} className="w-full h-auto object-cover" />
                                 </span>
