@@ -76,7 +76,7 @@ import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, Check, Sparkles } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, Check, Sparkles, Image as ImageIcon, Video, Copy, Download } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
@@ -331,6 +331,7 @@ export function ChatInterface() {
   const agents = getAgents(appLang)
   const modelDescriptions = MODEL_DESCRIPTIONS[appLang]
   const [inputValue, setInputValue] = useState('')
+  const [mediaMode, setMediaMode] = useState<'text' | 'image' | 'video'>('text')
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
@@ -359,6 +360,10 @@ export function ChatInterface() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null)
   const [editContent, setEditContent] = useState("")
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null)
+
+  // Estado para o Lightbox da Imagem Gerada
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null)
+  const [isGeneratingMedia, setIsGeneratingMedia] = useState<'image' | 'video' | null>(null)
 
   // Frases de Loading dinâmicas
   const loadingPhrases = language === 'pt-BR' ? [
@@ -563,7 +568,66 @@ export function ChatInterface() {
       // Descarta o card de upsell ao enviar nova mensagem
       setInlineUpsell(null)
 
-      if (selectedFile) {
+      if (mediaMode !== 'text') {
+        const token = localStorage.getItem('access_token') || ''
+
+        addMessage({
+          id: Date.now().toString(),
+          role: 'user',
+          content: textToSend || (mediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo')
+        })
+
+        setIsGeneratingMedia(mediaMode)
+
+        setIsStreaming(true)
+
+        const { activeId, setActiveId, fetchConversations } = useConversations.getState()
+
+        const formData = new FormData()
+        formData.append('token', token)
+        formData.append('prompt', textToSend || '')
+        formData.append('media_type', mediaMode)
+        if (activeId) formData.append('session_id', activeId)
+
+        try {
+          const res = await fetch(`${config.apiUrl}/api/studio/media/generate`, {
+            method: 'POST',
+            body: formData
+          })
+          const data = await res.json()
+
+          setIsGeneratingMedia(null)
+          setIsStreaming(false)
+
+          if (data.status === 'success') {
+            if (!activeId && data.session_id) {
+              setActiveId(data.session_id)
+              await fetchConversations()
+            }
+            addMessage({
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: `![Mídia Gerada](${data.url})`,
+              model: 'screen-ai-1.2'
+            })
+          } else {
+            if (data.detail && data.detail.includes('Saldo insuficiente')) {
+              setUpgradeDialogMessage(data.detail)
+              setIsUpgradeDialogOpen(true)
+            } else {
+              addMessage({
+                id: Date.now().toString(),
+                role: 'assistant',
+                content: `Erro: ${data.detail || 'Falha na comunicação com o AI Studio.'}`
+              })
+            }
+          }
+        } catch (error) {
+          setIsGeneratingMedia(null)
+          setIsStreaming(false)
+          console.error("Erro na geração de mídia:", error)
+        }
+      } else if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
         const token = localStorage.getItem('access_token') || ''
 
@@ -677,9 +741,13 @@ export function ChatInterface() {
 
   const activeModelName = modelDescriptions[selectedModel]?.title || AI_MODELS.find(m => m.id === selectedModel)?.label || 'ScreenAI'
   const currentAgent = agents.find(a => a.id === selectedAgentId) || agents[0]
-  const placeholderText = !isEmptyChat
-    ? (language === 'pt-BR' ? `Mensagem para o ${activeModelName}` : `Message for ${activeModelName}`)
-    : t('app.send_message');
+  const placeholderText = mediaMode === 'image'
+    ? (language === 'pt-BR' ? 'Descreva a imagem que deseja gerar...' : 'Describe the image you want to generate...')
+    : mediaMode === 'video'
+      ? (language === 'pt-BR' ? 'Descreva o vídeo que deseja gerar...' : 'Describe the video you want to generate...')
+      : (!isEmptyChat
+        ? (language === 'pt-BR' ? `Mensagem para o ${activeModelName}` : `Message for ${activeModelName}`)
+        : t('app.send_message'));
   const openModelsDialog = () => {
     setIsAgentsDialogOpen(false)
     setIsModelsDialogOpen(true)
@@ -1045,43 +1113,61 @@ export function ChatInterface() {
 
                     <div className="flex flex-col w-full min-w-0">
                       <div className="text-[15px] max-w-none w-full break-words leading-relaxed">
-                        <ReactMarkdown
-                          remarkPlugins={[remarkGfm]}
-                          components={{
-                            p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
-                            a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
-                            ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
-                            ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
-                            li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
-                            h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
-                            h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
-                            h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
-                            strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
-                            em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
-                            blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
-                            hr: () => <hr className="my-6 border-zinc-800/80" />,
-                            table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
-                            th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
-                            td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
-                            code: ({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) => {
-                              const match = /language-(\w+)/.exec(className || '')
-                              return match ? (
-                                <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
-                                  <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
-                                    <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                        {m.content && m.content.match(/!\[Mídia Gerada\]\((.+?)\)/) ? (
+                          <span
+                            className="mt-2 mb-4 relative rounded-xl overflow-hidden border border-zinc-700/50 shadow-sm max-w-sm cursor-pointer inline-block"
+                            onClick={() => { const match = m.content.match(/!\[Mídia Gerada\]\((.+?)\)/); if (match) setLightboxImage(match[1]); }}
+                          >
+                            <img src={m.content.match(/!\[Mídia Gerada\]\((.+?)\)/)?.[1]} alt="Mídia Gerada" className="w-full h-auto object-cover" />
+                          </span>
+                        ) : (
+                          <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            urlTransform={(url) => url}
+                            components={{
+                              p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+                              a: ({ children, href }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300 underline underline-offset-4 decoration-indigo-400/30 transition-colors font-medium">{children}</a>,
+                              ul: ({ children }) => <ul className="list-disc pl-6 mb-4 space-y-2">{children}</ul>,
+                              ol: ({ children }) => <ol className="list-decimal pl-6 mb-4 space-y-2">{children}</ol>,
+                              li: ({ children }) => <li className="pl-1 marker:text-zinc-500">{children}</li>,
+                              img: ({ src, alt }) => (
+                                <span
+                                  className="mt-2 mb-4 relative rounded-xl overflow-hidden border border-zinc-700/50 shadow-sm max-w-sm cursor-pointer inline-block"
+                                  onClick={() => src && setLightboxImage(src)}
+                                >
+                                  <img src={src} alt={alt} className="w-full h-auto object-cover" />
+                                </span>
+                              ),
+                              h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 mt-6 text-zinc-100 pb-2 border-b border-zinc-800">{children}</h1>,
+                              h2: ({ children }) => <h2 className="text-xl font-bold mb-3 mt-5 text-zinc-100">{children}</h2>,
+                              h3: ({ children }) => <h3 className="text-lg font-semibold mb-3 mt-4 text-zinc-200">{children}</h3>,
+                              strong: ({ children }) => <strong className="font-semibold text-zinc-100">{children}</strong>,
+                              em: ({ children }) => <em className="italic text-zinc-400">{children}</em>,
+                              blockquote: ({ children }) => <blockquote className="border-l-4 border-indigo-500/50 bg-indigo-500/10 pl-4 py-2 my-4 rounded-r-lg italic text-zinc-300">{children}</blockquote>,
+                              hr: () => <hr className="my-6 border-zinc-800/80" />,
+                              table: ({ children }) => <div className="overflow-x-auto my-6 rounded-lg border border-zinc-800"><table className="w-full text-left border-collapse text-sm">{children}</table></div>,
+                              th: ({ children }) => <th className="bg-zinc-800/50 px-4 py-3 font-semibold text-zinc-200 border-b border-zinc-800">{children}</th>,
+                              td: ({ children }) => <td className="px-4 py-3 text-zinc-300 border-b border-zinc-800/50 last:border-0">{children}</td>,
+                              code: ({ className, children, ...props }: ComponentPropsWithoutRef<'code'>) => {
+                                const match = /language-(\w+)/.exec(className || '')
+                                return match ? (
+                                  <div className="relative my-5 rounded-xl overflow-hidden bg-[#161616] border border-zinc-800 shadow-md">
+                                    <div className="flex items-center justify-between px-4 py-2 bg-[#1e1e1e] border-b border-zinc-800">
+                                      <span className="text-xs font-medium text-zinc-400 uppercase tracking-wider">{match[1]}</span>
+                                    </div>
+                                    <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
+                                      <code className={className} {...props}>{children}</code>
+                                    </div>
                                   </div>
-                                  <div className="p-4 overflow-x-auto text-[13px] font-mono leading-relaxed">
-                                    <code className={className} {...props}>{children}</code>
-                                  </div>
-                                </div>
-                              ) : (
-                                <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
-                              )
-                            }
-                          }}
-                        >
-                          {m.content}
-                        </ReactMarkdown>
+                                ) : (
+                                  <code className="bg-zinc-800 text-zinc-200 px-1.5 py-0.5 rounded-md font-mono text-[13px] border border-zinc-700/50" {...props}>{children}</code>
+                                )
+                              }
+                            }}
+                          >
+                            {m.content}
+                          </ReactMarkdown>
+                        )}
                       </div>
 
                       {/* AI Identification Badge & Actions */}
@@ -1109,7 +1195,9 @@ export function ChatInterface() {
 
                             const badgeAgent = agents.find(a => a.id === msgAgentId) || agents[0];
                             const msgNormalizedModelId = normalizeModelId(msgModelId);
-                            const badgeModelLabel = modelDescriptions[msgNormalizedModelId]?.title || AI_MODELS.find(model => model.id === msgNormalizedModelId)?.label || 'ScreenAI 1.2';
+                            
+                            const isGeneratedMedia = m.content && m.content.match(/!\[Mídia Gerada\]\((.+?)\)/);
+                            const badgeModelLabel = isGeneratedMedia ? 'Nano Banana' : (modelDescriptions[msgNormalizedModelId]?.title || AI_MODELS.find(model => model.id === msgNormalizedModelId)?.label || 'ScreenAI 1.2');
 
                             return (
                               <div className="flex items-center gap-2 select-none">
@@ -1128,14 +1216,19 @@ export function ChatInterface() {
                                   </div>
                                 )}
                                 <div className="flex items-center gap-1.5 px-2 py-1">
-                                  <div className="scale-[0.7] -mx-1 origin-center">
-                                    <InputModelIcon id={msgNormalizedModelId} />
-                                  </div>
+                                  {isGeneratedMedia ? (
+                                    <Image src="/logo_nanobanana.png" alt="Nano Banana" width={14} height={14} className="w-3.5 h-3.5 object-contain" />
+                                  ) : (
+                                    <div className="scale-[0.7] -mx-1 origin-center">
+                                      <InputModelIcon id={msgNormalizedModelId} />
+                                    </div>
+                                  )}
                                   <span className="text-[10px] font-medium text-zinc-500 leading-none">
                                     {badgeModelLabel}
                                   </span>
                                 </div>
                               </div>
+
                             )
                           })()}
                         </div>
@@ -1151,28 +1244,35 @@ export function ChatInterface() {
           {isStreaming && (
             <div className="flex items-start w-full pl-2 my-2">
               {isWaitingForFirstChunk && (
-                <div className="flex items-center gap-3 px-1 py-1 animate-in fade-in zoom-in-95 duration-300">
-                  <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
-                    <div className="absolute inset-0 rounded-full border-[2px] border-zinc-600/30"></div>
-                    <div className="absolute inset-0 rounded-full border-[2px] border-transparent border-t-zinc-200 animate-[spin_0.8s_linear_infinite]"></div>
-                    <img
-                      src="/icon.png"
-                      alt="Loading"
-                      className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse"
-                    />
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center gap-3 px-1 py-1 animate-in fade-in zoom-in-95 duration-300">
+                    <div className="relative flex items-center justify-center w-6 h-6 shrink-0">
+                      <div className="absolute inset-0 rounded-full border-[2px] border-zinc-600/30"></div>
+                      <div className="absolute inset-0 rounded-full border-[2px] border-transparent border-t-zinc-200 animate-[spin_0.8s_linear_infinite]"></div>
+                      <img
+                        src="/icon.png"
+                        alt="Loading"
+                        className="w-3.5 h-3.5 object-contain opacity-80 animate-pulse"
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-zinc-300 min-w-[160px] animate-pulse">
+                      {isGeneratingMedia 
+                        ? (isGeneratingMedia === 'image' ? (language === 'pt-BR' ? 'Gerando imagem...' : 'Generating image...') : (language === 'pt-BR' ? 'Gerando vídeo...' : 'Generating video...'))
+                        : loadingPhrases[phraseIndex]}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => sendCancel()}
+                      aria-label={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
+                      title={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
+                      className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-700/60 hover:text-zinc-200"
+                    >
+                      <Square className="w-3.5 h-3.5 fill-current" />
+                    </button>
                   </div>
-                  <span className="text-sm font-medium text-zinc-300 min-w-[160px] animate-pulse">
-                    {loadingPhrases[phraseIndex]}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => sendCancel()}
-                    aria-label={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
-                    title={language === 'pt-BR' ? 'Parar resposta' : 'Stop response'}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-zinc-500 transition-colors hover:bg-zinc-700/60 hover:text-zinc-200"
-                  >
-                    <Square className="w-3.5 h-3.5 fill-current" />
-                  </button>
+                  {isGeneratingMedia && (
+                    <div className="ml-1 w-[300px] aspect-square bg-zinc-800/40 rounded-xl border border-zinc-700/30 animate-pulse shadow-sm"></div>
+                  )}
                 </div>
               )}
             </div>
@@ -1330,10 +1430,9 @@ export function ChatInterface() {
                   <DropdownMenuTrigger asChild>
                     <button
                       id="tour-attachment-btn"
-                      className="flex items-center gap-1 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full px-2.5 py-1 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                      className="flex items-center justify-center bg-transparent hover:bg-zinc-800 rounded-full w-7 h-7 text-white transition-colors shadow-sm cursor-pointer"
                     >
-                      <Plus className="w-3.5 h-3.5 text-zinc-400" />
-                      <span>{language === 'pt-BR' ? 'Adicionar' : 'Add'}</span>
+                      <Plus className="w-4 h-4" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100] transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 duration-150 ease-out">
@@ -1341,8 +1440,30 @@ export function ChatInterface() {
                       <FileUp className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                       <span className="font-medium text-[14px]">{t('app.send_file')}</span>
                     </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => setMediaMode('image')} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                      <ImageIcon className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
+                      <span className="font-medium text-[14px]">{language === 'pt-BR' ? 'Gerar Imagem' : 'Generate Image'}</span>
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem onClick={() => setMediaMode('video')} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                      <Video className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
+                      <span className="font-medium text-[14px]">{language === 'pt-BR' ? 'Gerar Vídeo' : 'Generate Video'}</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {mediaMode !== 'text' && (
+                  <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-[1.5px] ${mediaMode === 'image' ? 'border-indigo-500/80 bg-indigo-500/10' : 'border-blue-500/80 bg-blue-500/10'} shrink-0 select-none animate-in fade-in zoom-in-95 duration-200`}>
+                    {mediaMode === 'image' ? <ImageIcon className="w-3.5 h-3.5 text-indigo-400" /> : <Video className="w-3.5 h-3.5 text-blue-400" />}
+                    <span className="text-[12px] font-semibold empty-chat-prompt__text leading-none pt-0.5 pb-0.5">
+                      {mediaMode === 'image' ? (language === 'pt-BR' ? 'Imagem' : 'Image') : (language === 'pt-BR' ? 'Vídeo' : 'Video')}
+                    </span>
+                    <button onClick={() => setMediaMode('text')} className="ml-0.5 text-zinc-400 hover:text-zinc-200 transition-colors flex items-center justify-center rounded-full">
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
 
                 {/* Agent Selector Button */}
                 <button
@@ -1414,7 +1535,30 @@ export function ChatInterface() {
               </div>
             </div>
 
-            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/,application/pdf,audio/,.xlsx,.xls,.zip,.txt,.csv" />
+            <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileSelect} accept="image/*,application/pdf,audio/*,.xlsx,.xls,.zip,.txt,.csv" />
+          </div>
+        </div>
+      )}
+
+      {lightboxImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-black/60 backdrop-blur-md transition-all duration-300 animate-in fade-in"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div className="absolute top-4 right-4 md:top-6 md:right-6 flex items-center gap-5 z-10" onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => { navigator.clipboard.writeText(lightboxImage); alert(language === 'pt-BR' ? 'URL copiada!' : 'URL copied!') }} className="text-white hover:text-zinc-300 transition-colors drop-shadow-md" title={language === 'pt-BR' ? 'Copiar URL' : 'Copy URL'}>
+              <Copy className="w-5 h-5" strokeWidth={2.5} />
+            </button>
+            <a href={lightboxImage} download="screenai-gerada.png" target="_blank" rel="noopener noreferrer" className="text-white hover:text-zinc-300 transition-colors drop-shadow-md" title={language === 'pt-BR' ? 'Baixar' : 'Download'}>
+              <Download className="w-5 h-5" strokeWidth={2.5} />
+            </a>
+            <button onClick={() => setLightboxImage(null)} className="text-white hover:text-zinc-300 transition-colors drop-shadow-md" title={language === 'pt-BR' ? 'Fechar' : 'Close'}>
+              <X className="w-6 h-6" strokeWidth={2.5} />
+            </button>
+          </div>
+
+          <div className="relative max-w-5xl w-full h-full flex flex-col items-center justify-center" onClick={(e) => e.stopPropagation()}>
+             <img src={lightboxImage} className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border border-white/10" alt="Mídia Gerada" />
           </div>
         </div>
       )}
