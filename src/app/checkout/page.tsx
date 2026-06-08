@@ -848,7 +848,7 @@ function CheckoutContent() {
               <span style={{ fontSize: 14, fontWeight: 500, color: '#e5e7eb' }}>{copy.paymentMethod}</span>
 
             {/* Tabs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: language === 'pt-BR' ? '1fr 1fr' : '1fr', gap: 8 }}>
               {/* Card tab */}
               <button
                 onClick={() => setPaymentMethod('card')}
@@ -869,23 +869,25 @@ function CheckoutContent() {
               </button>
 
               {/* Pix tab */}
-              <button
-                onClick={() => setPaymentMethod('pix')}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  padding: '14px 20px',
-                  borderRadius: 10,
-                  border: paymentMethod === 'pix' ? '1.5px solid #e5e7eb' : '1.5px solid transparent',
-                  background: '#1a1a1a',
-                  color: paymentMethod === 'pix' ? '#fff' : '#6b7280',
-                  cursor: 'pointer',
-                  fontSize: 15, fontWeight: 500,
-                  transition: 'all 0.15s',
-                }}
-              >
-                <PixIcon size={16} />
-                Pix
-              </button>
+              {language === 'pt-BR' && (
+                <button
+                  onClick={() => setPaymentMethod('pix')}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '14px 20px',
+                    borderRadius: 10,
+                    border: paymentMethod === 'pix' ? '1.5px solid #e5e7eb' : '1.5px solid transparent',
+                    background: '#1a1a1a',
+                    color: paymentMethod === 'pix' ? '#fff' : '#6b7280',
+                    cursor: 'pointer',
+                    fontSize: 15, fontWeight: 500,
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <PixIcon size={16} />
+                  Pix
+                </button>
+              )}
             </div>
 
             
