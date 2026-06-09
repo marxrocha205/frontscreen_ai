@@ -1416,10 +1416,6 @@ export function ChatInterface() {
                       <span className="font-medium text-[14px]">{language === 'pt-BR' ? 'Gerar Imagem' : 'Generate Image'}</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => setMediaMode('video')} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
-                      <Video className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
-                      <span className="font-medium text-[14px]">{language === 'pt-BR' ? 'Gerar Vídeo' : 'Generate Video'}</span>
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>

@@ -241,8 +241,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         </div>
       )}
 
-      {/* Condição para esconder Overlay e Botões do Sidebar se estiver no Studio */}
-      {!isStudioRoute && (
+      {/* Overlay e Botões do Sidebar */}
+      <>
         <>
           {isSidebarOpen && (
             <div
@@ -565,7 +565,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </>
-      )}
+      </>
 
       {/* Como o flex-1 ocupa todo o restante do espaço, se a sidebar estiver oculta, a children ocupará 100% da tela */}
       <div className="flex-1 flex flex-col relative h-full bg-zinc-950">
