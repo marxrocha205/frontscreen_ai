@@ -1,7 +1,7 @@
 "use client"
 
 import { ReactNode } from 'react'
-import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Save, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video, Check, Loader2 } from 'lucide-react'
+import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Save, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video, Check, Loader2, Image as LucideImage } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
@@ -347,11 +347,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                   className="w-full justify-start gap-2 h-10 px-3 bg-zinc-900/50 hover:bg-zinc-800 hover:text-white rounded-lg border border-zinc-800/80 text-zinc-400 transition-colors"
                 >
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4" />
+                    <LucideImage className="w-4 h-4" />
                     <span className="text-sm font-medium">ScreenAI Studio</span>
-                    {!isAdmin && (
-                      <span className="text-[10px] bg-indigo-500/20 text-indigo-400 px-1.5 py-0.5 rounded ml-1">Beta</span>
-                    )}
                   </div>
                 </Button>
 
