@@ -63,13 +63,13 @@ export function StripeCardForm({
   return (
     <div style={{ background: '#1a1a1a', padding: '24px 20px', borderRadius: 12, border: '1px solid #333' }}>
       <Elements stripe={stripePromise} options={{ clientSecret, appearance: { theme: 'night' } }}>
-        <StripeCheckoutForm language={language} />
+        <StripeCheckoutForm language={language} planId={planId} />
       </Elements>
     </div>
   );
 }
 
-function StripeCheckoutForm({ language }: { language: string }) {
+function StripeCheckoutForm({ language, planId }: { language: string, planId: number }) {
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
