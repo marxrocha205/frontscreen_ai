@@ -87,7 +87,7 @@ function StripeCheckoutForm({ language }: { language: string }) {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/app`,
+        return_url: `${window.location.origin}/success?plan=${planId}`,
       },
       redirect: 'if_required',
     });
@@ -97,7 +97,7 @@ function StripeCheckoutForm({ language }: { language: string }) {
       setIsLoading(false);
     } else {
       setSuccess(true);
-      setTimeout(() => router.push('/app'), 2000);
+      setTimeout(() => router.push(`/success?plan=${planId}`), 2000);
     }
   };
 
