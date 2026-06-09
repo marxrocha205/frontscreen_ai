@@ -1393,46 +1393,16 @@ export function ChatInterface() {
             )}
 
             {/* CAIXA DE TEXTO MULTI-LINHA COM LAYOUT DO MOCKUP (TEXTAREA ACIMA, BOTÕES ABAIXO) */}
-            <div className="flex flex-col gap-1.5 bg-[#121212] rounded-[22px] px-2.5 py-2">
-
-              {/* Textarea Area */}
-              <div className="w-full flex items-start">
-                <textarea
-                  ref={textareaRef}
-                  value={inputValue}
-                  onChange={e => {
-                    setInputValue(e.target.value);
-                    e.target.style.height = 'auto'; // Reseta a altura
-                    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Cresce até ao limite de 200px
-                  }}
-                  onKeyDown={e => {
-                    // Se pressionar Enter (SEM o Shift), envia a mensagem.
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }}
-                  placeholder={placeholderText}
-                  rows={1}
-                  className="placeholder-ellipsis w-full bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-0.5 leading-6 max-h-[200px] overflow-y-auto custom-scrollbar"
-                  style={{ minHeight: '28px' }}
-                />
-              </div>
-
-            </div>
-
-            {/* Bottom Row: Pills (Left) and Action Buttons (Right) - POSICIONADOS NA PARTE CINZA */}
-            <div className="flex items-center justify-between gap-2 w-full px-1.5 py-0">
-              {/* Left Side: Pills */}
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
-                {/* Plus Attachment Button */}
+            <div className="flex items-start gap-1 w-full">
+              {/* Plus Attachment Button - GRAY AREA */}
+              <div className="pt-1.5 pl-1 shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <button
                       id="tour-attachment-btn"
-                      className="flex items-center justify-center bg-transparent hover:bg-zinc-800 rounded-full w-7 h-7 text-white transition-colors shadow-sm cursor-pointer"
+                      className="flex items-center justify-center bg-transparent hover:bg-zinc-800 rounded-full w-8 h-8 text-white transition-colors shadow-sm cursor-pointer"
                     >
-                      <Plus className="w-4 h-4" />
+                      <Plus className="w-5 h-5" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent container={floatingState !== 'none' && pipWindow ? pipWindow.document.body : undefined} align="start" sideOffset={12} className="w-64 bg-[#1a1a1a] border-zinc-800 text-zinc-200 p-1.5 rounded-xl shadow-2xl z-[100] transition-all data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 data-[state=open]:zoom-in-95 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 duration-150 ease-out">
@@ -1452,6 +1422,39 @@ export function ChatInterface() {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+              </div>
+
+              {/* Input Transparente */}
+              <div className="flex-1 flex flex-col gap-1.5 bg-transparent px-1 py-1">
+                <div className="w-full flex items-start">
+                  <textarea
+                  ref={textareaRef}
+                  value={inputValue}
+                  onChange={e => {
+                    setInputValue(e.target.value);
+                    e.target.style.height = 'auto'; // Reseta a altura
+                    e.target.style.height = `${Math.min(e.target.scrollHeight, 200)}px`; // Cresce até ao limite de 200px
+                  }}
+                  onKeyDown={e => {
+                    // Se pressionar Enter (SEM o Shift), envia a mensagem.
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSend();
+                    }
+                  }}
+                  placeholder={placeholderText}
+                  rows={1}
+                  className="placeholder-ellipsis w-full bg-transparent border-none focus:outline-none focus:ring-0 text-zinc-200 placeholder:text-zinc-500 text-[15px] resize-none py-0.5 leading-6 max-h-[200px] overflow-y-auto custom-scrollbar"
+                  style={{ minHeight: '28px' }}
+                />
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom Row: Pills (Left) and Action Buttons (Right) - POSICIONADOS NA PARTE CINZA */}
+            <div className="flex items-center justify-between gap-2 w-full px-1.5 py-0">
+              {/* Left Side: Pills */}
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0 flex-1">
 
                 {mediaMode !== 'text' && (
                   <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border-[1.5px] ${mediaMode === 'image' ? 'border-indigo-500/80 bg-indigo-500/10' : 'border-blue-500/80 bg-blue-500/10'} shrink-0 select-none animate-in fade-in zoom-in-95 duration-200`}>
@@ -1468,22 +1471,9 @@ export function ChatInterface() {
                 {/* Agent Selector Button */}
                 <button
                   onClick={() => setIsAgentsDialogOpen(true)}
-                  className="flex items-center gap-1.5 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full pl-2 pr-2.5 py-1 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                  className="flex items-center gap-1 bg-transparent hover:bg-white/10 border border-white/20 rounded-full pl-2.5 pr-2 py-1 text-xs text-white transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
                 >
-                  {currentAgent.id === '' ? (
-                    <AgentIconSvg className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  ) : (
-                    <div className="w-3.5 h-3.5 rounded-full overflow-hidden shrink-0 relative flex items-center justify-center">
-                      <Image
-                        src={`/agents/${currentAgent.id}.png`}
-                        alt={currentAgent.label}
-                        width={14}
-                        height={14}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <span className="leading-none">{currentAgent.label}</span>
+                  <span className="leading-none">Assistentes</span>
                   <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                 </button>
 
@@ -1491,13 +1481,12 @@ export function ChatInterface() {
                 {!isEmptyChat && (
                   <button
                     onClick={() => setIsModelsDialogOpen(true)}
-                    className="flex items-center gap-1.5 bg-[#121212] hover:bg-zinc-850 border border-zinc-800 rounded-full pl-1.5 pr-2.5 py-1 text-xs text-zinc-300 hover:text-zinc-200 transition-colors shadow-sm select-none cursor-pointer"
+                    className="flex items-center gap-1 bg-transparent hover:bg-white/10 border border-white/20 rounded-full pl-2.5 pr-2 py-1 text-xs text-white transition-colors shadow-sm select-none cursor-pointer"
                   >
-                    <InputModelIcon id={selectedModel} />
                     <span className="font-semibold text-[11px] leading-none">
                       {modelDescriptions[selectedModel]?.title || AI_MODELS.find(m => m.id === selectedModel)?.label || 'ScreenAI'}
                     </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500" />
+                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                   </button>
                 )}
               </div>
