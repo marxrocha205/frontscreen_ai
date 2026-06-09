@@ -143,29 +143,29 @@ export function DashboardTab() {
       {/* 1º BLOCO: Finanças e Renovações */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <div className="col-span-1">
-          <Card className="bg-emerald-500/10 border border-emerald-500/20 shadow-sm h-full">
+          <Card className="bg-zinc-950 border-zinc-800 shadow-sm h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-emerald-400">Receita Total</CardTitle>
-              <DollarSign className="w-4 h-4 text-emerald-400" />
+              <CardTitle className="text-sm font-medium text-zinc-300">Receita Total</CardTitle>
+              <DollarSign className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-300">{formatBRL(INITIAL_STATE.total_revenue_brl)}</div>
-              <p className="text-xs text-emerald-500/70 mt-1">Faturamento Consolidado do Período</p>
+              <div className="text-3xl font-bold text-zinc-100">{formatBRL(INITIAL_STATE.total_revenue_brl)}</div>
+              <p className="text-xs text-zinc-500 mt-1">Faturamento Consolidado do Período</p>
               
             </CardContent>
           </Card>
         </div>
 
         <div className="col-span-1">
-          <Card className="bg-red-500/10 border border-red-500/20 shadow-sm h-full transition-all duration-300">
+          <Card className="bg-zinc-950 border-zinc-800 shadow-sm h-full transition-all duration-300">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-red-400">Custo Total (IA)</CardTitle>
-              <BrainCircuit className="w-4 h-4 text-red-400" />
+              <CardTitle className="text-sm font-medium text-zinc-300">Custo Total (IA)</CardTitle>
+              <BrainCircuit className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">{formatBRL(liveData.total_cost_brl)}</div>
-              <p className="text-xs text-red-500/70 mt-1 flex items-center gap-1">
-                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+              <div className="text-3xl font-bold text-zinc-100 font-mono tracking-tight">{formatBRL(liveData.total_cost_brl)}</div>
+              <p className="text-xs text-zinc-500 mt-1 flex items-center gap-1">
+                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-500 animate-pulse"></span>
                  Consumo em tempo real
               </p>
             </CardContent>
@@ -173,14 +173,14 @@ export function DashboardTab() {
         </div>
 
         <div className="col-span-1">
-          <Card className="bg-purple-500/10 border border-purple-500/20 shadow-sm h-full">
+          <Card className="bg-zinc-950 border-zinc-800 shadow-sm h-full">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-purple-400">Assinaturas Renovadas</CardTitle>
-              <RefreshCw className="w-4 h-4 text-purple-400" />
+              <CardTitle className="text-sm font-medium text-zinc-300">Assinaturas Renovadas</CardTitle>
+              <RefreshCw className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-300">{INITIAL_STATE.renewals.total}</div>
-              <p className="text-xs text-purple-500/70 mt-1">{INITIAL_STATE.renewals.pro_mensal} PRO MENSAL | {INITIAL_STATE.renewals.pro_anual} PRO ANUAL</p>
+              <div className="text-3xl font-bold text-zinc-100">{INITIAL_STATE.renewals.total}</div>
+              <p className="text-xs text-zinc-500 mt-1">{INITIAL_STATE.renewals.pro_mensal} PRO MENSAL | {INITIAL_STATE.renewals.pro_anual} PRO ANUAL</p>
             </CardContent>
           </Card>
         </div>
@@ -189,20 +189,20 @@ export function DashboardTab() {
       {/* 2º BLOCO: Tráfego e Utilizadores Online */}
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
         <div className="col-span-1">
-          <Card className="bg-blue-500/10 border border-blue-500/20 shadow-sm h-full relative overflow-hidden transition-all duration-300">
+          <Card className="bg-zinc-950 border-zinc-800 shadow-sm h-full relative overflow-hidden transition-all duration-300">
             <div className="absolute top-0 right-0 p-4">
                <span className="flex h-3 w-3">
-                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                 <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-zinc-400 opacity-75"></span>
+                 <span className="relative inline-flex rounded-full h-3 w-3 bg-zinc-500"></span>
                </span>
             </div>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-400">Online Agora</CardTitle>
-              <Users className="w-4 h-4 text-blue-400" />
+              <CardTitle className="text-sm font-medium text-zinc-300">Online Agora</CardTitle>
+              <Users className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-300">{liveData.online_users}</div>
-              <p className="text-xs text-blue-500/70 mt-1">Via Websockets</p>
+              <div className="text-3xl font-bold text-zinc-100">{liveData.online_users}</div>
+              <p className="text-xs text-zinc-500 mt-1">Via Websockets</p>
             </CardContent>
           </Card>
         </div>
