@@ -9,6 +9,7 @@ import { BillingTab } from "./tabs/BillingTab"
 import { WebsocketsTab } from "./tabs/WebsocketsTab"
 import { AuditTab } from "./tabs/AudiTab"
 import { SettingsTab } from "./tabs/SettingsTab"
+import { LogsTab } from "./tabs/LogsTab"
 
 /**
  * AdminPageContent (Componente Interno)
@@ -43,28 +44,8 @@ function AdminPageContent() {
         case 'audit': return <AuditTab />
     case 'settings': return <SettingsTab />
       
-      case 'vadlogs':
-       return (
-          <div className="flex h-[400px] flex-col items-center justify-center border-2 border-dashed border-zinc-200 rounded-xl">
-            <h3 className="text-lg font-semibold text-zinc-500">Módulo em Desenvolvimento</h3>
-            
-          </div>
-        )
-        case 'settings':
-       return (
-          <div className="flex h-[400px] flex-col items-center justify-center border-2 border-dashed border-zinc-200 rounded-xl">
-            <h3 className="text-lg font-semibold text-zinc-500">Módulo em Desenvolvimento</h3>
-            
-          </div>
-        )
-        case 'Audit':
-       return (
-          <div className="flex h-[400px] flex-col items-center justify-center border-2 border-dashed border-zinc-200 rounded-xl">
-            <h3 className="text-lg font-semibold text-zinc-500">Módulo em Desenvolvimento</h3>
-            
-          </div>
-        )
-        
+      case 'logs':
+        return <LogsTab />
         
       default:
         return (
