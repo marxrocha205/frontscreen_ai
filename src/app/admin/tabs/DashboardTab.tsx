@@ -269,7 +269,7 @@ export function DashboardTab() {
               <DollarSign className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-emerald-300">{formatBRL(INITIAL_STATE.total_revenue_brl)}</div>
+              <div className="text-3xl font-bold text-emerald-300">{formatBRL(safeMetrics.total_revenue_brl)}</div>
               <p className="text-xs text-emerald-500/70 mt-1">Faturamento Consolidado do Período</p>
               
             </CardContent>
@@ -284,7 +284,7 @@ export function DashboardTab() {
               <BrainCircuit className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">{formatBRL(liveData.total_cost_brl)}</div>
+              <div className="text-3xl font-bold text-red-300 font-mono tracking-tight">{formatBRL(totalCostBrl)}</div>
               <p className="text-xs text-red-500/70 mt-1 flex items-center gap-1">
                  <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
                  Consumo em tempo real
@@ -301,8 +301,8 @@ export function DashboardTab() {
               <RefreshCw className="w-4 h-4 text-purple-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-purple-300">{INITIAL_STATE.renewals.total}</div>
-              <p className="text-xs text-purple-500/70 mt-1">{INITIAL_STATE.renewals.pro_mensal} PRO MENSAL | {INITIAL_STATE.renewals.pro_anual} PRO ANUAL</p>
+              <div className="text-3xl font-bold text-purple-300">{activeSubsTotal}</div>
+              <p className="text-xs text-purple-500/70 mt-1">{safeMetrics.subs_by_plan.filter(p => p.plan.toLowerCase().includes("mensal")).reduce((s, p) => s + p.count, 0)} PRO MENSAL | {safeMetrics.subs_by_plan.filter(p => p.plan.toLowerCase().includes("anual")).reduce((s, p) => s + p.count, 0)} PRO ANUAL</p>
             </CardContent>
           </Card>
         </div>
@@ -325,7 +325,7 @@ export function DashboardTab() {
               <Users className="w-4 h-4 text-zinc-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-blue-300">{liveData.online_users}</div>
+              <div className="text-3xl font-bold text-blue-300">{wsStats.online_users}</div>
               <p className="text-xs text-blue-500/70 mt-1">Via Websockets</p>
             </CardContent>
           </Card>
