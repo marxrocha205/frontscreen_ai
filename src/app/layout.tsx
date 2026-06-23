@@ -38,6 +38,18 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="h-[100dvh] flex flex-col overflow-hidden overscroll-none bg-black" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties} suppressHydrationWarning>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-18247965256"
+          strategy="afterInteractive"
+        />
+        <Script id="google-tag-manager" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'AW-18247965256');
+          `}
+        </Script>
         <Script id="utmify-pixel-init" strategy="afterInteractive">
           {`
             window.pixelId = "69cff704edd1516d3ada4900";
