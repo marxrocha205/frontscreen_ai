@@ -76,7 +76,7 @@ import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, Check, Sparkles, Image as ImageIcon, Video, Copy, Download } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, Check, Sparkles, Image as ImageIcon, Video, Copy, Download, MonitorUp } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
@@ -335,6 +335,17 @@ export function ChatInterface() {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
+  const [welcomeStep, setWelcomeStep] = useState(0)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isNewUser = localStorage.getItem('is_new_user') === 'true'
+      if (isNewUser) {
+        setWelcomeStep(1)
+        setIsModelsDialogOpen(true)
+      }
+    }
+  }, [])
 
   // Nota: inlineUpsell e setInlineUpsell vêm do useChatStore (abaixo)
   // para que o WebSocket também possa disparar o upsell inline
@@ -455,7 +466,7 @@ export function ChatInterface() {
     }
   }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
 
-  const { isSharing: isScreenShared, stopSharing, stream } = useScreenShare()
+  const { isSharing: isScreenShared, stopSharing, startSharing, stream } = useScreenShare()
 
   const videoRef = useCallback((node: HTMLVideoElement | null) => {
     if (node && stream && node.srcObject !== stream) {
@@ -761,14 +772,79 @@ export function ChatInterface() {
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} ctaLabel={language === 'pt-BR' ? 'Continuar com Pro' : 'Continue with Pro'} />
 
-      <Dialog open={isModelsDialogOpen} onOpenChange={setIsModelsDialogOpen}>
-        <DialogContent className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
-          <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
-            <DialogModeSwitch active="models" language={language} onOpenModels={openModelsDialog} onOpenAgents={openAgentsDialog} />
-          </DialogHeader>
+      <Dialog open={isModelsDialogOpen} onOpenChange={(open) => {
+        // Impede que o usuário feche clicando fora ou com ESC durante o onboarding
+        if (!open && welcomeStep > 0) return;
+        setIsModelsDialogOpen(open);
+      }}>
+        <DialogContent showCloseButton={welcomeStep === 0} className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
+          {welcomeStep === 2 ? (
+            <div className="flex flex-col items-center justify-center p-4 md:p-8 space-y-8 animate-in fade-in zoom-in-95 duration-500">
+              <div className="text-center space-y-3">
+                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+                  {language === 'pt-BR' ? 'Compartilhe a sua tela' : 'Share your screen'}
+                </h2>
+                <p className="text-zinc-400 text-sm md:text-base max-w-md mx-auto">
+                  {language === 'pt-BR' ? 'Para ver e entender o que você está fazendo, a ScreenAI precisa que você compartilhe a sua tela. Lembre-se de confirmar a permissão no topo do navegador após clicar no botão abaixo.' : 'To see and understand what you are doing, ScreenAI needs you to share your screen. Remember to confirm the browser permission after clicking the button below.'}
+                </p>
+              </div>
+              
+              <div className="w-full max-w-2xl aspect-video rounded-2xl overflow-hidden shadow-2xl border border-zinc-800 bg-black">
+                <video 
+                  src="/vid.mp4" 
+                  autoPlay 
+                  loop 
+                  playsInline
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-          {/* Columns Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 pt-4 md:pt-5 pb-2 overflow-y-auto md:overflow-visible pr-1 custom-scrollbar">
+              <button 
+                onClick={async () => {
+                  try {
+                    await startSharing()
+                    localStorage.removeItem('is_new_user')
+                    setWelcomeStep(0)
+                    setIsModelsDialogOpen(false)
+                    const firstName = localStorage.getItem('user_first_name') || ''
+                    const initialMsg = [
+                      'Nota de sistema: O usuário é novo e está acessando o sistema pela primeira vez. Por favor, seja muito acolhedor.',
+                      firstName ? `O nome do usuário é ${firstName}. Chame-o pelo primeiro nome no cumprimento.` : '',
+                      'Pergunte com o que ele trabalha e, dependendo da resposta, peça gentilmente para ele abrir alguma tarefa ou documento na tela para que você possa ajudá-lo de forma prática.'
+                    ].filter(Boolean).join(' ')
+                    startGeminiLive(initialMsg)
+                  } catch (e) {
+                    console.error('Compartilhamento cancelado pelo usuário', e)
+                  }
+                }}
+                className="mt-4 bg-zinc-900/40 hover:bg-zinc-800/80 border border-zinc-700/50 text-zinc-300 hover:text-white font-medium py-3.5 px-8 rounded-xl text-base transition-all hover:border-zinc-600 flex items-center gap-3"
+              >
+                <MonitorUp className="w-5 h-5" />
+                {language === 'pt-BR' ? 'Compartilhar tela e começar' : 'Share screen and start'}
+              </button>
+            </div>
+          ) : (
+            <>
+              <DialogHeader className="relative flex flex-col items-center justify-center pb-4 border-b border-zinc-900">
+                {welcomeStep === 1 ? (
+                  <div className="flex flex-col items-center text-center space-y-2 animate-enter-fade-zoom pb-2">
+                    <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-10 w-auto object-contain drop-shadow-md mb-1" />
+                    <h2 className="text-2xl font-bold empty-chat-prompt tracking-tight">
+                      <span className="empty-chat-prompt__text">
+                        {language === 'pt-BR' ? 'Seja bem vindo(a) à ScreenAI' : 'Welcome to ScreenAI'}
+                      </span>
+                    </h2>
+                    <p className="text-sm text-zinc-400 delay-150 animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both">
+                      {language === 'pt-BR' ? 'Escolha um modelo para começar:' : 'Choose a model to start:'}
+                    </p>
+                  </div>
+                ) : (
+                  <DialogModeSwitch active="models" language={language} onOpenModels={openModelsDialog} onOpenAgents={openAgentsDialog} />
+                )}
+              </DialogHeader>
+
+              {/* Columns Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 pt-4 md:pt-5 pb-2 overflow-y-auto md:overflow-visible pr-1 custom-scrollbar">
             {/* RÁPIDO Column */}
             <div className="flex flex-col min-w-0">
               <span className="text-zinc-500 tracking-wider text-[11px] font-bold uppercase mb-3 px-1">
@@ -780,9 +856,13 @@ export function ChatInterface() {
                     key={model.id}
                     onClick={() => {
                       handleModelSelect(model.id)
-                      setIsModelsDialogOpen(false)
+                      if (welcomeStep === 1) {
+                        setWelcomeStep(2)
+                      } else {
+                        setIsModelsDialogOpen(false)
+                      }
                     }}
-                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto ${selectedModel === model.id
+                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto focus:outline-none ${selectedModel === model.id
                       ? 'border-zinc-700 bg-zinc-800/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_rgba(99,102,241,0.08)]'
                       : 'border-transparent bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-800/60'
                       }`}
@@ -817,9 +897,13 @@ export function ChatInterface() {
                     key={model.id}
                     onClick={() => {
                       handleModelSelect(model.id)
-                      setIsModelsDialogOpen(false)
+                      if (welcomeStep === 1) {
+                        setWelcomeStep(2)
+                      } else {
+                        setIsModelsDialogOpen(false)
+                      }
                     }}
-                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto ${selectedModel === model.id
+                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto focus:outline-none ${selectedModel === model.id
                       ? 'border-zinc-700 bg-zinc-800/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_rgba(99,102,241,0.08)]'
                       : 'border-transparent bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-800/60'
                       }`}
@@ -854,9 +938,13 @@ export function ChatInterface() {
                     key={model.id}
                     onClick={() => {
                       handleModelSelect(model.id)
-                      setIsModelsDialogOpen(false)
+                      if (welcomeStep === 1) {
+                        setWelcomeStep(2)
+                      } else {
+                        setIsModelsDialogOpen(false)
+                      }
                     }}
-                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto ${selectedModel === model.id
+                    className={`w-full flex items-start gap-3.5 p-3 rounded-xl border text-left transition-all duration-200 cursor-pointer group pointer-events-auto focus:outline-none ${selectedModel === model.id
                       ? 'border-zinc-700 bg-zinc-800/40 shadow-[inset_0_1px_1px_rgba(255,255,255,0.05),0_0_15px_rgba(99,102,241,0.08)]'
                       : 'border-transparent bg-zinc-900/40 hover:bg-zinc-900/80 hover:border-zinc-800/60'
                       }`}
@@ -880,6 +968,8 @@ export function ChatInterface() {
               </div>
             </div>
           </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
 
