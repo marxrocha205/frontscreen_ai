@@ -127,6 +127,7 @@ export function UsersTab() {
                   <th className="p-4 font-medium">Telefone</th>
                   <th className="p-4 font-medium">Role</th>
                   <th className="p-4 font-medium">Estado</th>
+                  <th className="p-4 font-medium">Cadastro</th>
                   <th className="p-4 font-medium text-right">Ações</th>
                 </tr>
               </thead>
@@ -146,6 +147,9 @@ export function UsersTab() {
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${user.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                         {user.is_active ? "Ativo" : "Inativo"}
                       </span>
+                    </td>
+                    <td className="p-4 text-zinc-400">
+                      {new Date(user.created_at).toLocaleDateString('pt-BR')}
                     </td>
                     <td className="p-4 text-right flex justify-end gap-2">
                       <button onClick={() => handleOpenDetails(user.id)} className="p-2 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20">

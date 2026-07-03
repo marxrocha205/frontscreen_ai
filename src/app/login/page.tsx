@@ -16,6 +16,10 @@ import { jwtDecode } from 'jwt-decode'
 
 interface GoogleJwtPayload {
   email?: string
+  picture?: string
+  name?: string
+  given_name?: string
+  family_name?: string
 }
 
 export default function LoginPage() {
@@ -54,8 +58,20 @@ export default function LoginPage() {
         try {
           const decoded = jwtDecode<GoogleJwtPayload>(credentialResponse.credential || '')
           userEmail = decoded.email || ''
+          if (decoded.picture) {
+            localStorage.setItem('user_picture', decoded.picture)
+          }
+          if (decoded.given_name) {
+            localStorage.setItem('user_first_name', decoded.given_name)
+          }
+          if (decoded.family_name) {
+            localStorage.setItem('user_last_name', decoded.family_name)
+          }
+          if (decoded.name && !decoded.given_name) {
+            localStorage.setItem('user_first_name', decoded.name)
+          }
         } catch (e) {
-          console.error("Falha ao ler o email do token", e)
+          console.error("Falha ao ler dados do token", e)
         }
 
         login(userEmail)

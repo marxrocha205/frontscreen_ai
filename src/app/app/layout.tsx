@@ -4,7 +4,7 @@ import { ReactNode } from 'react'
 import { Plus, MessageSquare, Settings as SettingsIcon, HelpCircle, Trash2, Sparkles, FileText, Search, MonitorUp, Laptop, X, ChevronDown, Save, PanelLeftClose, PanelLeftOpen, PictureInPicture2, Pencil, Paintbrush, Video, Check, Loader2, Image as LucideImage } from 'lucide-react'
 import { useI18n } from '@/context/i18n-context'
 import { SettingsDialog } from '@/components/settings-dialog'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu'
@@ -75,6 +75,29 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     : (language === 'pt-BR' ? 'Carregando plano...' : 'Loading plan...')
   const ADMIN_EMAILS = ['marxrochascr@gmail.com', 'marxrocha.scr@gmail.com', 'admin@frontscreen.ai'] // Substitua pelos e-mails reais
   const isAdmin = Boolean(user?.email && ADMIN_EMAILS.includes(user.email.trim().toLowerCase()))
+  
+  const [userProfile, setUserProfile] = useState({ name: '', picture: '', initials: 'US' })
+
+  useEffect(() => {
+    if (hasHydrated && isLoggedIn) {
+      const firstName = localStorage.getItem('user_first_name')
+      const lastName = localStorage.getItem('user_last_name')
+      const picture = localStorage.getItem('user_picture') || ''
+      
+      let name = user?.email || 'User'
+      let initials = user?.email?.substring(0, 2).toUpperCase() || 'US'
+      
+      if (firstName) {
+        name = lastName ? `${firstName} ${lastName}` : firstName
+        initials = firstName.substring(0, 1).toUpperCase()
+        if (lastName) {
+          initials += lastName.substring(0, 1).toUpperCase()
+        }
+      }
+      
+      setUserProfile({ name, picture, initials })
+    }
+  }, [hasHydrated, isLoggedIn, user?.email])
   
   const handleModelSelect = (model: typeof AI_MODELS[number]) => {
     // Se o modelo requer plano pago e o usuário está no plano Free (ou sem plano), bloqueia
@@ -546,13 +569,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                     trigger={
                       <Button variant="ghost" className="w-full justify-start gap-3 h-14 px-3 hover:bg-zinc-800/50 rounded-lg group">
                         <Avatar className="h-8 w-8 bg-zinc-800 text-xs">
+                          {userProfile.picture && (
+                            <AvatarImage src={userProfile.picture} alt={userProfile.name} />
+                          )}
                           <AvatarFallback className="bg-zinc-800 text-zinc-300 font-medium">
-                            {user?.email?.substring(0, 2).toUpperCase() || 'US'}
+                            {userProfile.initials}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col items-start leading-tight">
-                          <span className="text-sm font-medium text-zinc-200 truncate w-32 text-left">{user?.email || 'User'}</span>
-                          <span className="text-xs text-zinc-500">{currentPlanLabel}</span>
+                        <div className="flex flex-col items-start leading-tight min-w-0">
+                          <span className="text-sm font-medium text-zinc-200 truncate w-full text-left">{userProfile.name}</span>
+                          <span className="text-xs text-zinc-500 truncate w-full text-left">{currentPlanLabel}</span>
                         </div>
                       </Button>
                     }

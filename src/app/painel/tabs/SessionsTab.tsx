@@ -1,9 +1,10 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Activity, MessageSquare, Loader2 } from "lucide-react"
+import { Activity, MessageSquare, Loader2, Eye, User, Bot } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
 import { config } from "@/lib/config"
 
 interface SessionData {
@@ -13,10 +14,23 @@ interface SessionData {
   created_at: string
 }
 
+interface ChatMessage {
+  id: str
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  model: string | null
+  created_at: string
+}
+
 export function SessionsTab() {
   const [sessions, setSessions] = useState<SessionData[]>([])
   const [syncData, setSyncData] = useState({ active_sessions: 0, total_messages: 0 })
   const [loading, setLoading] = useState(true)
+
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+  const [loadingDetails, setLoadingDetails] = useState(false)
+  const [selectedSession, setSelectedSession] = useState<SessionData | null>(null)
+  const [sessionMessages, setSessionMessages] = useState<ChatMessage[]>([])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +66,29 @@ export function SessionsTab() {
 
     fetchData()
   }, [])
+
+  const handleOpenDetails = async (session: SessionData) => {
+    setSelectedSession(session)
+    setIsDetailsOpen(true)
+    setLoadingDetails(true)
+    setSessionMessages([])
+    
+    try {
+      const token = document.cookie.split('; ').find(row => row.startsWith('access_token='))?.split('=')[1] || localStorage.getItem('access_token');
+      const res = await fetch(`${config.apiUrl}/api/admin/sessions/${session.session_id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        setSessionMessages(json.data);
+      }
+    } catch (e) {
+      console.error("Erro ao carregar mensagens da sessão", e);
+    } finally {
+      setLoadingDetails(false)
+    }
+  }
 
   if (loading) return <div className="flex h-64 w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-400" /></div>
 
@@ -111,13 +148,22 @@ export function SessionsTab() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0">
-                    <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">
-                      {new Date(session.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                    </span>
-                    <p className="text-[10px] text-zinc-600 mt-1 uppercase font-mono">
-                      ID: {session.session_id}
-                    </p>
+                  <div className="text-right shrink-0 flex items-center gap-4">
+                    <div>
+                      <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">
+                        {new Date(session.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                      </span>
+                      <p className="text-[10px] text-zinc-600 mt-1 uppercase font-mono">
+                        ID: {session.session_id}
+                      </p>
+                    </div>
+                    <button 
+                      onClick={() => handleOpenDetails(session)}
+                      className="p-2 rounded-md bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 border border-indigo-500/20 transition-colors"
+                      title="Ver Chat"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -125,6 +171,62 @@ export function SessionsTab() {
           </ScrollArea>
         </CardContent>
       </Card>
+
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-3xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="text-2xl flex items-center gap-2">
+              <MessageSquare className="text-indigo-400 w-6 h-6" /> 
+              Visualização de Chat
+            </DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              {selectedSession?.title} &bull; <span className="text-zinc-500">{selectedSession?.user_email}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingDetails ? (
+            <div className="flex h-40 w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div>
+          ) : (
+            <ScrollArea className="flex-1 mt-4 pr-4">
+              <div className="space-y-4 pb-4">
+                {sessionMessages.length === 0 ? (
+                  <p className="text-center text-sm text-zinc-500 py-8">Nenhuma mensagem encontrada nesta sessão.</p>
+                ) : (
+                  sessionMessages.map((msg, i) => (
+                    <div 
+                      key={i} 
+                      className={`flex flex-col max-w-[85%] ${msg.role === 'user' ? 'ml-auto' : 'mr-auto'}`}
+                    >
+                      <div className="flex items-center gap-2 mb-1">
+                        {msg.role === 'user' ? (
+                          <>
+                            <span className="text-xs text-zinc-500 ml-auto">Usuário</span>
+                            <User className="h-3 w-3 text-zinc-400" />
+                          </>
+                        ) : (
+                          <>
+                            <Bot className="h-3 w-3 text-indigo-400" />
+                            <span className="text-xs text-zinc-500">Assistente {msg.model && <span className="text-zinc-600">({msg.model})</span>}</span>
+                          </>
+                        )}
+                      </div>
+                      <div 
+                        className={`p-3 rounded-xl text-sm whitespace-pre-wrap break-words ${
+                          msg.role === 'user' 
+                            ? 'bg-indigo-600/20 border border-indigo-500/30 text-zinc-200 rounded-tr-none' 
+                            : 'bg-zinc-800/50 border border-zinc-700/50 text-zinc-300 rounded-tl-none'
+                        }`}
+                      >
+                        {msg.content}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </ScrollArea>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
