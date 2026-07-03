@@ -63,6 +63,8 @@ function RegisterForm() {
 
       if (res.ok) {
         const data = await res.json()
+        console.log('[REGISTER GOOGLE] Resposta da API:', data)
+        console.log('[REGISTER GOOGLE] is_new_user:', data.is_new_user)
         localStorage.setItem('access_token', data.access_token)
         Cookies.set('access_token', data.access_token, {
           expires: 7,
@@ -79,10 +81,13 @@ function RegisterForm() {
         }
 
         login(userEmail)
+        console.log('[REGISTER GOOGLE] email:', userEmail)
         if (data.is_new_user) {
+          console.log('[REGISTER GOOGLE] → Redirecionando para /onboarding')
           localStorage.setItem('is_new_user', 'true')
           window.location.href = '/onboarding'
         } else {
+          console.log('[REGISTER GOOGLE] → Redirecionando para /app')
           window.location.href = '/app'
         }
       } else {
@@ -192,6 +197,8 @@ function RegisterForm() {
 
       if (loginRes.ok) {
         const data = await loginRes.json()
+        console.log('[REGISTER EMAIL] Login automático - Resposta da API:', data)
+        console.log('[REGISTER EMAIL] is_new_user:', data.is_new_user)
         localStorage.setItem('access_token', data.access_token)
         Cookies.set('access_token', data.access_token, {
           expires: 7,
@@ -199,11 +206,13 @@ function RegisterForm() {
           sameSite: 'strict'
         })
         login(email)
-        console.log("[REGISTER] Resposta do login automático, is_new_user =", data.is_new_user)
+        console.log('[REGISTER EMAIL] Resposta do login automático, is_new_user =', data.is_new_user)
         if (data.is_new_user) {
+          console.log('[REGISTER EMAIL] → Redirecionando para /onboarding')
           localStorage.setItem('is_new_user', 'true')
           router.push('/onboarding')
         } else {
+          console.log('[REGISTER EMAIL] → Redirecionando para /app')
           router.push('/app')
         }
       } else {
@@ -226,7 +235,7 @@ function RegisterForm() {
 
   return (
     <div className="flex h-screen w-full items-center justify-center bg-zinc-950">
-      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4">
+      <div className="flex flex-col items-center gap-6 w-full max-w-sm px-4 mt-16">
         <div className="flex justify-center mb-2">
           <img src="/logobranco-semfundo.png" alt="ScreenAI" className="h-10 w-auto object-contain drop-shadow-md" />
         </div>
