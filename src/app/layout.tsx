@@ -21,9 +21,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "ScreenAI",
   description: "Your real-time AI screen analysis assistant",
-  icons: {
-    icon: "/icon.ico",
-  },
 };
 
 export default function RootLayout({
