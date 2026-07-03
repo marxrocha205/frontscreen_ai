@@ -164,6 +164,7 @@ export default function OnboardingClient() {
                 type="text"
                 placeholder="Nome"
                 value={firstName}
+                maxLength={20}
                 onChange={e => { setFirstName(e.target.value); setErrors(prev => ({ ...prev, firstName: undefined })) }}
                 className={`w-full bg-zinc-900 border text-zinc-300 placeholder-zinc-500 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors focus:border-zinc-600 h-11 ${errors.firstName ? 'border-red-500/60' : 'border-zinc-800'}`}
               />
@@ -174,6 +175,7 @@ export default function OnboardingClient() {
                 type="text"
                 placeholder="Sobrenome"
                 value={lastName}
+                maxLength={20}
                 onChange={e => { setLastName(e.target.value); setErrors(prev => ({ ...prev, lastName: undefined })) }}
                 className={`w-full bg-zinc-900 border text-zinc-300 placeholder-zinc-500 rounded-lg px-3 py-2.5 text-sm outline-none transition-colors focus:border-zinc-600 h-11 ${errors.lastName ? 'border-red-500/60' : 'border-zinc-800'}`}
               />
@@ -183,13 +185,13 @@ export default function OnboardingClient() {
 
           {/* Phone */}
           <div>
-            <div className={`flex border rounded-lg overflow-hidden bg-zinc-900 transition-colors focus-within:border-zinc-600 ${errors.phone ? 'border-red-500/60' : 'border-zinc-800'}`}>
+            <div className={`flex border rounded-lg bg-zinc-900 transition-colors focus-within:border-zinc-600 ${errors.phone ? 'border-red-500/60' : 'border-zinc-800'}`}>
               {/* Country selector */}
               <div ref={dropdownRef} className="relative flex-shrink-0">
                 <button
                   type="button"
                   onClick={() => setIsDropdownOpen(o => !o)}
-                  className="flex items-center gap-1.5 px-3 h-11 text-sm text-zinc-300 hover:bg-zinc-800/50 transition-colors border-r border-zinc-800 min-w-[96px]"
+                  className="flex items-center gap-1.5 px-3 h-11 text-sm text-zinc-300 hover:bg-zinc-800/50 transition-colors border-r border-zinc-800 min-w-[96px] rounded-l-lg"
                 >
                   <span className="text-base leading-none">{selectedCountry.flag}</span>
                   <span className="text-zinc-400 text-xs font-mono">{selectedCountry.dial}</span>
@@ -235,7 +237,7 @@ export default function OnboardingClient() {
                 placeholder={selectedCountry.mask.replace(/#/g, '0')}
                 value={phone}
                 onChange={handlePhoneChange}
-                className="flex-1 bg-transparent text-zinc-300 placeholder-zinc-500 px-3 py-2.5 text-sm outline-none min-w-0 h-11"
+                className="flex-1 bg-transparent text-zinc-300 placeholder-zinc-500 px-3 py-2.5 text-sm outline-none min-w-0 h-11 rounded-r-lg"
               />
             </div>
             {errors.phone && <p className="text-red-400 text-xs mt-1 ml-0.5">{errors.phone}</p>}
