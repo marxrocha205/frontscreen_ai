@@ -9,13 +9,19 @@ import { config } from "@/lib/config"
 interface UserData {
   id: number
   email: string
+  full_name: string | null
+  phone: string | null
   is_active: boolean
   is_admin: boolean
   created_at: string
 }
 
 interface UserDetails {
-  user: { email?: string }
+  user: { 
+    email?: string
+    full_name?: string | null
+    phone?: string | null
+  }
   subscription: {
     plan_name: string
     status: string
@@ -116,7 +122,9 @@ export function UsersTab() {
               <thead className="bg-zinc-900 text-zinc-300">
                 <tr>
                   <th className="p-4 font-medium">ID</th>
+                  <th className="p-4 font-medium">Nome</th>
                   <th className="p-4 font-medium">Email</th>
+                  <th className="p-4 font-medium">Telefone</th>
                   <th className="p-4 font-medium">Role</th>
                   <th className="p-4 font-medium">Estado</th>
                   <th className="p-4 font-medium text-right">Ações</th>
@@ -126,7 +134,9 @@ export function UsersTab() {
                 {currentUsers.map((user) => (
                   <tr key={user.id} className="border-t border-zinc-800 hover:bg-zinc-800/40 transition-colors">
                     <td className="p-4 text-zinc-400">{user.id}</td>
-                    <td className="p-4 font-medium text-zinc-100">{user.email}</td>
+                    <td className="p-4 font-medium text-zinc-100">{user.full_name || <span className="text-zinc-600 italic">—</span>}</td>
+                    <td className="p-4 text-zinc-300">{user.email}</td>
+                    <td className="p-4 text-zinc-400">{user.phone || <span className="text-zinc-600 italic">—</span>}</td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${user.is_admin ? 'bg-purple-500/10 text-purple-400 border-purple-500/20' : 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}>
                         {user.is_admin ? "Admin" : "Usuário"}
@@ -163,32 +173,52 @@ export function UsersTab() {
         <DialogContent className="max-w-2xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-2xl flex items-center gap-2"><ScanEye className="text-indigo-400 w-6 h-6" /> Raio-X do Cliente</DialogTitle>
-            <DialogDescription className="text-zinc-400">{userDetails?.user?.email}</DialogDescription>
+            <DialogDescription className="text-zinc-400">
+              {userDetails?.user?.full_name && <span className="text-zinc-100 font-medium">{userDetails.user.full_name} &bull; </span>}
+              {userDetails?.user?.email}
+              {userDetails?.user?.phone && <span className="text-zinc-500 ml-2">({userDetails.user.phone})</span>}
+            </DialogDescription>
           </DialogHeader>
 
           {loadingDetails ? <div className="flex h-40 w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div> : userDetails ? (
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col gap-1">
-                <div className="flex items-center gap-2 text-emerald-400 font-medium mb-2"><DollarSign className="w-5 h-5" /> Receita Gerada (LTV)</div>
-                <span className="text-3xl font-bold text-emerald-300">R$ {userDetails.lifetime_value_brl.toFixed(2)}</span>
-                <p className="text-xs text-zinc-500 mt-2">Plano Atual: <span className="text-zinc-300">{userDetails.subscription.plan_name}</span></p>
-                <p className="text-xs text-zinc-500 mt-1">Créditos Restantes: <span className="text-zinc-300">{userDetails.subscription.remaining_credits}</span></p>
-              </div>
-              <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex flex-col gap-1 h-full overflow-y-auto max-h-48">
-                <div className="flex items-center gap-2 text-red-400 font-medium mb-2"><BrainCircuit className="w-5 h-5" /> Custo API IA (USD)</div>
-                <span className="text-3xl font-bold text-red-300">${userDetails.total_ai_cost_usd.toFixed(4)}</span>
-                {userDetails.ai_costs && userDetails.ai_costs.length > 0 ? (
-                  <div className="mt-2 space-y-2">
-                    {userDetails.ai_costs.map((cost, idx) => (
-                      <div key={idx} className="flex justify-between text-xs border-t border-red-500/10 pt-1">
-                        <span className="text-zinc-400">{cost.model}</span>
-                        <span className="text-red-300/70">${cost.cost_usd.toFixed(4)}</span>
-                      </div>
-                    ))}
+            <div className="space-y-4 mt-2">
+              {/* Identidade */}
+              {(userDetails.user.full_name || userDetails.user.phone) && (
+                <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-zinc-500 text-xs mb-0.5">Nome completo</p>
+                    <p className="text-zinc-100">{userDetails.user.full_name || <span className="text-zinc-600 italic">&mdash;</span>}</p>
                   </div>
-                ) : (
-                  <p className="text-xs text-zinc-500 mt-2">Sem consumo registrado</p>
-                )}
+                  <div>
+                    <p className="text-zinc-500 text-xs mb-0.5">Telefone</p>
+                    <p className="text-zinc-300">{userDetails.user.phone || <span className="text-zinc-600 italic">&mdash;</span>}</p>
+                  </div>
+                </div>
+              )}
+              {/* Financeiro */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col gap-1">
+                  <div className="flex items-center gap-2 text-emerald-400 font-medium mb-2"><DollarSign className="w-5 h-5" /> Receita Gerada (LTV)</div>
+                  <span className="text-3xl font-bold text-emerald-300">R$ {userDetails.lifetime_value_brl.toFixed(2)}</span>
+                  <p className="text-xs text-zinc-500 mt-2">Plano Atual: <span className="text-zinc-300">{userDetails.subscription.plan_name}</span></p>
+                  <p className="text-xs text-zinc-500 mt-1">Créditos Restantes: <span className="text-zinc-300">{userDetails.subscription.remaining_credits}</span></p>
+                </div>
+                <div className="bg-red-500/10 border border-red-500/20 p-4 rounded-xl flex flex-col gap-1 h-full overflow-y-auto max-h-48">
+                  <div className="flex items-center gap-2 text-red-400 font-medium mb-2"><BrainCircuit className="w-5 h-5" /> Custo API IA (USD)</div>
+                  <span className="text-3xl font-bold text-red-300">${userDetails.total_ai_cost_usd.toFixed(4)}</span>
+                  {userDetails.ai_costs && userDetails.ai_costs.length > 0 ? (
+                    <div className="mt-2 space-y-2">
+                      {userDetails.ai_costs.map((cost, idx) => (
+                        <div key={idx} className="flex justify-between text-xs border-t border-red-500/10 pt-1">
+                          <span className="text-zinc-400">{cost.model}</span>
+                          <span className="text-red-300/70">${cost.cost_usd.toFixed(4)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-zinc-500 mt-2">Sem consumo registrado</p>
+                  )}
+                </div>
               </div>
             </div>
           ) : null}

@@ -79,7 +79,12 @@ function RegisterForm() {
         }
 
         login(userEmail)
-        window.location.href = '/app'
+        if (data.is_new_user) {
+          localStorage.setItem('is_new_user', 'true')
+          window.location.href = '/onboarding'
+        } else {
+          window.location.href = '/app'
+        }
       } else {
         const errData = await res.json().catch(() => ({}))
         setError(errData.detail || 'Falha ao logar com o Google.')
@@ -194,7 +199,13 @@ function RegisterForm() {
           sameSite: 'strict'
         })
         login(email)
-        router.push('/app')
+        console.log("[REGISTER] Resposta do login automático, is_new_user =", data.is_new_user)
+        if (data.is_new_user) {
+          localStorage.setItem('is_new_user', 'true')
+          router.push('/onboarding')
+        } else {
+          router.push('/app')
+        }
       } else {
         // Se falhar o login automático, atira para a tela de login
         router.push('/login')

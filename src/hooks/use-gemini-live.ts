@@ -140,8 +140,10 @@ export function useGeminiLive() {
   const lastUserTranscriptRef = useRef<string>("");
   const liveConversationIdRef = useRef<string | null>(null);
   const hasSyncedLiveConversationRef = useRef(false);
-  const voiceSessionIdRef = useRef<string | null>(null);
+  const initialMessageRef = useRef<string | null>(null);
+  const waitingForInitialTurnRef = useRef(false);
   const hasChargedVoiceSessionRef = useRef(false);
+  const voiceSessionIdRef = useRef<string | null>(null);
 
   const { isSharing, stream } = useScreenShare();
 
@@ -245,6 +247,7 @@ export function useGeminiLive() {
       liveStateListeners.delete(listener);
     };
   }, []);
+
 
   const captureAndSendFrame = useCallback(() => {
     const now = Date.now();
@@ -391,6 +394,8 @@ export function useGeminiLive() {
         audioRecorderRef.current?.stop();
         audioRecorderRef.current = new AudioRecorder(
           (base64) => {
+            // Se ainda esperando pela 1ª resposta da IA (boas-vindas), não envia áudio do microfone
+            if (waitingForInitialTurnRef.current) return;
             if (activeSessionIdRef.current === sessionId && wsRef.current?.readyState === WebSocket.OPEN) {
               wsRef.current.send(JSON.stringify({
                 realtimeInput: { audio: { mimeType: "audio/l16;rate=16000", data: base64 } }
@@ -408,6 +413,19 @@ export function useGeminiLive() {
           console.log("[Gemini Live] Tentando iniciar gravação de áudio...");
           await audioRecorderRef.current.start();
           console.log("[Gemini Live] Gravação de áudio iniciada com sucesso.");
+          
+          if (initialMessageRef.current && activeSessionIdRef.current === sessionId && wsRef.current?.readyState === WebSocket.OPEN) {
+            waitingForInitialTurnRef.current = true; // bloqueia microfone até IA terminar
+            wsRef.current.send(JSON.stringify({
+              clientContent: {
+                turns: [{ role: "user", parts: [{ text: initialMessageRef.current }] }],
+                turnComplete: true
+              }
+            }));
+            console.log("[Gemini Live] Mensagem inicial enviada.");
+            initialMessageRef.current = null;
+          }
+
           if (activeSessionIdRef.current !== sessionId) {
             console.log("[Gemini Live] Sessão mudou durante a inicialização do áudio. Parando.");
             audioRecorderRef.current?.stop();
@@ -510,6 +528,11 @@ export function useGeminiLive() {
         }
 
         if (serverContent.turn_complete || serverContent.turnComplete) {
+          // Se estava aguardando o término das boas-vindas, agora libera o microfone
+          if (waitingForInitialTurnRef.current) {
+            waitingForInitialTurnRef.current = false;
+            console.log("[Gemini Live] Boas-vindas concluídas. Microfone desbloqueado.");
+          }
           if (currentUserMessageIdRef.current && currentUserTranscriptRef.current) {
             persistLiveMessage(currentUserMessageIdRef.current, 'user', currentUserTranscriptRef.current, true);
           } else if (lastUserMessageIdRef.current && lastUserTranscriptRef.current) {
@@ -536,7 +559,7 @@ export function useGeminiLive() {
     }
   }, [addMessage, captureAndSendFrame, markAssistantActivity, persistLiveMessage, stopSession]);
 
-  const startSession = useCallback(async () => {
+  const startSession = useCallback(async (initialMessage?: string) => {
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
     if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
@@ -569,6 +592,8 @@ export function useGeminiLive() {
     hasSyncedLiveConversationRef.current = Boolean(activeConversationId);
     lastUserMessageIdRef.current = null;
     lastUserTranscriptRef.current = "";
+    initialMessageRef.current = initialMessage || null;
+    waitingForInitialTurnRef.current = false;
     activeLiveOwner = liveOwnerRef.current;
     stopActiveGeminiLiveSession = stopSession;
     const sessionId = activeSessionIdRef.current + 1;

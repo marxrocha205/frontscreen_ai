@@ -57,7 +57,12 @@ export default function LoginPage() {
         }
 
         login(userEmail)
-        window.location.href = '/app'
+        if (data.is_new_user) {
+          localStorage.setItem('is_new_user', 'true')
+          window.location.href = '/onboarding'
+        } else {
+          window.location.href = '/app'
+        }
       } else {
         const errData = await res.json().catch(() => ({}))
         setError(errData.detail || 'Falha ao logar com o Google.')
@@ -101,7 +106,12 @@ export default function LoginPage() {
   })
         
         login(email)
-        window.location.href = '/app'
+        if (data.is_new_user) {
+          localStorage.setItem('is_new_user', 'true')
+          router.push('/onboarding')
+        } else {
+          router.push('/app')
+        }
       } else {
         const errData = await response.json()
         setError(errData.detail || 'Email ou senha incorretos.')
