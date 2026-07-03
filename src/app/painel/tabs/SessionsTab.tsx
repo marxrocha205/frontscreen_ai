@@ -15,7 +15,7 @@ interface SessionData {
 }
 
 interface ChatMessage {
-  id: str
+  id: string
   role: 'user' | 'assistant' | 'system'
   content: string
   model: string | null
