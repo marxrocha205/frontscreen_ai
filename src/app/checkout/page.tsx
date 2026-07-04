@@ -657,6 +657,31 @@ function CheckoutContent() {
     }
   }, [hasHydrated, language, currency])
 
+  // Polling for PIX payment success
+  useEffect(() => {
+    let interval: NodeJS.Timeout
+    if (pixData) {
+      interval = setInterval(async () => {
+        try {
+          const token = localStorage.getItem('access_token')
+          const res = await fetch(`${config.apiUrl}/api/users/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          if (res.ok) {
+            const data = await res.json()
+            if (data.plan_id === selectedPlan.id) {
+              clearInterval(interval)
+              router.push(`/success?plan=${selectedPlan.id}`)
+            }
+          }
+        } catch (e) {
+          console.error("Erro no polling de pagamento PIX:", e)
+        }
+      }, 3000)
+    }
+    return () => clearInterval(interval)
+  }, [pixData, selectedPlan.id, router])
+
   const handleCepChange = async (e: React.ChangeEvent<HTMLInputElement>, formType: 'pix' | 'card' = 'pix') => {
     const masked = maskCEP(e.target.value)
     const cep = masked.replace(/\D/g, '')

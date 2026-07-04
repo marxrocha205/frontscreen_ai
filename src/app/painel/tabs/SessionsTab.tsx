@@ -173,7 +173,7 @@ export function SessionsTab() {
       </Card>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-3xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-3xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl max-h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="text-2xl flex items-center gap-2">
               <MessageSquare className="text-indigo-400 w-6 h-6" /> 
@@ -187,7 +187,7 @@ export function SessionsTab() {
           {loadingDetails ? (
             <div className="flex h-40 w-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-zinc-500" /></div>
           ) : (
-            <ScrollArea className="flex-1 mt-4 pr-4">
+            <div className="flex-1 mt-4 pr-4 overflow-y-auto custom-scrollbar">
               <div className="space-y-4 pb-4">
                 {sessionMessages.length === 0 ? (
                   <p className="text-center text-sm text-zinc-500 py-8">Nenhuma mensagem encontrada nesta sessão.</p>
@@ -223,7 +223,7 @@ export function SessionsTab() {
                   ))
                 )}
               </div>
-            </ScrollArea>
+            </div>
           )}
         </DialogContent>
       </Dialog>

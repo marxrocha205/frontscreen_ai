@@ -336,6 +336,7 @@ export function ChatInterface() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
   const [welcomeStep, setWelcomeStep] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -767,8 +768,52 @@ export function ChatInterface() {
     setIsModelsDialogOpen(false)
     setIsAgentsDialogOpen(true)
   }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.types.includes('Files')) {
+      setIsDragging(true);
+    }
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setSelectedFile(e.dataTransfer.files[0]);
+    }
+  }
+
   return (
-    <div className="relative h-full w-full overflow-hidden bg-[#0a0a0a]">
+    <div 
+      className="relative h-full w-full overflow-hidden bg-[#0a0a0a]"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm border-2 border-dashed border-zinc-500 rounded-xl m-2 pointer-events-none">
+          <div className="text-center p-8 bg-[#1a1a1a]/95 rounded-2xl shadow-2xl">
+            <FileUp className="w-12 h-12 text-zinc-400 mx-auto mb-4 animate-bounce" />
+            <h3 className="text-xl font-semibold text-white mb-2">
+              {language === 'pt-BR' ? 'Solte o arquivo aqui' : 'Drop your file here'}
+            </h3>
+            <p className="text-zinc-400">
+              {language === 'pt-BR' ? 'Anexe documentos, imagens ou planilhas' : 'Attach documents, images or spreadsheets'}
+            </p>
+          </div>
+        </div>
+      )}
       <LoginPromptDialog open={showLoginPrompt} onOpenChange={setShowLoginPrompt} />
       <UpgradePlanDialog open={isUpgradeDialogOpen} onOpenChange={setIsUpgradeDialogOpen} message={upgradeDialogMessage} ctaLabel={language === 'pt-BR' ? 'Continuar com Pro' : 'Continue with Pro'} />
 
@@ -1470,9 +1515,7 @@ export function ChatInterface() {
           <div id="tour-input-bar" className="pointer-events-auto bg-[#1e1e1e] border border-zinc-800/80 rounded-[28px] px-1.5 pt-1.5 pb-1 shadow-2xl relative flex flex-col gap-1">
             {selectedFile && (
               <div className="absolute -top-14 left-4 bg-[#2a2a2a] border border-zinc-700/80 rounded-xl px-3 py-2 flex items-center gap-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
-                <div className="bg-indigo-500/20 p-1.5 rounded-lg">
-                  <FileUp className="w-4 h-4 text-indigo-400" />
-                </div>
+                <FileUp className="w-4 h-4 text-zinc-400" />
                 <span className="text-sm font-medium text-zinc-200 max-w-[180px] truncate">
                   {selectedFile.name}
                 </span>
@@ -1516,6 +1559,12 @@ export function ChatInterface() {
                   <textarea
                   ref={textareaRef}
                   value={inputValue}
+                  onPaste={e => {
+                    if (e.clipboardData.files && e.clipboardData.files.length > 0) {
+                      e.preventDefault();
+                      setSelectedFile(e.clipboardData.files[0]);
+                    }
+                  }}
                   onChange={e => {
                     setInputValue(e.target.value);
                     e.target.style.height = 'auto'; // Reseta a altura
