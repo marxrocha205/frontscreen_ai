@@ -116,7 +116,7 @@ export default function PricingPage() {
   const { language } = useI18n()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
   const [isNavigating, setIsNavigating] = useState(false)
-  const [isAnnual, setIsAnnual] = useState(true)
+  const [isAnnual, setIsAnnual] = useState(false)
   const planDetails = getProPlan(language)
 
   useEffect(() => {
