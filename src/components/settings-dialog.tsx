@@ -122,7 +122,14 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
                    )}
                  </div>
 
-                 <div className="p-3 border-t border-zinc-800/50">
+                 <div className="p-3 border-t border-zinc-800/50 flex flex-col gap-3">
+                    <Button 
+                      onClick={() => router.push('/settings')} 
+                      className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
+                    >
+                       <SettingsIcon className="w-4 h-4 mr-2" />
+                       {language === 'pt-BR' ? 'Configurar Perfil' : 'Profile Settings'}
+                    </Button>
                     <Button onClick={logout} variant="outline" className="w-full border-zinc-800 text-red-400 hover:bg-red-950/20">
                        {language === 'pt-BR' ? 'Sair da Conta' : 'Log Out'}
                     </Button>
