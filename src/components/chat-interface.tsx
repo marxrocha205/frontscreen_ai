@@ -76,7 +76,7 @@ import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, Check, Sparkles, Image as ImageIcon, Video, Copy, Download, MonitorUp } from 'lucide-react'
+import { Mic, Navigation, Plus, FileUp, X, AudioLines, Pencil, Square, ChevronRight, ChevronDown, Check, Sparkles, Image as ImageIcon, Video, Copy, Download, MonitorUp } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useGeminiLive } from '@/hooks/use-gemini-live'
@@ -1606,22 +1606,22 @@ export function ChatInterface() {
                 {/* Agent Selector Button */}
                 <button
                   onClick={() => setIsAgentsDialogOpen(true)}
-                  className="flex items-center gap-1 bg-transparent hover:bg-white/10 border border-white/20 rounded-full pl-2.5 pr-2 py-1 text-xs text-white transition-colors shadow-sm select-none cursor-pointer font-semibold text-[11px]"
+                  className="flex items-center gap-1 bg-transparent hover:bg-white/5 rounded-lg px-2 py-1 text-zinc-400 hover:text-zinc-200 transition-colors select-none cursor-pointer font-medium"
                 >
-                  <span className="leading-none">Assistentes</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                  <span className="leading-none text-[12px]">{language === 'pt-BR' ? 'Assistentes' : 'Agents'}</span>
+                  <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
                 </button>
 
                 {/* AI Model Selector Button (Only visible if NOT empty chat) */}
                 {!isEmptyChat && (
                   <button
                     onClick={() => setIsModelsDialogOpen(true)}
-                    className="flex items-center gap-1 bg-transparent hover:bg-white/10 border border-white/20 rounded-full pl-2.5 pr-2 py-1 text-xs text-white transition-colors shadow-sm select-none cursor-pointer"
+                    className="flex items-center gap-1 bg-transparent hover:bg-white/5 rounded-lg px-2 py-1 text-zinc-400 hover:text-zinc-200 transition-colors select-none cursor-pointer font-medium"
                   >
-                    <span className="font-semibold text-[11px] leading-none">
+                    <span className="leading-none text-[12px]">
                       {modelDescriptions[selectedModel]?.title || AI_MODELS.find(m => m.id === selectedModel)?.label || 'ScreenAI'}
                     </span>
-                    <ChevronRight className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                    <ChevronDown className="w-3.5 h-3.5 opacity-50 shrink-0" />
                   </button>
                 )}
               </div>

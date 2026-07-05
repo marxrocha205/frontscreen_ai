@@ -12,25 +12,25 @@ import { config } from '@/lib/config'
 export default function ProfileSettingsPage() {
   const { t, language } = useI18n()
   const { user } = useAuth()
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [showSuccessToast, setShowSuccessToast] = useState(false)
-  
+
   // State
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [picture, setPicture] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  
+
   // Passwords
   const [isEditingPassword, setIsEditingPassword] = useState(false)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  
+
   const [initialState, setInitialState] = useState({
     firstName: '',
     lastName: '',
@@ -43,12 +43,12 @@ export default function ProfileSettingsPage() {
     const last = localStorage.getItem('user_last_name') || ''
     const pic = localStorage.getItem('user_picture') || ''
     const ph = localStorage.getItem('user_phone') || ''
-    
+
     setFirstName(first)
     setLastName(last)
     setPicture(pic)
     setPhone(ph)
-    
+
     setInitialState({
       firstName: first,
       lastName: last,
@@ -69,7 +69,7 @@ export default function ProfileSettingsPage() {
   const initialAvatar = firstName ? `${firstName.charAt(0)}${lastName ? lastName.charAt(0) : ''}`.toUpperCase() : 'US'
 
   // Check if anything changed to enable save button
-  const hasChanges = 
+  const hasChanges =
     (firstName !== initialState.firstName) ||
     (lastName !== initialState.lastName) ||
     (phone !== initialState.phone) ||
@@ -79,7 +79,7 @@ export default function ProfileSettingsPage() {
     if (!hasChanges) return
     setIsSaving(true)
     setPasswordError('')
-    
+
     try {
       // Handle password change if filled
       if (currentPassword && newPassword && confirmPassword === newPassword) {
@@ -111,20 +111,20 @@ export default function ProfileSettingsPage() {
         localStorage.setItem('user_first_name', firstName)
         localStorage.setItem('user_last_name', lastName)
         localStorage.setItem('user_phone', phone)
-        
+
         setInitialState({
           firstName,
           lastName,
           phone
         })
-        
+
         // Dispatch event to update layout header
         window.dispatchEvent(new Event('storage'))
       }
-      
+
       setShowSuccessToast(true)
       setTimeout(() => setShowSuccessToast(false), 3000)
-      
+
       // Reset password fields if they were used
       setCurrentPassword('')
       setNewPassword('')
@@ -158,21 +158,21 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-500 pb-20">
-      
+
       {/* Header Section */}
       <div className="mb-12">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2">
           {language === 'pt-BR' ? 'Configurar Perfil' : 'Profile Settings'}
         </h2>
         <p className="text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed">
-          {language === 'pt-BR' 
+          {language === 'pt-BR'
             ? 'Gerencie suas informações pessoais e credenciais de acesso.'
             : 'Manage your personal information and access credentials.'}
         </p>
       </div>
 
       <div className="flex flex-col xl:flex-row gap-12 xl:gap-20">
-        
+
         {/* Left Column: Avatar */}
         <div className="flex-shrink-0 flex flex-col items-start xl:items-center">
           <div className="relative">
@@ -186,17 +186,17 @@ export default function ProfileSettingsPage() {
                 </div>
               )}
             </div>
-            
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
+
+            <input
+              type="file"
+              ref={fileInputRef}
+              className="hidden"
               accept="image/*"
               onChange={handleFileChange}
             />
           </div>
-          
-          <button 
+
+          <button
             onClick={handleImageClick}
             className="mt-5 text-[15px] text-zinc-300 hover:text-white underline underline-offset-4 transition-colors"
           >
@@ -206,16 +206,16 @@ export default function ProfileSettingsPage() {
 
         {/* Right Column: Forms */}
         <div className="flex-1 max-w-2xl">
-          
+
           <div className="space-y-8">
-            
+
             {/* Name and Last Name */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="firstName" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   {language === 'pt-BR' ? 'Nome' : 'First Name'}
                 </Label>
-                <Input 
+                <Input
                   id="firstName"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
@@ -227,7 +227,7 @@ export default function ProfileSettingsPage() {
                 <Label htmlFor="lastName" className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
                   {language === 'pt-BR' ? 'Sobrenome' : 'Last Name'}
                 </Label>
-                <Input 
+                <Input
                   id="lastName"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
@@ -270,7 +270,7 @@ export default function ProfileSettingsPage() {
                     </span>
                     <div className="relative">
                       <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <Input 
+                      <Input
                         disabled
                         type="password"
                         value="••••••••••••••"
@@ -278,7 +278,7 @@ export default function ProfileSettingsPage() {
                       />
                     </div>
                   </div>
-                  <button 
+                  <button
                     onClick={() => setIsEditingPassword(true)}
                     className="text-[15px] font-medium text-indigo-500 hover:text-indigo-400 transition-colors text-left"
                   >
@@ -291,7 +291,7 @@ export default function ProfileSettingsPage() {
                     <h3 className="text-sm font-semibold text-zinc-200">
                       {language === 'pt-BR' ? 'Alterar Senha' : 'Change Password'}
                     </h3>
-                    <button 
+                    <button
                       onClick={() => {
                         setIsEditingPassword(false)
                         setCurrentPassword('')
@@ -310,7 +310,7 @@ export default function ProfileSettingsPage() {
                     </Label>
                     <div className="relative">
                       <Lock className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                      <Input 
+                      <Input
                         id="currentPass"
                         type="password"
                         value={currentPassword}
@@ -319,13 +319,13 @@ export default function ProfileSettingsPage() {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-2">
                       <Label htmlFor="newPass" className="text-xs font-semibold text-zinc-400">
                         {language === 'pt-BR' ? 'Nova Senha' : 'New Password'}
                       </Label>
-                      <Input 
+                      <Input
                         id="newPass"
                         type="password"
                         value={newPassword}
@@ -337,16 +337,15 @@ export default function ProfileSettingsPage() {
                       <Label htmlFor="confirmPass" className="text-xs font-semibold text-zinc-400">
                         {language === 'pt-BR' ? 'Confirmar Nova Senha' : 'Confirm New Password'}
                       </Label>
-                      <Input 
+                      <Input
                         id="confirmPass"
                         type="password"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        className={`bg-zinc-950/50 border-zinc-800 h-11 text-zinc-100 focus-visible:ring-1 transition-all rounded-lg ${
-                          confirmPassword.length > 0 && confirmPassword !== newPassword 
-                          ? 'border-rose-500/50 focus-visible:ring-rose-500/50 focus-visible:border-rose-500' 
-                          : 'focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500'
-                        }`}
+                        className={`bg-zinc-950/50 border-zinc-800 h-11 text-zinc-100 focus-visible:ring-1 transition-all rounded-lg ${confirmPassword.length > 0 && confirmPassword !== newPassword
+                            ? 'border-rose-500/50 focus-visible:ring-rose-500/50 focus-visible:border-rose-500'
+                            : 'focus-visible:ring-indigo-500/50 focus-visible:border-indigo-500'
+                          }`}
                       />
                       {confirmPassword.length > 0 && confirmPassword !== newPassword && (
                         <p className="text-[11px] text-rose-400 mt-1 font-medium">
@@ -368,38 +367,38 @@ export default function ProfileSettingsPage() {
 
           {/* Action Footer */}
           <div className="pt-10 pb-10 flex items-center justify-between">
-             <div className="h-10 flex items-center">
-               {showSuccessToast && (
-                 <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium animate-in slide-in-from-left-4 fade-in duration-300">
-                   <CheckCircle2 className="w-4 h-4" />
-                   {language === 'pt-BR' ? 'Alterações salvas com sucesso!' : 'Changes saved successfully!'}
-                 </div>
-               )}
-             </div>
-             
-             <Button
-               onClick={handleSave}
-               disabled={!hasChanges || isSaving}
-               className={`
+            <div className="h-10 flex items-center">
+              {showSuccessToast && (
+                <div className="flex items-center gap-2 text-emerald-400 text-sm font-medium animate-in slide-in-from-left-4 fade-in duration-300">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {language === 'pt-BR' ? 'Alterações salvas com sucesso!' : 'Changes saved successfully!'}
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={handleSave}
+              disabled={!hasChanges || isSaving}
+              className={`
                  h-12 px-8 rounded-full font-bold shadow-lg transition-all duration-300
-                 ${hasChanges 
-                   ? 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-indigo-500/25 hover:-translate-y-0.5' 
-                   : 'bg-zinc-800/50 text-zinc-500 cursor-not-allowed shadow-none'
-                 }
+                 ${hasChanges
+                  ? 'bg-indigo-600 text-white hover:bg-indigo-500 hover:shadow-indigo-500/25 hover:-translate-y-0.5'
+                  : 'bg-zinc-800/50 text-zinc-500 cursor-not-allowed shadow-none'
+                }
                `}
-             >
-               {isSaving ? (
-                 <>
-                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                   {language === 'pt-BR' ? 'Salvando...' : 'Saving...'}
-                 </>
-               ) : (
-                 <>
-                   <Save className="w-4 h-4 mr-2" />
-                   {language === 'pt-BR' ? 'Salvar alterações' : 'Save changes'}
-                 </>
-               )}
-             </Button>
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  {language === 'pt-BR' ? 'Salvando...' : 'Saving...'}
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  {language === 'pt-BR' ? 'Salvar alterações' : 'Save changes'}
+                </>
+              )}
+            </Button>
           </div>
 
         </div>
