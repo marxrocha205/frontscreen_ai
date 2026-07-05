@@ -142,17 +142,43 @@ export default function ProfileSettingsPage() {
     fileInputRef.current?.click()
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      // Pré-visualização imediata
       const reader = new FileReader()
       reader.onload = (event) => {
-        const result = event.target?.result as string
-        setPicture(result)
-        localStorage.setItem('user_picture', result)
-        window.dispatchEvent(new Event('storage'))
+        setPicture(event.target?.result as string)
       }
       reader.readAsDataURL(file)
+
+      // Upload real para o backend
+      const token = localStorage.getItem('access_token')
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      try {
+        const response = await fetch(`${config.apiUrl}/auth/profile/picture`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          if (data.profile_picture_url) {
+             const baseUrl = config.apiUrl.replace(/\/api$/, '')
+             const fullUrl = `${baseUrl}${data.profile_picture_url}`
+             setPicture(fullUrl)
+             localStorage.setItem('user_picture', fullUrl)
+             window.dispatchEvent(new Event('storage'))
+          }
+        }
+      } catch (err) {
+        console.error("Erro no upload da imagem:", err)
+      }
     }
   }
 

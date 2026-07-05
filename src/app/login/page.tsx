@@ -120,6 +120,10 @@ export default function LoginPage() {
         const data = await response.json()
         // Guarda o token para o WebSocket usar depois
         localStorage.setItem('access_token', data.access_token)
+        if (data.profile_picture_url) {
+          const baseUrl = config.apiUrl.replace(/\/api$/, '')
+          localStorage.setItem('user_picture', `${baseUrl}${data.profile_picture_url}`)
+        }
         Cookies.set('access_token', data.access_token, { 
     expires: 7, // 7 dias (alinhar com o backend)
     secure: process.env.NODE_ENV === 'production',
