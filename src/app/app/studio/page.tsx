@@ -9,12 +9,14 @@ import {
   ChevronDown,
   ArrowRight,
   Plus,
-  Flower2
+  Flower2,
+  ArrowLeft
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '@/hooks/use-auth'
 import { useI18n } from '@/context/i18n-context'
 import { config } from '@/lib/config'
+import { useRouter } from 'next/navigation'
 
 type AspectRatio = '16:9' | '4:3' | '1:1' | '3:4' | '9:16'
 type TabType = 'image' | 'video' | 'frames' | 'ingredients'
@@ -35,6 +37,7 @@ const VIDEO_MODELS = ['Veo 3.1 - Lite', 'Veo 3.1 - Fast', 'Veo 3.1 - Quality']
 function StudioContent() {
   const { language } = useI18n()
   const { isLoggedIn, syncFromStorage } = useAuth()
+  const router = useRouter()
   
   // Settings State
   const [prompt, setPrompt] = useState('')
@@ -147,7 +150,32 @@ function StudioContent() {
     <div className="flex flex-col h-full w-full bg-[#050505] text-zinc-100 overflow-hidden relative font-sans">
       
       {/* BACKGROUND AREA (Masonry Grid or Empty State) */}
-      <div className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-40 px-6">
+      <div className="flex-1 overflow-y-auto w-full custom-scrollbar pt-6 pb-40 px-6 md:px-12">
+        
+        {/* Header Section (Same style as Settings) */}
+        <div className="mb-10 flex flex-col gap-6">
+          <button
+            onClick={() => router.push('/app')}
+            className="flex items-center gap-2 text-[15px] font-semibold text-zinc-400 hover:text-white transition-colors w-fit"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            {language === 'pt-BR' ? 'Voltar para o Chat' : 'Back to Chat'}
+          </button>
+          
+          <div>
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+              ScreenAI Studio
+              <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-bold uppercase tracking-widest translate-y-[2px]">
+                Beta
+              </span>
+            </h2>
+            <p className="text-zinc-400 text-sm md:text-base max-w-xl leading-relaxed">
+              {language === 'pt-BR' 
+                ? 'Gere imagens e vídeos avançados usando nossos modelos de estúdio.'
+                : 'Generate advanced images and videos using our studio models.'}
+            </p>
+          </div>
+        </div>
         
         {history.length === 0 ? (
           // Empty State

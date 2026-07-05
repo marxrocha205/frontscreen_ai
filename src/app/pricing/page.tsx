@@ -160,20 +160,25 @@ export default function PricingPage() {
       )}
 
       {/* Header */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/50 sticky top-0 bg-black/80 backdrop-blur-xl z-50">
-        <Link href="/app" className="block hover:opacity-80 transition-opacity">
+      <nav className="flex items-center justify-between px-6 md:px-8 py-5 border-b border-zinc-800/50 sticky top-0 bg-black/80 backdrop-blur-xl z-50">
+        
+        {/* Espaçador esquerdo apenas no desktop para centralizar a logo perfeitamente */}
+        <div className="hidden md:block md:flex-1" />
+
+        <Link href="/app" className="block hover:opacity-80 transition-opacity flex-shrink-0">
           <Image
-            src="/logobranco-semfundo.png"
+            src="/logo-name-bg.png"
             alt="ScreenAI Logo"
-            width={70}
-            height={32}
-            style={{ height: 'auto' }}
-            className="object-contain"
+            width={130}
+            height={28}
+            className="object-contain h-6 md:h-7 w-auto"
+            priority
           />
         </Link>
-        <div className="flex items-center gap-3">
+        
+        <div className="flex items-center justify-end gap-3 md:flex-1">
           {hasHydrated && isLoggedIn ? (
-            <Link href="/app" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            <Link href="/app" className="text-sm font-medium text-zinc-400 hover:text-white transition-colors">
               {language === 'pt-BR' ? 'Voltar ao App' : 'Back to App'}
             </Link>
           ) : (
