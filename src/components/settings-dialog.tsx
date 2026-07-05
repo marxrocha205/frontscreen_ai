@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
-import { Mic, User } from 'lucide-react'
+import { Mic, User, Settings as SettingsIcon } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
 
