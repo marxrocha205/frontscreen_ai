@@ -37,7 +37,9 @@ const getEmailFromToken = (token: string) => {
   try {
     const payload = token.split('.')[1]
     const decoded = JSON.parse(window.atob(payload.replace(/-/g, '+').replace(/_/g, '/')))
-    return typeof decoded.email === 'string' ? decoded.email : ''
+    return typeof decoded.email === 'string' && decoded.email 
+      ? decoded.email 
+      : (typeof decoded.sub === 'string' ? decoded.sub : '')
   } catch {
     return ''
   }
