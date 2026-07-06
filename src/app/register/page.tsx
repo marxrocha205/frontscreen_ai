@@ -63,8 +63,6 @@ function RegisterForm() {
 
       if (res.ok) {
         const data = await res.json()
-        console.log('[REGISTER GOOGLE] Resposta da API:', data)
-        console.log('[REGISTER GOOGLE] is_new_user:', data.is_new_user)
         localStorage.setItem('access_token', data.access_token)
         Cookies.set('access_token', data.access_token, {
           expires: 7,
@@ -81,13 +79,11 @@ function RegisterForm() {
         }
 
         login(userEmail)
-        console.log('[REGISTER GOOGLE] email:', userEmail)
-        if (data.is_new_user) {
-          console.log('[REGISTER GOOGLE] → Redirecionando para /onboarding')
+        const isMobile = window.innerWidth < 768
+        if (data.is_new_user && !isMobile) {
           localStorage.setItem('is_new_user', 'true')
           window.location.href = '/onboarding'
         } else {
-          console.log('[REGISTER GOOGLE] → Redirecionando para /app')
           window.location.href = '/app'
         }
       } else {
@@ -197,8 +193,6 @@ function RegisterForm() {
 
       if (loginRes.ok) {
         const data = await loginRes.json()
-        console.log('[REGISTER EMAIL] Login automático - Resposta da API:', data)
-        console.log('[REGISTER EMAIL] is_new_user:', data.is_new_user)
         localStorage.setItem('access_token', data.access_token)
         Cookies.set('access_token', data.access_token, {
           expires: 7,
@@ -206,13 +200,11 @@ function RegisterForm() {
           sameSite: 'strict'
         })
         login(email)
-        console.log('[REGISTER EMAIL] Resposta do login automático, is_new_user =', data.is_new_user)
-        if (data.is_new_user) {
-          console.log('[REGISTER EMAIL] → Redirecionando para /onboarding')
+        const isMobile = window.innerWidth < 768
+        if (data.is_new_user && !isMobile) {
           localStorage.setItem('is_new_user', 'true')
           router.push('/onboarding')
         } else {
-          console.log('[REGISTER EMAIL] → Redirecionando para /app')
           router.push('/app')
         }
       } else {

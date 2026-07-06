@@ -45,8 +45,6 @@ export default function LoginPage() {
 
       if (res.ok) {
         const data = await res.json()
-        console.log('[LOGIN GOOGLE] Resposta da API:', data)
-        console.log('[LOGIN GOOGLE] is_new_user:', data.is_new_user)
         localStorage.setItem('access_token', data.access_token)
         Cookies.set('access_token', data.access_token, { 
           expires: 7,
@@ -75,13 +73,11 @@ export default function LoginPage() {
         }
 
         login(userEmail)
-        console.log('[LOGIN GOOGLE] email:', userEmail)
-        if (data.is_new_user) {
-          console.log('[LOGIN GOOGLE] → Redirecionando para /onboarding')
+        const isMobile = window.innerWidth < 768
+        if (data.is_new_user && !isMobile) {
           localStorage.setItem('is_new_user', 'true')
           window.location.href = '/onboarding'
         } else {
-          console.log('[LOGIN GOOGLE] → Redirecionando para /app')
           window.location.href = '/app'
         }
       } else {
@@ -131,15 +127,11 @@ export default function LoginPage() {
   })
         
         login(email)
-        console.log('[LOGIN] Resposta da API:', data)
-        console.log('[LOGIN] is_new_user:', data.is_new_user)
-        console.log('[LOGIN] full_name no token (se houver):', data)
-        if (data.is_new_user) {
-          console.log('[LOGIN] → Redirecionando para /onboarding')
+        const isMobile = window.innerWidth < 768
+        if (data.is_new_user && !isMobile) {
           localStorage.setItem('is_new_user', 'true')
           router.push('/onboarding')
         } else {
-          console.log('[LOGIN] → Redirecionando para /app')
           router.push('/app')
         }
       } else {
