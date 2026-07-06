@@ -824,12 +824,12 @@ export function ChatInterface() {
       }}>
         <DialogContent showCloseButton={welcomeStep === 0} className="w-full max-w-[calc(100%-2rem)] sm:max-w-[90vw] md:max-w-[85vw] lg:max-w-[960px] max-h-[90vh] overflow-hidden flex flex-col bg-zinc-950/95 backdrop-blur-xl border border-zinc-800/80 text-zinc-100 p-4 md:p-6 rounded-2xl shadow-2xl focus:outline-none pointer-events-auto">
           {welcomeStep === 2 ? (
-            <div className="flex flex-col items-center justify-center p-4 md:p-8 space-y-8 animate-in fade-in zoom-in-95 duration-500">
-              <div className="text-center space-y-3">
-                <h2 className="text-2xl md:text-3xl font-bold text-white tracking-tight">
+            <div className="flex flex-col items-center justify-start md:justify-center p-2 sm:p-4 md:p-8 space-y-4 md:space-y-8 animate-in fade-in zoom-in-95 duration-500 overflow-y-auto custom-scrollbar w-full h-full max-h-full">
+              <div className="text-center space-y-2 md:space-y-3 mt-2 md:mt-0">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-white tracking-tight">
                   {language === 'pt-BR' ? 'Compartilhe a sua tela' : 'Share your screen'}
                 </h2>
-                <p className="text-zinc-400 text-sm md:text-base max-w-md mx-auto">
+                <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-md mx-auto">
                   {language === 'pt-BR' ? 'Para ver e entender o que você está fazendo, a ScreenAI precisa que você compartilhe a sua tela. Lembre-se de confirmar a permissão no topo do navegador após clicar no botão abaixo.' : 'To see and understand what you are doing, ScreenAI needs you to share your screen. Remember to confirm the browser permission after clicking the button below.'}
                 </p>
               </div>
