@@ -19,8 +19,30 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://appscreenai.com'),
   title: "ScreenAI",
-  description: "Your real-time AI screen analysis assistant",
+  description: "Seu assistente de IA para análise de tela em tempo real",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/icon.png', type: 'image/png' },
+    ],
+    apple: [
+      { url: '/icon.png' }
+    ]
+  },
+  openGraph: {
+    title: "ScreenAI",
+    description: "Seu assistente de IA para análise de tela em tempo real",
+    siteName: "ScreenAI",
+    images: [
+      {
+        url: "/icon.png",
+        width: 512,
+        height: 512,
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -63,6 +85,25 @@ export default function RootLayout({
           data-utmify-prevent-xcod-sck
           data-utmify-prevent-subids
         />
+        <Script id="schema-org" type="application/ld+json" strategy="afterInteractive">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "WebSite",
+              "name": "ScreenAI",
+              "url": "https://appscreenai.com",
+              "image": "https://appscreenai.com/icon.png",
+              "publisher": {
+                "@type": "Organization",
+                "name": "ScreenAI",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://appscreenai.com/icon.png"
+                }
+              }
+            }
+          `}
+        </Script>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

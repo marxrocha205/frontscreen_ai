@@ -264,14 +264,14 @@ export default function ProfileSettingsPage() {
             </div>
 
             {/* Email and Phone */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
+            <div className="flex flex-col gap-6 pt-4">
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs font-semibold text-zinc-500 uppercase tracking-wider flex items-center gap-2">
                   <Mail className="w-3.5 h-3.5" />
                   Email
                 </span>
                 <div className="flex items-center gap-3 mt-1">
-                  <span className="text-[15px] font-medium text-zinc-200">{email || (language === 'pt-BR' ? 'Não informado' : 'Not provided')}</span>
+                  <span className="text-[15px] font-medium text-zinc-200 break-all">{email || (language === 'pt-BR' ? 'Não informado' : 'Not provided')}</span>
                 </div>
               </div>
 
