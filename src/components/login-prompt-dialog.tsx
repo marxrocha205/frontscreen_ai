@@ -34,9 +34,9 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md bg-[#121212] border-zinc-800/50 text-zinc-100 p-8 rounded-3xl shadow-2xl backdrop-blur-xl">
         <DialogHeader className="mb-6">
-          <DialogTitle className="text-center text-2xl font-bold tracking-tight bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">Log in or sign up</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-bold tracking-tight bg-gradient-to-b from-white to-zinc-400 bg-clip-text text-transparent">{t('login_prompt.title')}</DialogTitle>
           <p className="text-center text-zinc-400 text-sm mt-3 leading-relaxed">
-            You&apos;ll get smarter responses and can upload files, images, and more.
+            {t('login_prompt.subtitle')}
           </p>
         </DialogHeader>
         
@@ -48,7 +48,7 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
            >
              <div className="flex items-center justify-center gap-3">
                <GoogleIcon />
-               <span>Continue with Google</span>
+               <span>{t('login.google')}</span>
              </div>
            </Button>
            
@@ -59,7 +59,7 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
            >
              <div className="flex items-center justify-center gap-3">
                <Phone className="w-5 h-5 text-zinc-400" />
-               <span>Continue with phone</span>
+               <span>{t('login_prompt.phone')}</span>
              </div>
            </Button>
 
@@ -68,7 +68,7 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
                 <span className="w-full border-t border-zinc-800/60" />
               </div>
               <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-widest">
-                <span className="bg-[#121212] px-4 text-zinc-500">OR</span>
+                <span className="bg-[#121212] px-4 text-zinc-500">{t('login.or')}</span>
               </div>
            </div>
 
@@ -77,11 +77,11 @@ export function LoginPromptDialog({ open, onOpenChange }: { open: boolean, onOpe
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Email address" 
+                placeholder={t('login.email_placeholder')} 
                 className="bg-zinc-900/50 border-zinc-800 h-12 rounded-xl text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700 focus-visible:border-zinc-600 transition-all text-base px-5" 
               />
               <Button onClick={handleContinue} className="w-full bg-white text-black hover:bg-zinc-200 rounded-xl h-12 font-bold transition-all hover:scale-[1.02] active:scale-[0.98]">
-                Continue
+                {t('login.continue')}
               </Button>
            </div>
         </div>

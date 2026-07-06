@@ -10,6 +10,10 @@ export const translations = {
     'login.signup': 'Cadastre-se',
     'login.admin_access': 'Acesso Administrativo',
     
+    'login_prompt.title': 'Entrar ou cadastrar',
+    'login_prompt.subtitle': 'Você receberá respostas mais inteligentes e poderá enviar arquivos, imagens e muito mais.',
+    'login_prompt.phone': 'Continuar com telefone',
+    
     'register.title': 'Crie sua conta',
     'register.subtitle': 'Junte-se ao ScreenAI para começar',
     'register.password_placeholder': 'Digite sua senha',
@@ -85,6 +89,10 @@ export const translations = {
     'login.signup': 'Sign up',
     'login.admin_access': 'Admin Access',
     
+    'login_prompt.title': 'Log in or sign up',
+    'login_prompt.subtitle': 'You\'ll get smarter responses and can upload files, images, and more.',
+    'login_prompt.phone': 'Continue with phone',
+    
     'register.title': 'Create your account',
     'register.subtitle': 'Join ScreenAI to get started',
     'register.password_placeholder': 'Enter your password',
@@ -159,6 +167,10 @@ export const translations = {
     'login.no_account': '¿No tienes cuenta?',
     'login.signup': 'Regístrate',
     'login.admin_access': 'Acceso Administrativo',
+    
+    'login_prompt.title': 'Iniciar sesión o registrarse',
+    'login_prompt.subtitle': 'Obtendrás respuestas más inteligentes y podrás subir archivos, imágenes y más.',
+    'login_prompt.phone': 'Continuar con teléfono',
     
     'register.title': 'Crea tu cuenta',
     'register.subtitle': 'Únete a ScreenAI para empezar',
