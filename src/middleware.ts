@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value
   const { pathname } = request.nextUrl
 
-  const isAdminRoute = pathname.startsWith('/admin')
+  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/painel')
 
   if (!token && isAdminRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
@@ -49,5 +49,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/app/:path*'],
+  matcher: ['/admin/:path*', '/painel/:path*', '/app/:path*'],
 }

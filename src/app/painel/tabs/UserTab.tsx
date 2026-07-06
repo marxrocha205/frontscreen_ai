@@ -116,9 +116,9 @@ export function UsersTab() {
           <CardDescription className="text-zinc-400">Base real de clientes extraídos da base de dados.</CardDescription>
         </CardHeader>
         
-        <CardContent className="flex flex-col flex-1">
-          <div className="rounded-md border border-zinc-800 overflow-hidden flex-1">
-            <table className="w-full text-sm text-left">
+        <CardContent className="flex flex-col flex-1 overflow-hidden p-0 sm:p-6">
+          <div className="rounded-md border border-zinc-800 overflow-x-auto flex-1 w-full">
+            <table className="w-full text-sm text-left min-w-[800px]">
               <thead className="bg-zinc-900 text-zinc-300">
                 <tr>
                   <th className="p-4 font-medium">ID</th>
@@ -162,7 +162,7 @@ export function UsersTab() {
             </table>
           </div>
 
-          <div className="flex items-center justify-between mt-4 text-sm text-zinc-400">
+          <div className="flex flex-col sm:flex-row items-center justify-between mt-4 text-sm text-zinc-400 gap-4 px-4 sm:px-0">
             <div>Mostrando <span className="text-zinc-200">{users.length > 0 ? startIndex + 1 : 0}</span> a <span className="text-zinc-200">{Math.min(endIndex, users.length)}</span> de <span className="text-zinc-200">{users.length}</span></div>
             <div className="flex items-center gap-2">
               <button onClick={goToPrevPage} disabled={currentPage === 1} className="p-2 bg-zinc-900 border border-zinc-800 rounded-md hover:bg-zinc-800 disabled:opacity-50"><ChevronLeft className="h-4 w-4" /></button>
@@ -174,9 +174,9 @@ export function UsersTab() {
       </Card>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-2xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl">
+        <DialogContent className="max-w-2xl bg-[#121212] border-zinc-800 text-zinc-100 p-4 md:p-6 rounded-2xl w-[95vw] sm:w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl flex items-center gap-2"><ScanEye className="text-indigo-400 w-6 h-6" /> Raio-X do Cliente</DialogTitle>
+            <DialogTitle className="text-xl md:text-2xl flex items-center gap-2"><ScanEye className="text-indigo-400 w-5 h-5 md:w-6 md:h-6" /> Raio-X do Cliente</DialogTitle>
             <DialogDescription className="text-zinc-400">
               {userDetails?.user?.full_name && <span className="text-zinc-100 font-medium">{userDetails.user.full_name} &bull; </span>}
               {userDetails?.user?.email}
@@ -188,7 +188,7 @@ export function UsersTab() {
             <div className="space-y-4 mt-2">
               {/* Identidade */}
               {(userDetails.user.full_name || userDetails.user.phone) && (
-                <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-xl grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                   <div>
                     <p className="text-zinc-500 text-xs mb-0.5">Nome completo</p>
                     <p className="text-zinc-100">{userDetails.user.full_name || <span className="text-zinc-600 italic">&mdash;</span>}</p>
@@ -200,7 +200,7 @@ export function UsersTab() {
                 </div>
               )}
               {/* Financeiro */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-emerald-500/10 border border-emerald-500/20 p-4 rounded-xl flex flex-col gap-1">
                   <div className="flex items-center gap-2 text-emerald-400 font-medium mb-2"><DollarSign className="w-5 h-5" /> Receita Gerada (LTV)</div>
                   <span className="text-3xl font-bold text-emerald-300">R$ {userDetails.lifetime_value_brl.toFixed(2)}</span>
