@@ -7,6 +7,7 @@ import { I18nProvider } from "@/context/i18n-context";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import { CookieBanner } from "@/components/cookie-banner";
+import { ClarityInit } from "@/components/clarity-init";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -113,6 +114,7 @@ export default function RootLayout({
               <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ""}>
                 {children}
                 <CookieBanner />
+                <ClarityInit projectId={process.env.NEXT_PUBLIC_CLARITY_PROJECT_ID || ""} />
               </GoogleOAuthProvider>
             </TooltipProvider>
           </I18nProvider>
