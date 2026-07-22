@@ -151,9 +151,9 @@ export function BillingTab() {
                 </CardTitle>
                 <CardDescription className="text-zinc-400">Gerencie saldos, planos e transações reais dos utilizadores.</CardDescription>
             </CardHeader>
-            <CardContent>
-                <div className="rounded-md border border-zinc-800 overflow-hidden">
-                    <table className="w-full text-sm text-left">
+            <CardContent className="p-0 sm:p-6 overflow-hidden">
+                <div className="rounded-md border border-zinc-800 overflow-x-auto w-full">
+                    <table className="w-full text-sm text-left min-w-[700px]">
                         <thead className="bg-zinc-900 text-zinc-300">
                             <tr>
                                 <th className="p-4 font-medium">Utilizador</th>
@@ -184,7 +184,7 @@ export function BillingTab() {
                                             <DialogTrigger render={<Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800" />}>
                                                 Gerir Fundo
                                             </DialogTrigger>
-                                            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 w-[95vw] sm:w-full max-w-lg rounded-2xl p-4 sm:p-6">
                                                 <DialogHeader>
                                                     <DialogTitle>Ajuste Manual de Créditos</DialogTitle>
                                                     <DialogDescription className="text-zinc-400">
@@ -238,7 +238,7 @@ export function BillingTab() {
                                             <DialogTrigger render={<Button variant="outline" size="sm" className="bg-zinc-900 border-zinc-700 text-zinc-300 hover:text-white hover:bg-zinc-800" />}>
                                                 Mudar Plano
                                             </DialogTrigger>
-                                            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100">
+                                            <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 w-[95vw] sm:w-full max-w-lg rounded-2xl p-4 sm:p-6">
                                                 <DialogHeader>
                                                     <DialogTitle>Alterar Plano</DialogTitle>
                                                     <DialogDescription className="text-zinc-400">

@@ -35,7 +35,7 @@ const GEMINI_VOICES = [
 
 export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
   const router = useRouter()
-  const { language, setLanguage } = useI18n()
+  const { t, language, setLanguage } = useI18n()
   const { logout } = useAuth()
   const { userPlan, setIsSidebarOpen } = useChatStore()
   const { voiceType, setVoiceType } = useVoiceConfig()
@@ -71,7 +71,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
         {/* Header & Plan */}
         <div className="p-3 mb-1">
           <div className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-1">
-            {language === 'pt-BR' ? 'Seu Plano' : 'Your Plan'}
+            {t('settings.your_plan')}
           </div>
           <div className="flex items-center justify-between">
             <span className="font-black text-lg bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
@@ -87,7 +87,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
             <div className="absolute inset-0 bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
             <span className="relative z-10 tracking-wide drop-shadow-md flex items-center gap-1.5">
 
-              {language === 'en-US' ? 'Upgrade to Pro' : 'Comprar Plano Pro'}
+              {t('settings.upgrade_pro')}
             </span>
           </button>
         </div>
@@ -106,7 +106,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
             <div className="w-7 h-7 rounded-lg bg-zinc-800/40 group-focus:bg-zinc-700/50 flex items-center justify-center border border-zinc-700/40 group-focus:border-zinc-600/50 transition-colors">
               <SettingsIcon className="h-3.5 w-3.5 text-zinc-400 group-focus:text-zinc-200" />
             </div>
-            {language === 'en-US' ? 'Settings' : 'Configurações da Conta'}
+            {t('settings.account_settings')}
           </DropdownMenuItem>
 
           <DropdownMenuSub>
@@ -115,7 +115,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
                 <div className="w-7 h-7 rounded-lg bg-zinc-800/40 group-focus:bg-zinc-700/50 flex items-center justify-center border border-zinc-700/40 group-focus:border-zinc-600/50 transition-colors">
                   <Mic className="h-3.5 w-3.5 text-zinc-400 group-focus:text-zinc-200" />
                 </div>
-                {language === 'en-US' ? 'Voice Assistant' : 'Voz do Assistente'}
+                {t('settings.voice_assistant_label')}
               </span>
               <ChevronRight className="h-3.5 w-3.5 text-zinc-500 group-focus:text-zinc-400" />
             </DropdownMenuSubTrigger>
@@ -150,7 +150,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
         <div className="px-3 py-3">
           <div className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest mb-3 flex items-center gap-1.5">
             <Globe2 className="h-3 w-3" />
-            {language === 'en-US' ? 'Language' : 'Idioma'}
+            {t('settings.language')}
           </div>
           <div className="flex bg-zinc-900/60 p-1 rounded-xl border border-zinc-800/40 shadow-inner">
             {LANGUAGE_OPTIONS.map(option => (
@@ -180,7 +180,7 @@ export function SettingsSideMenu({ trigger }: { trigger: ReactElement }) {
             <div className="w-7 h-7 rounded-lg bg-red-500/10 group-focus:bg-red-500/20 flex items-center justify-center border border-red-500/20 transition-colors">
               <LogOut className="h-3.5 w-3.5 text-red-400" />
             </div>
-            {language === 'en-US' ? 'Log out' : 'Sair da conta'}
+            {t('settings.logout')}
           </DropdownMenuItem>
         </div>
       </DropdownMenuContent>

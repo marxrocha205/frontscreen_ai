@@ -15,6 +15,7 @@ import { Zap, X, ArrowRight, Sparkles } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import type { Language } from '@/locales'
+import { useI18n } from '@/context/i18n-context'
 
 interface UpsellChatCardProps {
   /** Mensagem contextual gerada pelo backend (suporta Markdown) */
@@ -37,12 +38,12 @@ export function UpsellChatCard({
   language = 'pt-BR',
 }: UpsellChatCardProps) {
   const router = useRouter()
+  const { t } = useI18n()
 
   const handleUpgrade = () => {
     router.push('/pricing')
   }
 
-  const isPtBR = language === 'pt-BR'
 
   // Urgência visual baseada no threshold
   const isUrgent = (remainingCredits ?? threshold ?? 99) <= 2
@@ -73,16 +74,16 @@ export function UpsellChatCard({
               isUrgent ? 'bg-red-400' : isWarning ? 'bg-amber-400' : 'bg-indigo-400'
             }`} />
             {isUrgent
-              ? (isPtBR ? 'Créditos quase esgotados' : 'Credits almost gone')
+              ? t('upsell.credits_almost_gone')
               : isWarning
-              ? (isPtBR ? 'Créditos acabando' : 'Credits running low')
-              : (isPtBR ? 'Oferta especial' : 'Special offer')
+              ? t('upsell.credits_running_low')
+              : t('upsell.special_offer')
             }
           </span>
 
           {remainingCredits !== undefined && (
             <span className="text-[11px] text-zinc-500 font-medium">
-              {remainingCredits} {isPtBR ? 'restantes' : 'remaining'}
+              {remainingCredits} {t('upsell.remaining')}
             </span>
           )}
         </div>
@@ -134,7 +135,7 @@ export function UpsellChatCard({
             }`}
           >
             <Sparkles className="w-3.5 h-3.5" />
-            {isPtBR ? 'Quero o Plano Pro' : 'Get Pro Plan'}
+            {t('upsell.get_pro')}
             <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
           </button>
 
@@ -144,7 +145,7 @@ export function UpsellChatCard({
             className="inline-flex items-center gap-1.5 px-3 py-2.5 rounded-xl text-[12px] font-medium text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/60 transition-all duration-200 border border-transparent hover:border-zinc-700/50"
           >
             <X className="w-3 h-3" />
-            {isPtBR ? 'Agora não' : 'Not now'}
+            {t('upsell.not_now')}
           </button>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useChatStore } from './use-chat-store'
 import { useConversations } from './use-conversations'
 import { config } from '@/lib/config'
 import { useAuth } from './use-auth'
+import { useI18n } from '@/context/i18n-context'
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -23,10 +24,11 @@ export function stopAllAudio() {
 }
 
 function getInterruptedMessage() {
-  if (typeof document !== 'undefined' && document.documentElement.lang !== 'pt-BR') {
-    return 'Response interrupted'
+  if (typeof document !== 'undefined') {
+    const lang = document.documentElement.lang
+    if (lang === 'en-US') return 'Response interrupted'
+    if (lang === 'es-ES') return 'Respuesta interrumpida'
   }
-
   return 'Resposta interrompida'
 }
 
@@ -88,6 +90,7 @@ function markGenerationCancelled() {
 }
 
 export function useWebsocket() {
+  const { t } = useI18n()
   const { messages, isStreaming, addMessage, setIsStreaming, setCredits, setIsUpgradeDialogOpen, setUpgradeDialogMessage, setInlineUpsell } = useChatStore()
   const { isLoggedIn, syncFromStorage } = useAuth()
   const wsRef = useRef<WebSocket | null>(null)
@@ -156,7 +159,7 @@ export function useWebsocket() {
     ws.onclose = (event) => {
       setIsConnected(false)
       if (event.code === 1008) {
-        alert("Sessão Encerrada: A sua conta foi aberta noutro dispositivo.")
+        alert(t('error.session_expired') || "Sessão Encerrada: A sua conta foi aberta noutro dispositivo.")
       }
     }
 
@@ -314,7 +317,7 @@ export function useWebsocket() {
 
         case 'error':
           setIsStreaming(false) // Desliga o loading em caso de erro também
-          if (data.message && data.message.includes('Créditos insuficientes')) {
+          if (data.message && (data.message.includes('Créditos insuficientes') || data.message.includes('Insufficient credits') || data.message.includes('Insufficient'))) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
           } else {
@@ -369,7 +372,7 @@ export function useWebsocket() {
       
       wsRef.current.send(JSON.stringify(finalPayload))
     } else {
-      alert("Aguarde a conexão com o servidor de IA.")
+      alert(t('error.wait_connection') || "Aguarde a conexão com o servidor de IA.")
     }
   }, [addMessage, setIsStreaming])
 

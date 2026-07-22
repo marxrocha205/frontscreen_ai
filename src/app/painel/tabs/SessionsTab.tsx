@@ -133,7 +133,7 @@ export function SessionsTab() {
               {sessions.map((session) => (
                 <div 
                   key={session.session_id} 
-                  className="flex items-center justify-between border border-zinc-800/50 bg-zinc-900/40 p-3 rounded-lg hover:bg-zinc-800/60 transition-colors animate-in slide-in-from-top-2 fade-in duration-300"
+                  className="flex flex-col sm:flex-row sm:items-center justify-between border border-zinc-800/50 bg-zinc-900/40 p-3 rounded-lg hover:bg-zinc-800/60 transition-colors animate-in slide-in-from-top-2 fade-in duration-300 gap-3 sm:gap-0"
                 >
                   <div className="flex items-center gap-3">
                     <div className="h-8 w-8 rounded-full bg-zinc-800 flex items-center justify-center shrink-0">
@@ -148,7 +148,7 @@ export function SessionsTab() {
                       </p>
                     </div>
                   </div>
-                  <div className="text-right shrink-0 flex items-center gap-4">
+                  <div className="flex sm:text-right shrink-0 items-center justify-between sm:justify-end gap-4 w-full sm:w-auto">
                     <div>
                       <span className="text-xs font-mono text-zinc-400 bg-zinc-900 px-2 py-1 rounded-md border border-zinc-800">
                         {new Date(session.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -173,10 +173,10 @@ export function SessionsTab() {
       </Card>
 
       <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-        <DialogContent className="max-w-3xl bg-[#121212] border-zinc-800 text-zinc-100 p-6 rounded-2xl max-h-[85vh] flex flex-col overflow-hidden">
+        <DialogContent className="max-w-3xl bg-[#121212] border-zinc-800 text-zinc-100 p-4 md:p-6 rounded-2xl max-h-[85vh] w-[95vw] sm:w-full flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
-            <DialogTitle className="text-2xl flex items-center gap-2">
-              <MessageSquare className="text-indigo-400 w-6 h-6" /> 
+            <DialogTitle className="text-xl md:text-2xl flex items-center gap-2">
+              <MessageSquare className="text-indigo-400 w-5 h-5 md:w-6 md:h-6" /> 
               Visualização de Chat
             </DialogTitle>
             <DialogDescription className="text-zinc-400">

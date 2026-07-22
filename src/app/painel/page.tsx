@@ -48,9 +48,9 @@ function AdminPageContent() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 md:p-8">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold tracking-tight text-zinc-100 capitalize">
+        <h2 className="text-2xl md:text-3xl font-bold tracking-tight text-zinc-100 capitalize">
           {currentTab.replace('-', ' ')}
         </h2>
         <p className="text-zinc-500 text-sm mt-1">
@@ -71,7 +71,7 @@ function AdminPageContent() {
 export default function AdminPage() {
   return (
     <Suspense fallback={
-      <div className="flex items-center justify-center h-full p-8">
+      <div className="flex items-center justify-center h-full p-4 md:p-8">
         <div className="text-zinc-500 animate-pulse font-medium">Carregando painel...</div>
       </div>
     }>

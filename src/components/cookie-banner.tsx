@@ -4,12 +4,14 @@ import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import Cookies from 'js-cookie'
+import { useI18n } from '@/context/i18n-context'
 
 const COOKIE_CONSENT_KEY = 'screenai_cookie_consent'
 
 type ConsentValue = 'accepted' | 'rejected'
 
 export function CookieBanner() {
+  const { t } = useI18n()
   const [isVisible, setIsVisible] = useState(false)
   const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null)
 
@@ -35,13 +37,12 @@ export function CookieBanner() {
       <div className="pointer-events-auto mx-auto w-full max-w-5xl rounded-2xl border border-white/10 bg-zinc-950/95 shadow-2xl backdrop-blur-xl ring-1 ring-white/5">
         <div className="flex flex-col gap-4 p-4 sm:p-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-2">
-            <h2 className="text-base font-semibold text-white">Usamos cookies</h2>
+            <h2 className="text-base font-semibold text-white">{t('cookie.title')}</h2>
             <p className="max-w-3xl text-sm leading-6 text-zinc-300">
-              Utilizamos cookies essenciais para o funcionamento da plataforma e, com sua permissão, cookies de análise para melhorar a experiência.
-              Você pode aceitar ou recusar o uso não essencial.
+              {t('cookie.description')}
             </p>
             <Link href="/privacy" className="inline-flex text-sm font-medium text-indigo-400 hover:text-indigo-300">
-              Ver política de privacidade
+              {t('cookie.privacy_link')}
             </Link>
           </div>
 
@@ -55,7 +56,7 @@ export function CookieBanner() {
               }}
               onClick={() => handleConsent('rejected')}
             >
-              Recusar
+              {t('cookie.reject')}
             </button>
             <button
               type="button"
@@ -66,7 +67,7 @@ export function CookieBanner() {
               }}
               onClick={() => handleConsent('accepted')}
             >
-              Aceitar
+              {t('cookie.accept')}
             </button>
           </div>
         </div>
