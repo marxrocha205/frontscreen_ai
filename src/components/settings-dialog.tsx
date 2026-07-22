@@ -58,7 +58,7 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
   if (!mounted) return null
 
   const initialTab = defaultTab === 'account' ? 'account' : 'voice'
-  const planName = userPlan || (language === 'pt-BR' ? 'Carregando...' : 'Loading...')
+  const planName = userPlan || t('settings.loading')
   const isFreePlan = (userPlan || '').trim().toLowerCase() === 'free'
 
   return (
@@ -90,7 +90,7 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
                 <Label className="text-xs font-semibold text-zinc-100">{t('settings.voice_assistant')}</Label>
                 <Select value={voiceType} onValueChange={(val) => val && setVoiceType(val)}>
                   <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                    <SelectValue placeholder={language === 'pt-BR' ? "Selecione uma voz" : "Select a voice"} />
+                    <SelectValue placeholder={t('settings.select_voice')} />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false} className="bg-zinc-900 border-zinc-800 text-zinc-100 z-[100]">
                     {GEMINI_VOICES.map((v) => (
@@ -112,12 +112,12 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
                <div className="space-y-4">
                  <div className="rounded-lg border border-zinc-800 bg-zinc-900/40 p-4">
                    <div className="flex justify-between items-center mb-4">
-                     <span className="text-sm font-medium">{language === 'pt-BR' ? 'Plano Atual' : 'Current Plan'}</span>
+                     <span className="text-sm font-medium">{t('settings.current_plan')}</span>
                      <span className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{planName}</span>
                    </div>
                    {isFreePlan && (
                      <Button onClick={() => router.push("/pricing")} className="w-full bg-zinc-200 text-zinc-900 hover:bg-white text-xs font-bold uppercase h-10">
-                       {language === 'pt-BR' ? 'Fazer Upgrade' : 'Upgrade Now'}
+                       {t('settings.upgrade_now')}
                      </Button>
                    )}
                  </div>
@@ -128,10 +128,10 @@ export function SettingsDialog({ trigger, defaultTab = 'voice' }: SettingsDialog
                       className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
                     >
                        <SettingsIcon className="w-4 h-4 mr-2" />
-                       {language === 'pt-BR' ? 'Configurar Perfil' : 'Profile Settings'}
+                       {t('settings.profile_settings')}
                     </Button>
                     <Button onClick={logout} variant="outline" className="w-full border-zinc-800 text-red-400 hover:bg-red-950/20">
-                       {language === 'pt-BR' ? 'Sair da Conta' : 'Log Out'}
+                       {t('settings.logout')}
                     </Button>
                  </div>
                </div>

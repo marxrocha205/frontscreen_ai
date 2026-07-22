@@ -20,7 +20,7 @@ interface GoogleJwtPayload {
 }
 
 const getErrorMessage = (error: unknown) =>
-  error instanceof Error ? error.message : 'Erro inesperado'
+  error instanceof Error ? error.message : ''
 
 function RegisterForm() {
   const { t } = useI18n()
@@ -88,11 +88,11 @@ function RegisterForm() {
         }
       } else {
         const errData = await res.json().catch(() => ({}))
-        setError(errData.detail || 'Falha ao logar com o Google.')
+        setError(errData.detail || t('error.google_login_failed'))
       }
     } catch (err) {
       console.error('Erro no Google Login:', err)
-      setError('Erro ao contactar o servidor para o Google Login.')
+      setError(t('error.google_server'))
     } finally {
       setIsGoogleLoading(false)
     }
@@ -108,7 +108,7 @@ function RegisterForm() {
     if (e) e.preventDefault()
 
     if (!email) {
-      setError('Por favor, preencha o seu e-mail.')
+      setError(t('error.fill_email'))
       return
     }
 
@@ -130,7 +130,7 @@ function RegisterForm() {
         const errorMessage = errData.detail || `Erro no servidor: ${res.status}`
 
         if (res.status === 404) {
-          setError('Atenção: A nova API de envio de código parece não estar no ar (404 Not Found). Confira seu deploy backend!')
+          setError(t('error.send_code_api_404'))
         } else if (res.status === 400 && errorMessage.toLowerCase().includes('registrado')) {
           setStep(2)
           setResendTimer(60)
@@ -141,7 +141,7 @@ function RegisterForm() {
 
     } catch (err: unknown) {
       console.error('Erro ao enviar código:', err)
-      setError('Erro de conexão ao enviar o código.')
+      setError(t('error.send_code_connection'))
     } finally {
       setIsLoading(false)
     }
@@ -151,12 +151,12 @@ function RegisterForm() {
     if (e) e.preventDefault()
 
     if (!password || !verificationCode) {
-      setError('Por favor, preencha a senha e o código de verificação.')
+      setError(t('error.fill_password_code'))
       return
     }
 
     if (verificationCode.length !== 6) {
-      setError('O código de verificação deve ter 6 caracteres.')
+      setError(t('error.code_length'))
       return
     }
 
@@ -177,7 +177,7 @@ function RegisterForm() {
 
       if (!registerRes.ok) {
         const errData = await registerRes.json().catch(() => ({}))
-        throw new Error(errData.detail || 'Erro ao criar conta. Verifique o código e tente novamente.')
+        throw new Error(errData.detail || t('error.create_account_failed'))
       }
 
       // 2. Faz o Login Automático (URL Encoded)
@@ -235,7 +235,7 @@ function RegisterForm() {
         <div className="text-center space-y-2 mb-2">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">{t('register.title')}</h1>
           <p className="text-sm text-zinc-400 max-w-[280px] leading-relaxed mx-auto">
-            {step === 1 ? t('register.subtitle') : 'Verifique o seu e-mail para concluir o cadastro'}
+            {step === 1 ? t('register.subtitle') : t('register.verify_subtitle')}
           </p>
         </div>
 
@@ -250,7 +250,7 @@ function RegisterForm() {
                   <GoogleLogin
                     onSuccess={handleGoogleSuccess}
                     onError={() => {
-                      setError('O cadastro com Google falhou.')
+                      setError(t('error.google_register_failed'))
                     }}
                     useOneTap={false}
                     theme="filled_black"
@@ -264,7 +264,7 @@ function RegisterForm() {
                     <span className="w-full border-t border-zinc-800" />
                   </div>
                   <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-semibold">
-                    <span className="bg-zinc-950 px-3 text-zinc-500">ou cadastre-se com email</span>
+                    <span className="bg-zinc-950 px-3 text-zinc-500">{t('register.separator')}</span>
                   </div>
                 </div>
 
@@ -278,9 +278,9 @@ function RegisterForm() {
                   />
                   <Button type="submit" disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
                     {isLoading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('register.create_account') || 'Enviando...'}</>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('register.continue_email')}</>
                     ) : (
-                      'Continuar com e-mail'
+                      t('register.continue_email')
                     )}
                   </Button>
                 </div>
@@ -291,24 +291,24 @@ function RegisterForm() {
                 <div className="flex items-center text-sm text-zinc-400 mb-2">
                   <button type="button" onClick={() => setStep(1)} className="hover:text-zinc-100 flex items-center transition-colors">
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Voltar para e-mail
+                    {t('register.back_to_email')}
                   </button>
                 </div>
 
                 <div className="space-y-3">
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-zinc-200">Senha</label>
+                    <label className="text-sm font-medium text-zinc-200">{t('register.password_label')}</label>
                     <Input
                       type="password"
                       value={password}
                       onChange={e => setPassword(e.target.value)}
-                      placeholder={t('register.password_placeholder') || 'Sua senha'}
+                      placeholder={t('register.password_placeholder')}
                       className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700"
                     />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-sm font-medium text-zinc-200">Código de Verificação</label>
+                    <label className="text-sm font-medium text-zinc-200">{t('register.verification_label')}</label>
                     <Input
                       type="text"
                       value={verificationCode}
@@ -324,16 +324,16 @@ function RegisterForm() {
                         disabled={resendTimer > 0 || isLoading}
                         className="text-xs text-zinc-400 hover:text-zinc-200 disabled:opacity-50 disabled:hover:text-zinc-400 transition-colors"
                       >
-                        {resendTimer > 0 ? `Aguarde ${resendTimer}s para reenviar` : 'Não recebi o código'}
+                        {resendTimer > 0 ? t('register.resend_wait').replace('{seconds}', String(resendTimer)) : t('register.resend_code')}
                       </button>
                     </div>
                   </div>
 
                   <Button type="submit" disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium mt-4">
                     {isLoading ? (
-                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Criando conta...</>
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('register.creating_account')}</>
                     ) : (
-                      'Criar Conta'
+                      t('register.create_account_btn')
                     )}
                   </Button>
                 </div>
@@ -354,7 +354,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-zinc-950">A carregar...</div>}>
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-zinc-950">Loading...</div>}>
       <RegisterForm />
     </Suspense>
   )

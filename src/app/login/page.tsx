@@ -82,11 +82,11 @@ export default function LoginPage() {
         }
       } else {
         const errData = await res.json().catch(() => ({}))
-        setError(errData.detail || 'Falha ao logar com o Google.')
+        setError(errData.detail || t('error.google_login_failed'))
       }
     } catch (err) {
       console.error('Erro no Google Login:', err)
-      setError('Erro ao contactar o servidor para o Google Login.')
+      setError(t('error.google_server'))
     } finally {
       setIsGoogleLoading(false)
     }
@@ -94,7 +94,7 @@ export default function LoginPage() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Por favor, preencha email e senha.')
+      setError(t('error.fill_email_password'))
       return
     }
 
@@ -136,11 +136,11 @@ export default function LoginPage() {
         }
       } else {
         const errData = await response.json()
-        setError(errData.detail || 'Email ou senha incorretos.')
+        setError(errData.detail || t('error.fill_email_password'))
       }
     } catch (err) {
       console.error('Erro de rede:', err)
-      setError('Erro ao contactar o servidor.')
+      setError(t('error.server_contact'))
     } finally {
       setIsLoading(false)
     }
@@ -187,7 +187,7 @@ export default function LoginPage() {
                 <span className="w-full border-t border-zinc-800" />
               </div>
               <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-semibold">
-                <span className="bg-zinc-950 px-3 text-zinc-500">ou continue com email</span>
+                <span className="bg-zinc-950 px-3 text-zinc-500">{t('login.separator')}</span>
               </div>
             </div>
 
@@ -203,11 +203,11 @@ export default function LoginPage() {
                 type="password" 
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="Sua senha secreta" 
+                placeholder={t('login.password_placeholder')} 
                 className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700" 
               />
               <Button onClick={handleLogin} disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
-                {isLoading ? 'Conectando...' : t('login.continue')}
+                {isLoading ? t('login.connecting') : t('login.continue')}
               </Button>
             </div>
           </CardContent>

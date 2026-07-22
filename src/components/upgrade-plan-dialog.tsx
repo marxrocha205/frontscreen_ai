@@ -4,6 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { Zap, Lock } from 'lucide-react'
+import { useI18n } from '@/context/i18n-context'
 
 interface UpgradePlanDialogProps {
   open: boolean
@@ -15,6 +16,7 @@ interface UpgradePlanDialogProps {
 
 export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel }: UpgradePlanDialogProps) {
   const router = useRouter()
+  const { t } = useI18n()
 
   // Detecta se é um bloqueio de modelo (não de créditos) pela mensagem
   const isModelLock = message?.includes('disponível apenas nos planos')
@@ -36,7 +38,7 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel
   }
 
   const cleanMessage = stripEmojis(message)
-  const cleanTitle = stripEmojis(title || (isModelLock ? 'Recurso Exclusivo' : 'Créditos Insuficientes'))
+  const cleanTitle = stripEmojis(title || (isModelLock ? t('upgrade.title_model_lock') : t('upgrade.title_credits')))
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -55,7 +57,7 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel
           </DialogTitle>
           
           <DialogDescription className="text-zinc-400 text-center text-sm leading-relaxed max-w-[320px] sm:max-w-none mt-1">
-            {cleanMessage || "Você não possui créditos suficientes para realizar esta ação no momento."}
+            {cleanMessage || t('upgrade.default_message')}
           </DialogDescription>
         </DialogHeader>
 
@@ -65,13 +67,13 @@ export function UpgradePlanDialog({ open, onOpenChange, message, title, ctaLabel
             onClick={() => onOpenChange(false)} 
             className="flex-1 bg-transparent hover:bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200 rounded-xl h-11 justify-center font-medium transition-colors"
           >
-            Fechar
+            {t('upgrade.close')}
           </Button>
           <Button 
             onClick={handleUpgrade} 
             className="flex-1 rounded-xl h-11 font-medium transition-colors bg-white text-zinc-900 hover:bg-zinc-200 border-none shadow-sm"
           >
-            {ctaLabel || 'Fazer Upgrade'}
+            {ctaLabel || t('upgrade.cta')}
           </Button>
         </DialogFooter>
       </DialogContent>

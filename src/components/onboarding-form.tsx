@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, ArrowRight } from 'lucide-react'
+import { useI18n } from '@/context/i18n-context'
 
 const COUNTRIES = [
   { code: 'BR', name: 'Brasil', dial: '+55', flag: '🇧🇷', mask: '(##) #####-####' },
@@ -48,6 +49,7 @@ interface OnboardingFormProps {
 }
 
 export function OnboardingForm({ onComplete }: OnboardingFormProps) {
+  const { t } = useI18n()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [phone, setPhone] = useState('')
@@ -95,10 +97,10 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
   const validate = () => {
     const errs: typeof errors = {}
-    if (!firstName.trim()) errs.firstName = 'Informe seu nome'
-    if (!lastName.trim()) errs.lastName = 'Informe seu sobrenome'
+    if (!firstName.trim()) errs.firstName = t('onboarding.error_first_name')
+    if (!lastName.trim()) errs.lastName = t('onboarding.error_last_name')
     const digits = phone.replace(/\D/g, '')
-    if (digits.length < 7) errs.phone = 'Número inválido'
+    if (digits.length < 7) errs.phone = t('onboarding.error_phone')
     return errs
   }
 
@@ -128,8 +130,8 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="mb-8">
-            <h1 className="text-white text-2xl font-semibold tracking-tight">Antes de começar</h1>
-            <p className="text-zinc-500 text-sm mt-1.5">Queremos te conhecer melhor.</p>
+            <h1 className="text-white text-2xl font-semibold tracking-tight">{t('onboarding.title')}</h1>
+            <p className="text-zinc-500 text-sm mt-1.5">{t('onboarding.subtitle')}</p>
           </div>
 
           {/* First + Last Name row */}
@@ -137,7 +139,7 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Nome"
+                placeholder={t('onboarding.first_name')}
                 value={firstName}
                 onChange={e => { setFirstName(e.target.value); setErrors(prev => ({ ...prev, firstName: undefined })) }}
                 className={`w-full bg-zinc-900/60 border text-white placeholder-zinc-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors focus:border-zinc-500 ${errors.firstName ? 'border-red-500/60' : 'border-zinc-800'}`}
@@ -147,7 +149,7 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Sobrenome"
+                placeholder={t('onboarding.last_name')}
                 value={lastName}
                 onChange={e => { setLastName(e.target.value); setErrors(prev => ({ ...prev, lastName: undefined })) }}
                 className={`w-full bg-zinc-900/60 border text-white placeholder-zinc-600 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors focus:border-zinc-500 ${errors.lastName ? 'border-red-500/60' : 'border-zinc-800'}`}
@@ -177,7 +179,7 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
                       <input
                         ref={searchRef}
                         type="text"
-                        placeholder="Buscar país..."
+                        placeholder={t('onboarding.search_country')}
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         className="w-full bg-zinc-800/60 text-white text-xs placeholder-zinc-600 rounded-lg px-3 py-2 outline-none border border-transparent focus:border-zinc-700"
@@ -197,7 +199,7 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
                         </button>
                       ))}
                       {filtered.length === 0 && (
-                        <p className="text-zinc-600 text-xs text-center py-4">Nenhum país encontrado</p>
+                        <p className="text-zinc-600 text-xs text-center py-4">{t('onboarding.no_country')}</p>
                       )}
                     </div>
                   </div>
@@ -222,7 +224,7 @@ export function OnboardingForm({ onComplete }: OnboardingFormProps) {
               type="submit"
               className="w-full flex items-center justify-center gap-2.5 bg-white hover:bg-zinc-100 text-zinc-900 font-semibold py-3.5 rounded-xl text-sm transition-all active:scale-[0.98]"
             >
-              Continuar
+              {t('onboarding.continue')}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
