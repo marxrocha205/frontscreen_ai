@@ -5,6 +5,8 @@ import { useChatStore } from './use-chat-store';
 import { useVoiceConfig } from './use-voice-config';
 import { useConversations } from './use-conversations';
 import { config } from '@/lib/config';
+import { useAuth } from './use-auth';
+import { useGuestSession } from './use-guest-session';
 
 const LOW_CREDIT_THRESHOLD = 8;
 
@@ -73,6 +75,7 @@ const updateMessageContent = (messageId: string, content: string) => {
 };
 
 const maybeShowLowCreditWarning = async () => {
+  if (!useAuth.getState().isLoggedIn) return;
   const store = useChatStore.getState();
   const remaining = Number(store.credits ?? 0);
 
@@ -157,7 +160,7 @@ export function useGeminiLive() {
     if (!trimmedContent) return;
 
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    if (!token) return;
+    if (useAuth.getState().isLoggedIn && !token) return;
 
     const { activeId, setActiveId, fetchConversations } = useConversations.getState();
     const sessionId = liveConversationIdRef.current || activeId || createLiveSessionId();
@@ -528,6 +531,14 @@ export function useGeminiLive() {
         }
 
         if (serverContent.turn_complete || serverContent.turnComplete) {
+          if (!useAuth.getState().isLoggedIn) {
+            const { guestCredits, decrementGuestCredits } = useGuestSession.getState();
+            decrementGuestCredits(5);
+            if (guestCredits - 5 <= 0) {
+              useAuth.getState().setShowLoginPrompt(true);
+              stopSession();
+            }
+          }
           // Se estava aguardando o término das boas-vindas, agora libera o microfone
           if (waitingForInitialTurnRef.current) {
             waitingForInitialTurnRef.current = false;
@@ -561,8 +572,9 @@ export function useGeminiLive() {
 
   const startSession = useCallback(async (initialMessage?: string) => {
 
+    const { isLoggedIn } = useAuth.getState();
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
-    if (!token) return alert("Sessão expirada. Por favor, faça login novamente.");
+    if (isLoggedIn && !token) return alert("Sessão expirada. Por favor, faça login novamente.");
 
     console.log("[Gemini Live] Iniciando startSession. Ambiente tem navigator.mediaDevices?", !!navigator.mediaDevices);
     console.log("[Gemini Live] Tem getUserMedia?", !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia));
@@ -619,8 +631,14 @@ export function useGeminiLive() {
     await audioPlayerRef.current.beep();
     if (activeSessionIdRef.current !== sessionId) return;
 
-    // Conecta ao Proxy do Backend em vez do Google diretamente
-    const PROXY_URL = `${config.wsUrl}/ws/gemini-live?token=${token}`;
+    // Conecta ao Proxy do Backend
+    let PROXY_URL = '';
+    if (!isLoggedIn || !token) {
+        PROXY_URL = `${config.wsUrl}/ws/gemini-live-guest`;
+    } else {
+        PROXY_URL = `${config.wsUrl}/ws/gemini-live?token=${token}`;
+    }
+    
     const ws = new WebSocket(PROXY_URL);
     wsRef.current = ws;
 

@@ -59,7 +59,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   // Verifica se o usuário está na rota do Studio
   const isStudioRoute = pathname?.startsWith('/app/studio')
 
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const { showLoginPrompt, setShowLoginPrompt } = useAuth()
   const [showMobileWarning, setShowMobileWarning] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isStudioSubmenuOpen, setIsStudioSubmenuOpen] = useState(false)
@@ -419,7 +419,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <Button
                   id="tour-screen-share"
                   variant="ghost"
-                  onClick={() => handleAuthAction(() => { isScreenShared ? stopSharing() : handleStartSharing() })}
+                  onClick={() => { isScreenShared ? stopSharing() : handleStartSharing() }}
                   className={`w-full justify-start gap-3 h-9 px-3 rounded-xl transition-colors ${isScreenShared
                     ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20'
                     : 'bg-transparent hover:bg-white/5 text-zinc-400 hover:text-zinc-200'
@@ -433,13 +433,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                 <Button
                   id="tour-pip-chat"
                   variant="ghost"
-                  onClick={() => handleAuthAction(() => {
+                  onClick={() => {
                     if (isMobileDevice()) {
                       setShowMobileWarning(true)
                       return
                     }
                     openChat()
-                  })}
+                  }}
                   className={`w-full justify-start gap-3 h-9 px-3 rounded-xl transition-colors ${floatingState !== 'none'
                     ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 hover:text-indigo-300'
                     : 'bg-transparent hover:bg-white/5 text-zinc-400 hover:text-zinc-200'

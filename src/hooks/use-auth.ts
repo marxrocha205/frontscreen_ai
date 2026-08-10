@@ -52,13 +52,17 @@ interface AuthState {
   login: (email: string) => void
   logout: () => void
   syncFromStorage: () => void
+  showLoginPrompt: boolean
+  setShowLoginPrompt: (show: boolean) => void
 }
 
 export const useAuth = create<AuthState>((set) => ({
   hasHydrated: false,
   isLoggedIn: false,
   user: null,
-  login: (email) => set({ hasHydrated: true, isLoggedIn: true, user: { email } }),
+  showLoginPrompt: false,
+  setShowLoginPrompt: (show) => set({ showLoginPrompt: show }),
+  login: (email) => set({ hasHydrated: true, isLoggedIn: true, user: { email }, showLoginPrompt: false }),
   logout: () => {
     clearStoredToken()
     set({ hasHydrated: true, isLoggedIn: false, user: null })

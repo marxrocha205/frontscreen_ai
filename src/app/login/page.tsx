@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/use-auth'
+import { useChatStore } from '@/hooks/use-chat-store'
 import { useState } from 'react'
 import Cookies from 'js-cookie'
 import { config } from '@/lib/config'
@@ -72,6 +73,25 @@ export default function LoginPage() {
           console.error("Falha ao ler dados do token", e)
         }
 
+        const guestMessages = useChatStore.getState().messages.filter(m => m.role !== 'system' && m.id !== 'streaming-msg')
+        if (guestMessages.length > 0) {
+          try {
+            await fetch(`${config.apiUrl}/api/chat/migrate-guest`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${data.access_token}`
+              },
+              body: JSON.stringify({
+                history: guestMessages.map(m => ({ role: m.role, content: m.content, model: m.model, agent_id: m.agent_id }))
+              })
+            })
+            useChatStore.getState().clearMessages()
+          } catch (e) {
+            console.error('Erro ao migrar histórico guest:', e)
+          }
+        }
+
         login(userEmail)
         const isMobile = window.innerWidth < 768
         if (data.is_new_user && !isMobile) {
@@ -126,6 +146,25 @@ export default function LoginPage() {
     sameSite: 'strict'
   })
         
+        const guestMessages = useChatStore.getState().messages.filter(m => m.role !== 'system' && m.id !== 'streaming-msg')
+        if (guestMessages.length > 0) {
+          try {
+            await fetch(`${config.apiUrl}/api/chat/migrate-guest`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${data.access_token}`
+              },
+              body: JSON.stringify({
+                history: guestMessages.map(m => ({ role: m.role, content: m.content, model: m.model, agent_id: m.agent_id }))
+              })
+            })
+            useChatStore.getState().clearMessages()
+          } catch (e) {
+            console.error('Erro ao migrar histórico guest:', e)
+          }
+        }
+
         login(email)
         const isMobile = window.innerWidth < 768
         if (data.is_new_user && !isMobile) {

@@ -4,6 +4,7 @@ import { useConversations } from './use-conversations'
 import { config } from '@/lib/config'
 import { useAuth } from './use-auth'
 import { useI18n } from '@/context/i18n-context'
+import { useGuestSession } from './use-guest-session'
 
 // -------------------------------------------------------------------
 // MÁGICA: Variável global ao módulo para rastrear o áudio premium atual
@@ -129,9 +130,6 @@ export function useWebsocket() {
 
   // Inicia a ligação quando o hook é montado
   useEffect(() => {
-    if (!isLoggedIn) {
-      return
-    }
 
     if (
       wsRef.current?.readyState === WebSocket.OPEN ||
@@ -143,12 +141,14 @@ export function useWebsocket() {
     // Puxa o token que guardámos no Login
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
 
-    if (!token) {
-      syncFromStorage()
-      return // Sem token: o usuário não está logado, mas pode navegar livremente
+    let wsUrl = ''
+    if (!isLoggedIn || !token) {
+      wsUrl = `${config.wsUrl}/ws/assistente-guest`
+    } else {
+      wsUrl = `${config.wsUrl}/ws/assistente?token=${token}`
     }
 
-    const ws = new WebSocket(`${config.wsUrl}/ws/assistente?token=${token}`)
+    const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
     ws.onopen = () => {
@@ -299,6 +299,8 @@ export function useWebsocket() {
           // Atualiza os créditos na tela
           if (data.remaining_credits !== undefined) {
             setCredits(data.remaining_credits)
+          } else if (!useAuth.getState().isLoggedIn) {
+            useGuestSession.getState().decrementGuestCredits()
           }
 
           // Upsell inline: dispara card no chat quando o backend envia oferta contextual
@@ -356,12 +358,24 @@ export function useWebsocket() {
       setIsStreaming(true)
 
       // 2. ADICIONAR AO PAYLOAD FINAL
-      const finalPayload = {
+      const finalPayload: any = {
         ...payload,
         session_id: activeId,
         language: document.documentElement.lang || 'pt-BR',
         model: selectedModel && selectedModel !== '' ? selectedModel : undefined, // <-- A MÁGICA ACONTECE AQUI
         agent_id: selectedAgentId && selectedAgentId !== '' ? selectedAgentId : undefined // <-- A MÁGICA DO AGENTE AQUI
+      }
+
+      if (!useAuth.getState().isLoggedIn) {
+        finalPayload.session_id = 'guest_session'
+        finalPayload.history = useChatStore.getState().messages
+          .filter(m => m.role !== 'system' && m.id !== 'streaming-msg')
+          .map(m => ({
+            role: m.role,
+            content: m.content,
+            model: m.model,
+            agent_id: m.agent_id
+          }))
       }
       
       console.log('%c[WS][SEND] ========================================', 'color: #818cf8; font-weight: bold')
