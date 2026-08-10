@@ -659,6 +659,7 @@ export function ChatInterface() {
               content: `![Mídia Gerada](${data.url})`,
               model: 'screen-ai-1.2'
             })
+            setMediaMode('text')
           } else {
             if (data.detail && data.detail.includes('Saldo insuficiente')) {
               setUpgradeDialogMessage(data.detail)
@@ -1580,7 +1581,7 @@ export function ChatInterface() {
                       <span className="font-medium text-[14px]">{t('app.send_file')}</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem onClick={() => setMediaMode('image')} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
+                    <DropdownMenuItem onClick={() => { setMediaMode('image'); setTimeout(() => textareaRef.current?.focus(), 100); }} className="flex items-center justify-start gap-3 py-3 px-3 focus:bg-zinc-800 focus:text-white cursor-pointer rounded-lg transition-colors group">
                       <ImageIcon className="w-5 h-5 shrink-0 text-zinc-400 group-hover:text-zinc-300" />
                       <span className="font-medium text-[14px]">{language === 'pt-BR' ? 'Gerar Imagem' : 'Generate Image'}</span>
                     </DropdownMenuItem>
