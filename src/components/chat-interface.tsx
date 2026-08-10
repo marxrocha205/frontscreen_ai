@@ -71,6 +71,7 @@ import { useWebsocket } from '@/hooks/use-websocket'
 import { useGeminiVoice } from '@/hooks/use-gemini-voice'
 import { useScreenShare, captureScreenFrame } from '@/hooks/use-screen-share'
 import { useAuth } from '@/hooks/use-auth'
+import { useGuestSession } from '@/hooks/use-guest-session'
 import { useConversations } from '@/hooks/use-conversations'
 import { config } from '@/lib/config'
 import { LoginPromptDialog } from '@/components/login-prompt-dialog'
@@ -332,7 +333,7 @@ export function ChatInterface() {
   const modelDescriptions = MODEL_DESCRIPTIONS[appLang]
   const [inputValue, setInputValue] = useState('')
   const [mediaMode, setMediaMode] = useState<'text' | 'image' | 'video'>('text')
-  const [showLoginPrompt, setShowLoginPrompt] = useState(false)
+  const { showLoginPrompt, setShowLoginPrompt } = useAuth()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isModelsDialogOpen, setIsModelsDialogOpen] = useState(false)
   const [welcomeStep, setWelcomeStep] = useState(0)
@@ -341,9 +342,15 @@ export function ChatInterface() {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const isNewUser = localStorage.getItem('is_new_user') === 'true'
+      const { hasSeenWelcomeModal, setHasSeenWelcomeModal } = useGuestSession.getState()
+      
       if (isNewUser) {
-        setWelcomeStep(1)
-        setIsModelsDialogOpen(true)
+        if (!hasSeenWelcomeModal && window.innerWidth >= 768) {
+          setWelcomeStep(1)
+          setIsModelsDialogOpen(true)
+          setHasSeenWelcomeModal(true)
+        }
+        localStorage.removeItem('is_new_user')
       }
     }
   }, [])
@@ -395,7 +402,10 @@ export function ChatInterface() {
 
   const { messages, sendMessage, isStreaming, sendCancel } = useWebsocket()
   const { credits, addMessage, setIsStreaming, setCredits, floatingState, pipWindow, fetchCredits, isUpgradeDialogOpen, setIsUpgradeDialogOpen, upgradeDialogMessage, setUpgradeDialogMessage, userPlan, selectedModel, setSelectedModel, selectedAgentId, setSelectedAgentId, inlineUpsell, setInlineUpsell } = useChatStore()
+  const { guestCredits } = useGuestSession()
   const { hasHydrated, isLoggedIn, syncFromStorage } = useAuth()
+  
+  const displayCredits = isLoggedIn ? credits : guestCredits
 
   const handleModelSelect = (modelId: string) => {
     const model = AI_MODELS.find(m => m.id === modelId)
@@ -463,6 +473,20 @@ export function ChatInterface() {
     if (isGeminiLiveActive) {
       stopGeminiLive()
     } else {
+      const { isLoggedIn } = useAuth.getState()
+      if (!isLoggedIn) {
+        const { hasSeenWelcomeModal, setHasSeenWelcomeModal, guestCredits } = useGuestSession.getState()
+        if (guestCredits <= 0) {
+          setShowLoginPrompt(true)
+          return
+        }
+        if (!hasSeenWelcomeModal && window.innerWidth >= 768) {
+           setWelcomeStep(1)
+           setIsModelsDialogOpen(true)
+           setHasSeenWelcomeModal(true)
+           return 
+        }
+      }
       startGeminiLive()
     }
   }, [isGeminiLiveActive, startGeminiLive, stopGeminiLive])
@@ -560,14 +584,27 @@ export function ChatInterface() {
   }
 
   const handleSend = async (overrideText?: string) => {
-    requireAuth(async () => {
-
-      let audioBase64 = undefined
-      if (isVoiceActive) {
-        audioBase64 = await stopRecording()
+    const { isLoggedIn } = useAuth.getState()
+    if (!isLoggedIn) {
+      const { hasSeenWelcomeModal, setHasSeenWelcomeModal, guestCredits } = useGuestSession.getState()
+      if (guestCredits <= 0) {
+        setShowLoginPrompt(true)
+        return
       }
+      if (!hasSeenWelcomeModal && window.innerWidth >= 768) {
+        setWelcomeStep(1)
+        setIsModelsDialogOpen(true)
+        setHasSeenWelcomeModal(true)
+        return
+      }
+    }
 
-      const textToSend = typeof overrideText === 'string' ? overrideText : inputValue.trim()
+    let audioBase64 = undefined
+    if (isVoiceActive) {
+      audioBase64 = await stopRecording()
+    }
+
+    const textToSend = typeof overrideText === 'string' ? overrideText : inputValue.trim()
 
       if (!textToSend && !isScreenShared && !audioBase64 && !selectedFile) return
 
@@ -727,7 +764,6 @@ export function ChatInterface() {
         }
         sendMessage(payload)
       }
-    })
   }
 
   // ==========================================
@@ -1081,17 +1117,17 @@ export function ChatInterface() {
           {/* Badge principal */}
           <div
             onClick={() => setShowCreditsTooltip(!showCreditsTooltip)}
-            className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-pointer select-none transition-colors duration-200 ${(credits !== null && credits < 20)
-              ? 'border-red-500/40 hover:border-red-500/60'
-              : 'border-zinc-800 hover:border-zinc-700'
+            className={`flex items-center gap-2 bg-[#1e1e1e]/80 backdrop-blur-md border rounded-full px-3 md:px-4 h-10 shadow-lg cursor-pointer select-none transition-colors duration-200 ${(displayCredits !== null && displayCredits < 20)
+              ? 'border-red-500/50 hover:bg-[#2a1a1a]/80'
+              : 'border-zinc-800 hover:bg-[#2a2a2a]/80'
               }`}
           >
-            <span className={`text-sm font-bold ${(credits !== null && credits < 20) ? 'text-red-400' : 'text-zinc-200'
+            <span className={`text-sm font-bold ${(displayCredits !== null && displayCredits < 20) ? 'text-red-400' : 'text-zinc-200'
               }`}>
-              {credits !== null ? credits.toLocaleString(language) : '--'}
+              {displayCredits !== null ? displayCredits.toLocaleString(language) : '--'}
             </span>
             <span className="text-xs text-zinc-500 hidden sm:inline font-medium">{t('app.credits')}</span>
-            {credits !== null && credits < 20 && (
+            {displayCredits !== null && displayCredits < 20 && (
               <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             )}
           </div>
@@ -1112,24 +1148,24 @@ export function ChatInterface() {
               <div className="mb-3">
                 <div className="flex items-end justify-between mb-1.5">
                   <span className="text-xs text-zinc-500">{t('app.available_credits')}</span>
-                  <span className={`text-xl font-bold tabular-nums ${credits !== null && credits < 20 ? 'text-red-400' : 'text-zinc-100'
+                  <span className={`text-xl font-bold tabular-nums ${displayCredits !== null && displayCredits < 20 ? 'text-red-400' : 'text-zinc-100'
                     }`}>
-                    {credits !== null ? credits.toLocaleString(language) : '--'}
+                    {displayCredits !== null ? displayCredits.toLocaleString(language) : '--'}
                   </span>
                 </div>
                 {/* Barra de progresso */}
-                {credits !== null && (
+                {displayCredits !== null && (
                   <div className="w-full bg-zinc-800 rounded-full h-1.5 overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all duration-500 ${credits < 20 ? 'bg-red-500' : credits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
+                      className={`h-full rounded-full transition-all duration-500 ${displayCredits < 20 ? 'bg-red-500' : displayCredits < 100 ? 'bg-yellow-500' : 'bg-indigo-500'
                         }`}
-                      style={{ width: `${Math.min(100, (credits / 500) * 100)}%` }}
+                      style={{ width: `${Math.min(100, (displayCredits / 500) * 100)}%` }}
                     />
                   </div>
                 )}
               </div>
 
-              {credits !== null && credits < 20 && (
+              {displayCredits !== null && displayCredits < 20 && (
                 <p className="text-[11px] text-red-400/80 bg-red-500/5 border border-red-500/10 rounded-lg px-3 py-2 mb-3 leading-relaxed">
                   {t('app.credits_low')}
                 </p>
