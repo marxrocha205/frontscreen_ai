@@ -134,7 +134,8 @@ const AGENT_DEFINITIONS: LocalizedAgent[] = [
   { id: 'agent_metaphor_specialist', label: { 'pt-BR': 'Especialista em Metáforas', 'en-US': 'Metaphor Specialist' }, description: { 'pt-BR': 'Explica conceitos abstratos usando analogias criativas.', 'en-US': 'Explains abstract concepts with creative analogies.' } },
   { id: 'agent_process_designer', label: { 'pt-BR': 'Designer de Processos', 'en-US': 'Process Designer' }, description: { 'pt-BR': 'Modelagem de fluxos de trabalho e otimização operacional.', 'en-US': 'Models workflows and improves operations.' } },
   { id: 'agent_product_objection_analyst', label: { 'pt-BR': 'Analista de Objeções', 'en-US': 'Objection Analyst' }, description: { 'pt-BR': 'Mapeia e contorna resistências de clientes e vendas.', 'en-US': 'Maps and handles customer and sales objections.' } },
-  { id: 'agent_technical_translator', label: { 'pt-BR': 'Tradutor Técnico', 'en-US': 'Technical Translator' }, description: { 'pt-BR': 'Traduz documentos preservando a terminologia técnica precisa.', 'en-US': 'Translates documents while preserving precise technical terminology.' } }
+  { id: 'agent_technical_translator', label: { 'pt-BR': 'Tradutor Técnico', 'en-US': 'Technical Translator' }, description: { 'pt-BR': 'Traduz documentos preservando a terminologia técnica precisa.', 'en-US': 'Translates documents while preserving precise technical terminology.' } },
+  { id: 'agent_lawyer', label: { 'pt-BR': 'Advogado', 'en-US': 'Lawyer' }, description: { 'pt-BR': 'Consulta leis na internet e fornece orientação jurídica atualizada.', 'en-US': 'Searches laws on the internet and provides updated legal guidance.' } }
 ]
 
 const getAgents = (language: AppLanguage) =>
