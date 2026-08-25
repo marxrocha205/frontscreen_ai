@@ -130,7 +130,6 @@ export function useWebsocket() {
 
   // Inicia a ligação quando o hook é montado
   useEffect(() => {
-
     if (
       wsRef.current?.readyState === WebSocket.OPEN ||
       wsRef.current?.readyState === WebSocket.CONNECTING
@@ -138,15 +137,12 @@ export function useWebsocket() {
       return
     }
 
-    // Puxa o token que guardámos no Login
+    // Puxa o token que guardámos no Login (ou conecta como guest se não houver token)
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null
 
-    let wsUrl = ''
-    if (!isLoggedIn || !token) {
-      wsUrl = `${config.wsUrl}/ws/assistente-guest`
-    } else {
-      wsUrl = `${config.wsUrl}/ws/assistente?token=${token}`
-    }
+    const wsUrl = token
+      ? `${config.wsUrl}/ws/assistente?token=${token}`
+      : `${config.wsUrl}/ws/assistente-guest`
 
     const ws = new WebSocket(wsUrl)
     wsRef.current = ws
@@ -322,7 +318,7 @@ export function useWebsocket() {
 
         case 'error':
           setIsStreaming(false) // Desliga o loading em caso de erro também
-          if (data.message && (data.message.includes('Créditos insuficientes') || data.message.includes('Insufficient credits') || data.message.includes('Insufficient'))) {
+          if (data.message && (data.message.includes('Créditos insuficientes') || data.message.includes('Insufficient') || data.message.includes('Limite') || data.message.includes('crie uma conta') || data.message.includes('excedido'))) {
             setUpgradeDialogMessage(data.message)
             setIsUpgradeDialogOpen(true)
           } else {
