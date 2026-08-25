@@ -538,7 +538,15 @@ export function ChatInterface() {
     if (useAuth.getState().isLoggedIn) {
       action()
     } else {
-      setShowLoginPrompt(true)
+      const guestCount = parseInt(localStorage.getItem('guest_message_count') || '0', 10)
+      const MAX_GUEST_MESSAGES = 5
+
+      if (guestCount < MAX_GUEST_MESSAGES) {
+        localStorage.setItem('guest_message_count', (guestCount + 1).toString())
+        action()
+      } else {
+        setShowLoginPrompt(true)
+      }
     }
   }
 
@@ -571,6 +579,11 @@ export function ChatInterface() {
 
       if (mediaMode !== 'text') {
         const token = localStorage.getItem('access_token') || ''
+        if (!token) {
+          setShowLoginPrompt(true)
+          return
+        }
+
         const promptText = textToSend.trim() || (mediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo')
 
         addMessage({
@@ -594,9 +607,17 @@ export function ChatInterface() {
         try {
           const res = await fetch(`${config.apiUrl}/api/studio/media/generate`, {
             method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            headers: { 'Authorization': `Bearer ${token}` },
             body: formData
           })
+
+          if (res.status === 401) {
+            setIsGeneratingMedia(null)
+            setIsStreaming(false)
+            setShowLoginPrompt(true)
+            return
+          }
+
           const data = await res.json()
 
           setIsGeneratingMedia(null)
@@ -642,6 +663,10 @@ export function ChatInterface() {
       } else if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
         const token = localStorage.getItem('access_token') || ''
+        if (!token) {
+          setShowLoginPrompt(true)
+          return
+        }
 
         // Mensagem exibida no chat para o usuário
         const fileLabel = language === 'pt-BR'
