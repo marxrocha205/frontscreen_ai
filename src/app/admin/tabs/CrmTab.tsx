@@ -439,6 +439,11 @@ export function CrmTab() {
 
   const pendingContacts = contacts.filter(c => c.status === 'waiting_human')
 
+  const filteredContacts = contacts.filter(c => 
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+    c.phone_number.includes(searchTerm)
+  )
+
   return (
     <div className="space-y-6">
       {/* Top Header Controls */}
