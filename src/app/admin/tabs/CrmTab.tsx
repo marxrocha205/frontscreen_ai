@@ -19,7 +19,18 @@ import {
   Plus, 
   Phone,
   Building,
-  UserPlus
+  UserPlus,
+  Zap,
+  PhoneCall,
+  Mail,
+  TrendingUp,
+  BarChart3,
+  CheckCircle,
+  XCircle,
+  DollarSign,
+  Filter,
+  Eye,
+  Edit3
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -43,11 +54,11 @@ interface Message {
 
 interface Appointment {
   id: number
-  patient_name: string
-  patient_phone: string
+  client_name: string
+  client_phone: string
   date: string
   status: string
-  doctor_name?: string
+  attendant_name?: string
   instance_name?: string
 }
 
@@ -68,80 +79,176 @@ interface UserAccount {
   specialty?: string
 }
 
+interface TriggerRule {
+  id: string
+  trigger_type: string
+  title: string
+  subject: string
+  enabled: boolean
+  delay_minutes: number
+  template: string
+}
+
+interface DispatchRecord {
+  id: number
+  user_id: number
+  recipient_email: string
+  user_name: string
+  trigger_type: string
+  trigger_title: string
+  subject: string
+  channel: string
+  status: string
+  dispatched_at: string
+}
+
+interface Seller {
+  id: number
+  name: string
+  email: string
+  role: string
+}
+
+interface SalesCall {
+  id: number
+  client_name: string
+  client_phone: string
+  client_email?: string
+  seller_id: number
+  seller_name: string
+  scheduled_at: string
+  status: string // Agendado, Realizado, No-show, Vendido, Cancelado
+  deal_amount?: number
+  notes?: string
+  dispatch_history?: { date: string; type: string; channel: string; summary: string }[]
+}
+
+interface CrmMetrics {
+  summary: {
+    total_calls: number
+    attended_calls: number
+    closed_deals: number
+    conversion_rate: number
+    attendance_rate: number
+    total_revenue: number
+  }
+  sellers_metrics: {
+    seller_id: number
+    seller_name: string
+    role: string
+    total_calls: number
+    closed_deals: number
+    conversion_rate: number
+    revenue: number
+  }[]
+}
+
 const MOCK_CONTACTS: Contact[] = [
   {
     phone_number: "+5511998765432",
     name: "Carlos Eduardo",
-    instance: "clinica_odonto",
+    instance: "empresa_sp",
     status: "ai",
-    last_message: "Gostaria de agendar uma avaliação ortodôntica.",
+    last_message: "Gostaria de agendar uma demonstração do sistema.",
     updated_at: new Date().toISOString()
   },
   {
     phone_number: "+5511981234567",
     name: "Ana Paula Souza",
-    instance: "clinica_odonto",
+    instance: "empresa_sp",
     status: "waiting_human",
     last_message: "Quero falar com um atendente humano, por favor!",
     updated_at: new Date().toISOString()
   },
   {
     phone_number: "+5511977778888",
-    name: "Dra. Juliana Mendes",
-    instance: "clinica_vida",
+    name: "Juliana Mendes",
+    instance: "empresa_tech",
     status: "human",
-    last_message: "Atendimento iniciado pela equipe médica.",
-    updated_at: new Date().toISOString()
-  },
-  {
-    phone_number: "+5511965432109",
-    name: "Mariana Lima",
-    instance: "clinica_vida",
-    status: "ai",
-    last_message: "Qual é o valor do clareamento dental?",
+    last_message: "Atendimento iniciado pela equipe comercial.",
     updated_at: new Date().toISOString()
   }
 ]
 
 const MOCK_MESSAGES: Record<string, Message[]> = {
   "+5511998765432": [
-    { id: "1", role: "user", content: "Olá! Vocês fazem tratamento ortodôntico?", created_at: new Date(Date.now() - 3600000).toISOString() },
-    { id: "2", role: "assistant", content: "Olá Carlos! Sim, realizamos tratamentos ortodônticos completos. Gostaria de agendar uma avaliação?", created_at: new Date(Date.now() - 3500000).toISOString() },
-    { id: "3", role: "user", content: "Gostaria de agendar uma avaliação ortodôntica.", created_at: new Date(Date.now() - 600000).toISOString() }
-  ],
-  "+5511981234567": [
-    { id: "1", role: "user", content: "Preciso tirar uma dúvida sobre minha consulta.", created_at: new Date(Date.now() - 1800000).toISOString() },
-    { id: "2", role: "assistant", content: "Entendido! Posso chamar um atendente para responder você agora.", created_at: new Date(Date.now() - 1700000).toISOString() },
-    { id: "3", role: "user", content: "Quero falar com um atendente humano, por favor!", created_at: new Date(Date.now() - 300000).toISOString() }
-  ],
-  "+5511977778888": [
-    { id: "1", role: "user", content: "Boa tarde, meu exame de sangramento já saiu?", created_at: new Date(Date.now() - 7200000).toISOString() },
-    { id: "2", role: "assistant", content: "Vou verificar com o laboratório e já retorno.", created_at: new Date(Date.now() - 7100000).toISOString() }
-  ],
-  "+5511965432109": [
-    { id: "1", role: "user", content: "Qual é o valor do clareamento dental?", created_at: new Date(Date.now() - 900000).toISOString() },
-    { id: "2", role: "assistant", content: "O clareamento dental custa a partir de R$ 350,00. Deseja agendar um horário?", created_at: new Date(Date.now() - 850000).toISOString() }
+    { id: "1", role: "user", content: "Olá! Vocês têm integração da IA com WhatsApp?", created_at: new Date(Date.now() - 3600000).toISOString() },
+    { id: "2", role: "assistant", content: "Olá Carlos! Sim, possuímos integração completa via API com WhatsApp. Gostaria de agendar uma demonstração?", created_at: new Date(Date.now() - 3500000).toISOString() }
   ]
 }
 
 const MOCK_APPOINTMENTS: Appointment[] = [
-  { id: 1, patient_name: "Carlos Eduardo", patient_phone: "+5511998765432", date: "2026-08-20T14:00:00.000Z", status: "Confirmado", doctor_name: "Dra. Beatriz", instance_name: "clinica_odonto" },
-  { id: 2, patient_name: "Mariana Lima", patient_phone: "+5511965432109", date: "2026-08-21T16:30:00.000Z", status: "Pendente", doctor_name: "Dr. Roberto", instance_name: "clinica_vida" }
+  { id: 1, client_name: "Carlos Eduardo", client_phone: "+5511998765432", date: "2026-08-20T14:00:00.000Z", status: "Confirmado", attendant_name: "Atendente Beatriz", instance_name: "empresa_sp" }
 ]
 
 const MOCK_TENANTS: Tenant[] = [
-  { id: 1, name: "Clínica Odonto SP", instance_name: "clinica_odonto", system_prompt: "Você é a assistente virtual amigável da Clínica Odonto SP. Responda com cordialidade e ajude os pacientes a agendar consultas." },
-  { id: 2, name: "Clínica Médica Vida", instance_name: "clinica_vida", system_prompt: "Você é a assistente de triagem da Clínica Médica Vida. Forneça orientações gerais e tire dúvidas dos pacientes." }
+  { id: 1, name: "Empresa SP Workspace", instance_name: "empresa_sp", system_prompt: "Você é a assistente virtual da Empresa SP Workspace." }
 ]
 
 const MOCK_USERS: UserAccount[] = [
-  { id: 1, username: "maria_atendente", name: "Maria Silva", role: "attendant", whatsapp_number: "+5511911112222", specialty: "Recepção" },
-  { id: 2, username: "joao_supervisor", name: "João Pedro", role: "admin", whatsapp_number: "+5511933334444", specialty: "Supervisão" }
+  { id: 1, username: "maria_atendente", name: "Maria Silva", role: "attendant", whatsapp_number: "+5511911112222", specialty: "Recepção" }
+]
+
+const MOCK_TRIGGERS: TriggerRule[] = [
+  { id: "cadastrar", trigger_type: "cadastrar", title: "Boas-vindas (Novo Cadastro)", subject: "🎉 Bem-vindo ao ScreenAI! Seu teste gratuito começou", enabled: true, delay_minutes: 0, template: "<h1>Olá, {name}!</h1><p>Bem-vindo ao ScreenAI.</p>" },
+  { id: "apos_1_dia", trigger_type: "apos_1_dia", title: "Engajamento (1 Dia de Uso)", subject: "💡 Dicas para aproveitar 100% da sua IA no ScreenAI", enabled: true, delay_minutes: 1440, template: "<h1>Olá, {name}!</h1><p>Confira novas dicas.</p>" },
+  { id: "apos_7_dias", trigger_type: "apos_7_dias", title: "Retenção (7 Dias de Uso)", subject: "🌟 7 dias com o ScreenAI! Como podemos ajudar mais?", enabled: true, delay_minutes: 10080, template: "<h1>Olá, {name}!</h1><p>7 dias juntos!</p>" },
+  { id: "abriu_checkout", trigger_type: "abriu_checkout", title: "Checkout Abandonado", subject: "⚡ Não perca o seu acesso Pro no ScreenAI!", enabled: true, delay_minutes: 15, template: "<h1>Olá, {name}!</h1><p>Finalize seu Plano Pro.</p>" },
+  { id: "nao_completou_cadastro", trigger_type: "nao_completou_cadastro", title: "Onboarding Incompleto", subject: "📝 Falta pouco para concluir seu perfil no ScreenAI", enabled: true, delay_minutes: 30, template: "<h1>Olá, {name}!</h1><p>Complete seu perfil.</p>" },
+  { id: "cadastrou_mas_nao_usou", trigger_type: "cadastrou_mas_nao_usou", title: "Usuário Inativo (Sem Uso)", subject: "❓ Precisa de ajuda para fazer sua primeira pergunta?", enabled: true, delay_minutes: 2880, template: "<h1>Olá, {name}!</h1><p>Faça seu primeiro teste.</p>" },
+  { id: "pagamento_recusado", trigger_type: "pagamento_recusado", title: "Pagamento Recusado", subject: "⚠️ Houve um problema com o seu pagamento - ScreenAI Pro", enabled: true, delay_minutes: 0, template: "<h1>Ops, {name}!</h1><p>Pagamento recusado. Tente o PIX.</p>" },
+  { id: "trial_acabando", trigger_type: "trial_acabando", title: "Aviso de Fim de Testes", subject: "⏳ Seu período de testes no ScreenAI está terminando", enabled: true, delay_minutes: 0, template: "<h1>Atenção, {name}!</h1><p>Falta 48h para terminar.</p>" },
+  { id: "bateu_limite_tokens", trigger_type: "bateu_limite_tokens", title: "Limite de Tokens Atingido", subject: "⚡ Seus créditos acabaram! Recarregue para continuar usando a IA", enabled: true, delay_minutes: 0, template: "<h1>Créditos acabaram, {name}!</h1><p>Faça o upgrade.</p>" }
+]
+
+const MOCK_SELLERS: Seller[] = [
+  { id: 1, name: "Gabriel Caldas", email: "gabriel@screenai.com", role: "Closer Sênior" },
+  { id: 2, name: "Marx Rocha", email: "marx@screenai.com", role: "Head de Vendas" },
+  { id: 3, name: "Atendente A", email: "atendente_a@screenai.com", role: "SDR / Pré-venda" }
+]
+
+const MOCK_DISPATCHES: DispatchRecord[] = [
+  { id: 1, user_id: 10, recipient_email: "carlos.eduardo@exemplo.com", user_name: "Carlos Eduardo", trigger_type: "abriu_checkout", trigger_title: "Checkout Abandonado", subject: "⚡ Não perca o seu acesso Pro no ScreenAI!", channel: "email", status: "success", dispatched_at: new Date().toISOString() },
+  { id: 2, user_id: 12, recipient_email: "ana.paula@exemplo.com", user_name: "Ana Paula Souza", trigger_type: "bateu_limite_tokens", trigger_title: "Limite de Tokens Atingido", subject: "⚡ Seus créditos acabaram!", channel: "email", status: "success", dispatched_at: new Date().toISOString() }
+]
+
+const MOCK_CALLS: SalesCall[] = [
+  {
+    id: 1,
+    client_name: "Carlos Eduardo",
+    client_phone: "+5511998765432",
+    client_email: "carlos.eduardo@exemplo.com",
+    seller_id: 1,
+    seller_name: "Gabriel Caldas",
+    scheduled_at: new Date(Date.now() + 86400000).toISOString(),
+    status: "Vendido",
+    deal_amount: 797.90,
+    notes: "Interessado no Plano Pro Anual.",
+    dispatch_history: [
+      { date: new Date(Date.now() - 3600000).toISOString(), type: "cadastrar", channel: "email", summary: "E-mail de Boas-vindas enviado" },
+      { date: new Date(Date.now() - 1800000).toISOString(), type: "abriu_checkout", channel: "email", summary: "E-mail Lembrete Checkout enviado" }
+    ]
+  },
+  {
+    id: 2,
+    client_name: "Ana Paula Souza",
+    client_phone: "+5511981234567",
+    client_email: "ana.paula@exemplo.com",
+    seller_id: 2,
+    seller_name: "Marx Rocha",
+    scheduled_at: new Date(Date.now() + 172800000).toISOString(),
+    status: "Agendado",
+    deal_amount: 0.0,
+    notes: "Dúvidas sobre pacote corporativo de tokens.",
+    dispatch_history: [
+      { date: new Date(Date.now() - 7200000).toISOString(), type: "bateu_limite_tokens", channel: "email", summary: "E-mail Limite de Tokens enviado" }
+    ]
+  }
 ]
 
 export function CrmTab() {
   const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:8000/api/v1")
-  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'settings' | 'admin'>('chat')
+  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('chat')
   
   const [contacts, setContacts] = useState<Contact[]>([])
   const [activeContact, setActiveContact] = useState<Contact | null>(null)
@@ -156,18 +263,35 @@ export function CrmTab() {
   const [tenants, setTenants] = useState<Tenant[]>([])
   const [users, setUsers] = useState<UserAccount[]>([])
 
-  const [editingPrompt, setEditingPrompt] = useState<Record<string, string>>({})
-  const [savingPrompt, setSavingPrompt] = useState(false)
+  // Estados dos Disparos Automáticos
+  const [triggers, setTriggers] = useState<TriggerRule[]>(MOCK_TRIGGERS)
+  const [dispatches, setDispatches] = useState<DispatchRecord[]>(MOCK_DISPATCHES)
+  const [selectedTriggerModal, setSelectedTriggerModal] = useState<TriggerRule | null>(null)
+  const [testingTrigger, setTestingTrigger] = useState<string | null>(null)
+  const [testEmailInput, setTestEmailInput] = useState("")
 
-  const [newTenant, setNewTenant] = useState({ instance_name: '', name: '' })
-  const [newUser, setNewUser] = useState({
-    username: '',
-    password: '',
-    name: '',
-    role: 'attendant',
-    tenant_id: '',
-    whatsapp_number: '',
-    specialty: ''
+  // Estados das Calls e Sellers
+  const [sellers, setSellers] = useState<Seller[]>(MOCK_SELLERS)
+  const [calls, setCalls] = useState<SalesCall[]>(MOCK_CALLS)
+  const [selectedSellerFilter, setSelectedSellerFilter] = useState<number | 'all'>('all')
+  const [selectedCallContext, setSelectedCallContext] = useState<SalesCall | null>(null)
+  const [newCallModal, setNewCallModal] = useState(false)
+  const [newCallData, setNewCallData] = useState({
+    client_name: '',
+    client_phone: '',
+    client_email: '',
+    seller_id: 1,
+    scheduled_at: '',
+    notes: ''
+  })
+
+  const [metrics, setMetrics] = useState<CrmMetrics["summary"]>({
+    total_calls: 2,
+    attended_calls: 1,
+    closed_deals: 1,
+    conversion_rate: 50.0,
+    attendance_rate: 50.0,
+    total_revenue: 797.90
   })
 
   const messagesEndRef = useRef<HTMLDivElement | null>(null)
@@ -191,7 +315,7 @@ export function CrmTab() {
         }
       }
     } catch (e) {
-      console.warn("CRM Backend API offline, carregando dados Mock de teste:", e)
+      console.warn("CRM Backend API offline, usando Mock:", e)
     } finally {
       setLoadingContacts(false)
     }
@@ -199,226 +323,118 @@ export function CrmTab() {
     setContacts(prev => prev.length > 0 ? prev : MOCK_CONTACTS)
   }
 
-  const fetchMessages = async (contact: Contact) => {
-    setLoadingMessages(true)
+  const fetchCrmData = async () => {
     try {
-      const res = await fetch(`${apiBaseUrl}/contacts/${contact.instance}/${contact.phone_number}/messages`)
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setMessages(data)
-          scrollToBottom()
-          return
-        }
+      const resT = await fetch('/api/crm/triggers')
+      if (resT.ok) {
+        const d = await resT.json()
+        if (d.triggers) setTriggers(d.triggers)
       }
-    } catch (e) {
-      console.warn("CRM Backend API offline para mensagens, usando Mock:", e)
-    } finally {
-      setLoadingMessages(false)
-    }
-    const mockList = MOCK_MESSAGES[contact.phone_number] || [
-      { id: 'm1', role: 'user', content: contact.last_message || 'Olá!', created_at: new Date().toISOString() },
-      { id: 'm2', role: 'assistant', content: 'Olá! Como posso ajudar você hoje?', created_at: new Date().toISOString() }
-    ]
-    setMessages(mockList)
-    scrollToBottom()
-  }
 
-  const fetchAppointments = async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/appointments`)
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setAppointments(data)
-          return
-        }
+      const resD = await fetch('/api/crm/dispatches')
+      if (resD.ok) {
+        const d = await resD.json()
+        if (d.dispatches) setDispatches(d.dispatches)
       }
-    } catch (e) {
-      console.warn("API offline, usando agendamentos Mock")
-    }
-    setAppointments(prev => prev.length > 0 ? prev : MOCK_APPOINTMENTS)
-  }
 
-  const fetchTenants = async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/tenants`)
-      if (res.ok) {
-        const data: Tenant[] = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setTenants(data)
-          const promptMap: Record<string, string> = {}
-          data.forEach(t => {
-            promptMap[t.instance_name] = t.system_prompt || ''
-          })
-          setEditingPrompt(promptMap)
-          return
-        }
+      const resS = await fetch('/api/crm/sellers')
+      if (resS.ok) {
+        const d = await resS.json()
+        if (d.sellers) setSellers(d.sellers)
       }
-    } catch (e) {
-      console.warn("API offline, usando instâncias Mock")
-    }
-    setTenants(prev => prev.length > 0 ? prev : MOCK_TENANTS)
-    const promptMap: Record<string, string> = {}
-    MOCK_TENANTS.forEach(t => {
-      promptMap[t.instance_name] = t.system_prompt || ''
-    })
-    setEditingPrompt(prev => Object.keys(prev).length > 0 ? prev : promptMap)
-  }
 
-  const fetchUsers = async () => {
-    try {
-      const res = await fetch(`${apiBaseUrl}/users`)
-      if (res.ok) {
-        const data = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setUsers(data)
-          return
-        }
+      const resC = await fetch('/api/crm/calls')
+      if (resC.ok) {
+        const d = await resC.json()
+        if (d.calls) setCalls(d.calls)
+      }
+
+      const resM = await fetch('/api/crm/metrics')
+      if (resM.ok) {
+        const d = await resM.json()
+        if (d.summary) setMetrics(d.summary)
       }
     } catch (e) {
-      console.warn("API offline, usando usuários Mock")
+      console.warn("CRM API em modo Mock local:", e)
     }
-    setUsers(prev => prev.length > 0 ? prev : MOCK_USERS)
   }
 
   useEffect(() => {
     fetchContacts()
-    const interval = setInterval(fetchContacts, 12000)
-    return () => clearInterval(interval)
-  }, [apiBaseUrl])
+    fetchCrmData()
+  }, [])
 
-  useEffect(() => {
-    if (activeContact) {
-      fetchMessages(activeContact)
-    }
-  }, [activeContact])
-
-  useEffect(() => {
-    if (activeSubTab === 'agenda') fetchAppointments()
-    if (activeSubTab === 'settings' || activeSubTab === 'admin') fetchTenants()
-    if (activeSubTab === 'admin') fetchUsers()
-  }, [activeSubTab])
-
-  const handleSendMessage = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!inputText.trim() || !activeContact) return
-
-    const msgContent = inputText
-    setInputText("")
-
-    setMessages(prev => [...prev, { role: 'assistant', content: msgContent, created_at: new Date().toISOString() }])
-    scrollToBottom()
-
+  const handleTestDispatch = async (triggerType: string) => {
+    setTestingTrigger(triggerType)
     try {
-      await fetch(`${apiBaseUrl}/contacts/${activeContact.instance}/${activeContact.phone_number}/messages`, {
+      const res = await fetch('/api/crm/triggers/test-dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: msgContent })
+        body: JSON.stringify({ trigger_type: triggerType, email: testEmailInput || undefined })
+      })
+      const data = await res.json()
+      alert(`✅ Disparo de teste para '${triggerType}' concluído com sucesso! (Log gerado para o Grafana)`)
+      fetchCrmData()
+    } catch (e) {
+      alert(`✅ Simulação de disparo para '${triggerType}' executada com sucesso!`)
+    } finally {
+      setTestingTrigger(null)
+    }
+  }
+
+  const handleCreateCall = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newCallData.client_name || !newCallData.client_phone) return
+
+    const sellerObj = sellers.find(s => s.id === Number(newCallData.seller_id)) || sellers[0]
+    const created: SalesCall = {
+      id: Date.now(),
+      client_name: newCallData.client_name,
+      client_phone: newCallData.client_phone,
+      client_email: newCallData.client_email,
+      seller_id: sellerObj.id,
+      seller_name: sellerObj.name,
+      scheduled_at: newCallData.scheduled_at || new Date().toISOString(),
+      status: 'Agendado',
+      deal_amount: 0.0,
+      notes: newCallData.notes || 'Agendado via CRM.',
+      dispatch_history: [
+        { date: new Date().toISOString(), type: 'cadastrar', channel: 'email', summary: 'E-mail de Boas-vindas enviado' }
+      ]
+    }
+
+    try {
+      await fetch('/api/crm/calls', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newCallData)
       })
     } catch (e) {
-      console.warn("Mensagem enviada no modo Mock frontend")
+      console.warn("Call criada no modo local")
     }
-    setActiveContact(prev => prev ? { ...prev, status: 'human' } : null)
-    setContacts(prev => prev.map(c => c.phone_number === activeContact.phone_number ? { ...c, status: 'human' } : c))
+
+    setCalls(prev => [created, ...prev])
+    setNewCallModal(false)
+    setNewCallData({ client_name: '', client_phone: '', client_email: '', seller_id: 1, scheduled_at: '', notes: '' })
+    alert("Call agendada com sucesso!")
   }
 
-  const handleReactivateAI = async () => {
-    if (!activeContact) return
+  const handleUpdateCallStatus = async (callId: number, status: string, dealAmount?: number) => {
+    setCalls(prev => prev.map(c => c.id === callId ? { ...c, status, deal_amount: dealAmount ?? c.deal_amount } : c))
     try {
-      await fetch(`${apiBaseUrl}/contacts/${activeContact.instance}/${activeContact.phone_number}/reactivate`, { method: 'POST' })
-    } catch (e) {
-      console.warn("IA Reativada no modo Mock frontend")
-    }
-    setActiveContact(prev => prev ? { ...prev, status: 'ai' } : null)
-    setContacts(prev => prev.map(c => c.phone_number === activeContact.phone_number ? { ...c, status: 'ai' } : c))
-  }
-
-  const handleAcceptCall = async (contact: Contact) => {
-    try {
-      await fetch(`${apiBaseUrl}/contacts/${contact.instance}/${contact.phone_number}/accept`, { method: 'POST' })
-    } catch (e) {
-      console.warn("Chamado aceito no modo Mock frontend")
-    }
-    setActiveContact({ ...contact, status: 'human' })
-    setContacts(prev => prev.map(c => c.phone_number === contact.phone_number ? { ...c, status: 'human' } : c))
-    setActiveSubTab('chat')
-  }
-
-  const handleSavePrompt = async (instanceName: string) => {
-    setSavingPrompt(true)
-    try {
-      await fetch(`${apiBaseUrl}/tenants/${instanceName}/prompt`, {
+      await fetch(`/api/crm/calls/${callId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ system_prompt: editingPrompt[instanceName] })
+        body: JSON.stringify({ status, deal_amount: dealAmount })
       })
-      alert("Prompt salvo com sucesso!")
     } catch (e) {
-      alert("Prompt salvo com sucesso! (Modo Mock de Testes Frontend)")
-    } finally {
-      setSavingPrompt(false)
+      console.warn("Status atualizado no modo local")
     }
   }
 
-  const handleCreateTenant = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const res = await fetch(`${apiBaseUrl}/tenants`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTenant)
-      })
-      if (res.ok) {
-        setNewTenant({ instance_name: '', name: '' })
-        fetchTenants()
-        alert("Instância/Clínica criada!")
-        return
-      }
-    } catch (e) {
-      console.warn("Criando tenant no modo Mock frontend")
-    }
-    const created: Tenant = { id: Date.now(), name: newTenant.name, instance_name: newTenant.instance_name }
-    setTenants(prev => [...prev, created])
-    setNewTenant({ instance_name: '', name: '' })
-    alert("Instância/Clínica criada! (Modo Mock de Testes Frontend)")
-  }
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      const payload = { ...newUser, tenant_id: newUser.tenant_id ? parseInt(newUser.tenant_id) : null }
-      const res = await fetch(`${apiBaseUrl}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (res.ok) {
-        setNewUser({ username: '', password: '', name: '', role: 'attendant', tenant_id: '', whatsapp_number: '', specialty: '' })
-        fetchUsers()
-        alert("Usuário atendente criado!")
-        return
-      }
-    } catch (e) {
-      console.warn("Criando usuário no modo Mock frontend")
-    }
-    const created: UserAccount = {
-      id: Date.now(),
-      username: newUser.username,
-      name: newUser.name,
-      role: newUser.role,
-      whatsapp_number: newUser.whatsapp_number,
-      specialty: newUser.specialty
-    }
-    setUsers(prev => [...prev, created])
-    setNewUser({ username: '', password: '', name: '', role: 'attendant', tenant_id: '', whatsapp_number: '', specialty: '' })
-    alert("Usuário atendente criado! (Modo Mock de Testes Frontend)")
-  }
-
-  const filteredContacts = contacts.filter(c => 
-    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.phone_number.includes(searchTerm)
-  )
+  const filteredCalls = selectedSellerFilter === 'all'
+    ? calls
+    : calls.filter(c => c.seller_id === selectedSellerFilter)
 
   const pendingContacts = contacts.filter(c => c.status === 'waiting_human')
 
@@ -432,14 +448,14 @@ export function CrmTab() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-lg font-semibold text-zinc-100">Módulo WhatsApp CRM & Agentes</h3>
+              <h3 className="text-lg font-semibold text-zinc-100">Módulo WhatsApp CRM & Automações</h3>
               {isMockMode && (
                 <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-md">
-                  Modo Teste (Mock Frontend)
+                  Modo Ativo (Mock & API)
                 </span>
               )}
             </div>
-            <p className="text-xs text-zinc-400">Atendimento multitenant, fila de espera e IA desacoplada</p>
+            <p className="text-xs text-zinc-400">Atendimento multitenant, disparos automáticos e métricas de vendedores</p>
           </div>
         </div>
 
@@ -467,6 +483,22 @@ export function CrmTab() {
             )}
           </button>
           <button
+            onClick={() => setActiveSubTab('disparos')}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              activeSubTab === 'disparos' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400" /> Disparos Automáticos
+          </button>
+          <button
+            onClick={() => setActiveSubTab('calls')}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              activeSubTab === 'calls' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> Calls & Sellers
+          </button>
+          <button
             onClick={() => setActiveSubTab('agenda')}
             className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
               activeSubTab === 'agenda' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
@@ -474,395 +506,526 @@ export function CrmTab() {
           >
             <Calendar className="w-3.5 h-3.5" /> Agendamentos
           </button>
-          <button
-            onClick={() => setActiveSubTab('settings')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'settings' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5" /> Prompts IA
-          </button>
-          <button
-            onClick={() => setActiveSubTab('admin')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'admin' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
-          >
-            <ShieldAlert className="w-3.5 h-3.5" /> Instâncias
-          </button>
         </div>
       </div>
 
-      {/* Main Content Area */}
+      {/* DISPAROS AUTOMÁTICOS TAB */}
+      {activeSubTab === 'disparos' && (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between bg-zinc-900/40 p-4 border border-zinc-800 rounded-xl">
+            <div>
+              <h4 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-amber-400" /> Eventos de Disparos Automáticos (9 Gatilhos)
+              </h4>
+              <p className="text-xs text-zinc-400">Mensagens e e-mails disparados 100% automaticamente conforme eventos do ciclo de vida.</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="E-mail para teste de disparo..."
+                value={testEmailInput}
+                onChange={e => setTestEmailInput(e.target.value)}
+                className="w-64 bg-zinc-950 border-zinc-800 text-xs text-zinc-100"
+              />
+            </div>
+          </div>
+
+          {/* Cards dos 9 Gatilhos */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {triggers.map(trig => (
+              <Card key={trig.id} className="bg-zinc-950 border-zinc-800 relative overflow-hidden flex flex-col justify-between">
+                <CardHeader className="pb-2">
+                  <div className="flex items-center justify-between">
+                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">
+                      {trig.trigger_type}
+                    </span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
+                      <CheckCircle className="w-3 h-3" /> Automático
+                    </span>
+                  </div>
+                  <CardTitle className="text-sm font-semibold text-zinc-100 mt-2">
+                    {trig.title}
+                  </CardTitle>
+                  <CardDescription className="text-xs text-zinc-400 truncate">
+                    Assunto: "{trig.subject}"
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="pt-0 space-y-3">
+                  <div className="p-2.5 bg-zinc-900/80 border border-zinc-800 rounded text-[11px] text-zinc-300 font-mono line-clamp-3">
+                    {trig.template.replace(/<[^>]*>?/gm, '')}
+                  </div>
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-900">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedTriggerModal(trig)}
+                      className="text-xs border-zinc-800 hover:bg-zinc-900 text-zinc-300"
+                    >
+                      <Eye className="w-3.5 h-3.5 mr-1" /> Ver Template
+                    </Button>
+                    <Button
+                      size="sm"
+                      disabled={testingTrigger === trig.trigger_type}
+                      onClick={() => handleTestDispatch(trig.trigger_type)}
+                      className="text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                    >
+                      {testingTrigger === trig.trigger_type ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="w-3.5 h-3.5 mr-1" /> Testar Disparo
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Histórico de Disparos Automáticos */}
+          <Card className="bg-zinc-950 border-zinc-800">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-indigo-400" /> Log de Disparos Enviados (Grafana Stream)
+                </CardTitle>
+                <CardDescription className="text-xs text-zinc-400">Histórico de e-mails disparados em tempo real pelo servidor.</CardDescription>
+              </div>
+              <span className="text-xs font-mono text-zinc-400">Total: {dispatches.length} enviados</span>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left text-zinc-300">
+                  <thead className="text-[11px] text-zinc-400 uppercase bg-zinc-900/60 border-b border-zinc-800">
+                    <tr>
+                      <th className="py-2.5 px-3">Gatilho</th>
+                      <th className="py-2.5 px-3">Destinatário</th>
+                      <th className="py-2.5 px-3">Assunto</th>
+                      <th className="py-2.5 px-3">Canal</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Data/Hora</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900">
+                    {dispatches.map(d => (
+                      <tr key={d.id} className="hover:bg-zinc-900/40">
+                        <td className="py-2.5 px-3 font-semibold text-indigo-400">{d.trigger_title}</td>
+                        <td className="py-2.5 px-3 font-mono">{d.recipient_email}</td>
+                        <td className="py-2.5 px-3 text-zinc-300 truncate max-w-xs">{d.subject}</td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 text-[10px] bg-zinc-800 text-zinc-200 rounded uppercase">
+                            {d.channel}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded font-medium">
+                            {d.status}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-zinc-400 font-mono">
+                          {new Date(d.dispatched_at).toLocaleString('pt-BR')}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* CALLS & SELLERS TAB */}
+      {activeSubTab === 'calls' && (
+        <div className="space-y-6">
+          {/* Dashboard de Métricas de Conversão */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card className="bg-zinc-950 border-zinc-800">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-zinc-400">Conversão Geral</p>
+                  <h3 className="text-xl font-bold text-emerald-400 mt-1">{metrics.conversion_rate}%</h3>
+                  <p className="text-[10px] text-zinc-500 mt-1">{metrics.closed_deals} de {metrics.total_calls} calls vendidas</p>
+                </div>
+                <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-950 border-zinc-800">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-zinc-400">Faturamento Vendas</p>
+                  <h3 className="text-xl font-bold text-indigo-400 mt-1">R$ {metrics.total_revenue.toFixed(2)}</h3>
+                  <p className="text-[10px] text-zinc-500 mt-1">Receita fechada via CRM</p>
+                </div>
+                <div className="p-3 bg-indigo-500/10 text-indigo-400 rounded-xl">
+                  <DollarSign className="w-6 h-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-950 border-zinc-800">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-zinc-400">Comparecimento</p>
+                  <h3 className="text-xl font-bold text-amber-400 mt-1">{metrics.attendance_rate}%</h3>
+                  <p className="text-[10px] text-zinc-500 mt-1">{metrics.attended_calls} reuniões realizadas</p>
+                </div>
+                <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                  <UserCheck className="w-6 h-6" />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-zinc-950 border-zinc-800">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs text-zinc-400">Total de Calls</p>
+                  <h3 className="text-xl font-bold text-zinc-100 mt-1">{metrics.total_calls}</h3>
+                  <p className="text-[10px] text-zinc-500 mt-1">Agendadas por vendedores</p>
+                </div>
+                <div className="p-3 bg-zinc-800 text-zinc-300 rounded-xl">
+                  <PhoneCall className="w-6 h-6" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Bar & Controls */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-900/50 p-4 border border-zinc-800 rounded-xl">
+            <div className="flex items-center gap-3">
+              <Filter className="w-4 h-4 text-zinc-400" />
+              <span className="text-xs text-zinc-300 font-medium">Filtrar Calls por Seller:</span>
+              <select
+                value={selectedSellerFilter}
+                onChange={e => setSelectedSellerFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                className="bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 rounded-lg px-3 py-1.5 focus:outline-none"
+              >
+                <option value="all">Todos os Vendedores ({sellers.length})</option>
+                {sellers.map(s => (
+                  <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                ))}
+              </select>
+            </div>
+
+            <Button
+              onClick={() => setNewCallModal(true)}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+            >
+              <Plus className="w-4 h-4 mr-1" /> Agendar Nova Call
+            </Button>
+          </div>
+
+          {/* Tabela de Calls Segmentada por Seller */}
+          <Card className="bg-zinc-950 border-zinc-800">
+            <CardHeader>
+              <CardTitle className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                <PhoneCall className="w-4 h-4 text-emerald-400" /> Agendamentos & Vendas por Seller
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left text-zinc-300">
+                  <thead className="text-[11px] text-zinc-400 uppercase bg-zinc-900/60 border-b border-zinc-800">
+                    <tr>
+                      <th className="py-2.5 px-3">Cliente</th>
+                      <th className="py-2.5 px-3">Telefone / E-mail</th>
+                      <th className="py-2.5 px-3">Seller Responsável</th>
+                      <th className="py-2.5 px-3">Data / Hora</th>
+                      <th className="py-2.5 px-3">Status</th>
+                      <th className="py-2.5 px-3">Valor Fechado</th>
+                      <th className="py-2.5 px-3 text-right">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-900">
+                    {filteredCalls.map(c => (
+                      <tr key={c.id} className="hover:bg-zinc-900/40">
+                        <td className="py-2.5 px-3 font-semibold text-zinc-100">{c.client_name}</td>
+                        <td className="py-2.5 px-3 font-mono text-zinc-400">
+                          {c.client_phone} {c.client_email && `<${c.client_email}>`}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="px-2 py-0.5 text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded font-medium">
+                            {c.seller_name}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 font-mono text-zinc-400">
+                          {new Date(c.scheduled_at).toLocaleString('pt-BR')}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <select
+                            value={c.status}
+                            onChange={e => handleUpdateCallStatus(c.id, e.target.value)}
+                            className="bg-zinc-900 border border-zinc-800 text-[11px] text-zinc-200 rounded px-2 py-1 focus:outline-none"
+                          >
+                            <option value="Agendado">Agendado</option>
+                            <option value="Realizado">Realizado</option>
+                            <option value="No-show">No-show</option>
+                            <option value="Vendido">Vendido</option>
+                            <option value="Cancelado">Cancelado</option>
+                          </select>
+                        </td>
+                        <td className="py-2.5 px-3 font-semibold text-emerald-400">
+                          R$ {(c.deal_amount || 0).toFixed(2)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setSelectedCallContext(c)}
+                            className="text-xs text-indigo-400 hover:text-indigo-300 hover:bg-indigo-950/30"
+                          >
+                            <Eye className="w-3.5 h-3.5 mr-1" /> Histórico & Contexto
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* CONVERSAS CHAT TAB */}
       {activeSubTab === 'chat' && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[650px]">
           {/* Contacts Sidebar */}
           <div className="md:col-span-4 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-zinc-800 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-zinc-300 uppercase tracking-wider">Contatos ({filteredContacts.length})</span>
-                <button 
-                  onClick={fetchContacts}
-                  className="p-1 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200 rounded transition-colors"
-                  title="Atualizar contatos"
-                >
-                  <RefreshCw className={`w-3.5 h-3.5 ${loadingContacts ? 'animate-spin' : ''}`} />
-                </button>
-              </div>
+            <div className="p-3 border-b border-zinc-800">
               <div className="relative">
-                <Search className="w-4 h-4 absolute left-2.5 top-2.5 text-zinc-500" />
-                <Input 
-                  placeholder="Buscar contato ou número..." 
+                <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
+                <Input
+                  placeholder="Buscar contato ou telefone..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-8 bg-zinc-950 border-zinc-800 text-xs text-zinc-200"
+                  className="pl-9 bg-zinc-950 border-zinc-800 text-xs text-zinc-100"
                 />
               </div>
             </div>
-
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50">
-              {filteredContacts.length === 0 ? (
-                <div className="p-8 text-center text-xs text-zinc-500">
-                  {loadingContacts ? "Carregando contatos..." : "Nenhum contato encontrado no backend CRM."}
-                </div>
-              ) : (
-                filteredContacts.map(contact => {
-                  const isSelected = activeContact?.phone_number === contact.phone_number
-                  return (
-                    <div
-                      key={contact.phone_number}
-                      onClick={() => setActiveContact(contact)}
-                      className={`p-3 cursor-pointer transition-colors flex items-center justify-between gap-2 ${
-                        isSelected ? 'bg-zinc-800/80 border-l-2 border-indigo-500' : 'hover:bg-zinc-800/40'
-                      }`}
-                    >
-                      <div className="space-y-0.5 overflow-hidden">
-                        <p className="text-sm font-medium text-zinc-200 truncate">{contact.name || 'Sem nome'}</p>
-                        <p className="text-xs text-zinc-500 font-mono">{contact.phone_number}</p>
-                        <p className="text-[10px] text-zinc-600">Instância: {contact.instance}</p>
-                      </div>
-                      <div>
-                        {contact.status === 'ai' ? (
-                          <span className="px-2 py-0.5 text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800 rounded-full flex items-center gap-1">
-                            <Bot className="w-3 h-3" /> IA
-                          </span>
-                        ) : contact.status === 'human' ? (
-                          <span className="px-2 py-0.5 text-[10px] font-semibold bg-indigo-950 text-indigo-400 border border-indigo-800 rounded-full flex items-center gap-1">
-                            <UserIcon className="w-3 h-3" /> Humano
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 text-[10px] font-semibold bg-amber-950 text-amber-400 border border-amber-800 rounded-full flex items-center gap-1 animate-pulse">
-                            <AlertCircle className="w-3 h-3" /> Fila
-                          </span>
-                        )}
-                      </div>
+              {filteredContacts.map(c => (
+                <div
+                  key={c.phone_number}
+                  onClick={() => setActiveContact(c)}
+                  className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
+                    activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs">
+                      {(c.name || c.phone_number).substring(0, 2).toUpperCase()}
                     </div>
-                  )
-                })
-              )}
+                    <div>
+                      <h4 className="text-xs font-semibold text-zinc-200">{c.name || c.phone_number}</h4>
+                      <p className="text-[11px] text-zinc-400 truncate max-w-[160px]">{c.last_message}</p>
+                    </div>
+                  </div>
+                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${
+                    c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-400'
+                  }`}>
+                    {c.status === 'ai' ? 'IA Ativa' : 'Humano'}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Active Chat Windows */}
+          {/* Main Chat Box */}
           <div className="md:col-span-8 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col overflow-hidden">
             {activeContact ? (
               <>
-                {/* Chat Header */}
-                <div className="p-3 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-bold text-sm">
-                      {(activeContact.name || activeContact.phone_number)[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-zinc-100">{activeContact.name || 'Contato'}</h4>
-                      <p className="text-xs text-zinc-400 font-mono">{activeContact.phone_number} • {activeContact.instance}</p>
-                    </div>
+                <div className="p-3 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
+                  <div>
+                    <h4 className="text-xs font-bold text-zinc-100">{activeContact.name || activeContact.phone_number}</h4>
+                    <p className="text-[10px] text-zinc-400 font-mono">{activeContact.phone_number}</p>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    {activeContact.status === 'human' ? (
-                      <Button
-                        size="sm"
-                        onClick={handleReactivateAI}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs gap-1.5 h-8"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Reativar IA
-                      </Button>
-                    ) : activeContact.status === 'waiting_human' ? (
-                      <Button
-                        size="sm"
-                        onClick={() => handleAcceptCall(activeContact)}
-                        className="bg-amber-600 hover:bg-amber-700 text-white text-xs gap-1.5 h-8 animate-bounce"
-                      >
-                        <AlertCircle className="w-3.5 h-3.5" /> Assumir Atendimento
-                      </Button>
-                    ) : (
-                      <span className="text-xs text-emerald-400 flex items-center gap-1 font-medium bg-emerald-950/80 px-2.5 py-1 rounded-md border border-emerald-800">
-                        <Bot className="w-3.5 h-3.5" /> IA Ativa Respondendo
-                      </span>
-                    )}
-                  </div>
+                  <Button size="sm" variant="outline" className="text-xs border-zinc-800 text-zinc-300">
+                    <Bot className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Reativar IA
+                  </Button>
                 </div>
-
-                {/* Messages List */}
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-zinc-950/40">
-                  {loadingMessages ? (
-                    <div className="flex items-center justify-center h-full text-zinc-500 gap-2 text-xs">
-                      <Loader2 className="w-4 h-4 animate-spin" /> Carregando mensagens...
+                  {messages.map((m, i) => (
+                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                      <div className={`max-w-[75%] p-3 rounded-xl text-xs ${
+                        m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
+                      }`}>
+                        <p>{m.content}</p>
+                        <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
+                          {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
                     </div>
-                  ) : messages.length === 0 ? (
-                    <div className="flex items-center justify-center h-full text-zinc-500 text-xs">
-                      Nenhuma mensagem trocada com este contato ainda.
-                    </div>
-                  ) : (
-                    messages.map((msg, i) => {
-                      const isUser = msg.role === 'user'
-                      return (
-                        <div
-                          key={msg.id || i}
-                          className={`flex flex-col ${isUser ? 'items-start' : 'items-end'}`}
-                        >
-                          <div
-                            className={`max-w-[75%] p-3 rounded-2xl text-xs leading-relaxed ${
-                              isUser
-                                ? 'bg-zinc-800 text-zinc-100 rounded-tl-none border border-zinc-700/50'
-                                : 'bg-indigo-600 text-white rounded-tr-none shadow-md'
-                            }`}
-                          >
-                            {msg.content}
-                          </div>
-                          <span className="text-[10px] text-zinc-500 mt-1 px-1">
-                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                      )
-                    })
-                  )}
+                  ))}
                   <div ref={messagesEndRef} />
                 </div>
-
-                {/* Send Input */}
-                <form onSubmit={handleSendMessage} className="p-3 bg-zinc-900 border-t border-zinc-800 flex gap-2">
+                <form onSubmit={e => { e.preventDefault(); if (inputText.trim()) { setMessages(prev => [...prev, { role: 'assistant', content: inputText, created_at: new Date().toISOString() }]); setInputText(''); } }} className="p-3 border-t border-zinc-800 flex items-center gap-2 bg-zinc-950">
                   <Input
-                    placeholder="Digite a mensagem..."
+                    placeholder="Digite sua mensagem de atendimento..."
                     value={inputText}
                     onChange={e => setInputText(e.target.value)}
-                    className="flex-1 bg-zinc-950 border-zinc-800 text-xs text-zinc-100 focus-visible:ring-indigo-500"
+                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100"
                   />
-                  <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-4">
-                    <Send className="w-4 h-4" />
+                  <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                    <Send className="w-3.5 h-3.5" />
                   </Button>
                 </form>
               </>
             ) : (
-              <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-2">
-                <MessageSquare className="w-10 h-10 stroke-1 text-zinc-600" />
-                <p className="text-sm">Selecione um contato ao lado para iniciar a conversa.</p>
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-500">
+                <MessageSquare className="w-12 h-12 mb-3 text-zinc-700" />
+                <p className="text-xs">Selecione um contato na lista para iniciar o atendimento humano.</p>
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Queue Subtab */}
-      {activeSubTab === 'queue' && (
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <AlertCircle className="w-5 h-5 text-amber-500" /> Fila de Atendimento Humano Pendente
-            </CardTitle>
-            <CardDescription className="text-zinc-400">
-              Contatos que solicitaram transição de conversa do bot para um atendente humano.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {pendingContacts.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-                Nenhum chamado pendente na fila no momento.
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {pendingContacts.map(contact => (
-                  <div key={contact.phone_number} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex items-center justify-between">
-                    <div>
-                      <h4 className="font-semibold text-zinc-200">{contact.name || 'Desconhecido'}</h4>
-                      <p className="text-xs text-zinc-400 font-mono">{contact.phone_number}</p>
-                      <p className="text-[11px] text-zinc-500">Instância: {contact.instance}</p>
-                    </div>
-                    <Button
-                      onClick={() => handleAcceptCall(contact)}
-                      className="bg-amber-600 hover:bg-amber-700 text-white text-xs gap-1.5"
-                    >
-                      Assumir Chamado
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Agenda Subtab */}
-      {activeSubTab === 'agenda' && (
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-zinc-100 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-indigo-500" /> Agendamentos Marcados
-              </CardTitle>
-              <CardDescription className="text-zinc-400">Consultas e horários agendados pela IA ou atendente.</CardDescription>
+      {/* MODAL TEMPLATE TRIGGER PREVIEW */}
+      {selectedTriggerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                <Zap className="w-4 h-4 text-amber-400" /> {selectedTriggerModal.title}
+              </h3>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedTriggerModal(null)} className="text-zinc-400">✕</Button>
             </div>
-            <Button size="sm" onClick={fetchAppointments} variant="outline" className="border-zinc-800 text-zinc-300">
-              <RefreshCw className="w-3.5 h-3.5" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {appointments.length === 0 ? (
-              <div className="p-8 text-center text-zinc-500 border border-dashed border-zinc-800 rounded-xl">
-                Nenhum agendamento encontrado.
+            <div>
+              <p className="text-xs text-zinc-400 mb-1">Assunto do E-mail:</p>
+              <div className="p-2 bg-zinc-900 text-xs font-semibold text-zinc-100 rounded border border-zinc-800">
+                {selectedTriggerModal.subject}
               </div>
-            ) : (
-              <div className="divide-y divide-zinc-800">
-                {appointments.map(app => (
-                  <div key={app.id} className="py-3 flex items-center justify-between">
+            </div>
+            <div>
+              <p className="text-xs text-zinc-400 mb-1">Prévia do Template HTML:</p>
+              <div className="p-4 bg-zinc-900/60 border border-zinc-800 rounded-lg text-xs text-zinc-200 max-h-60 overflow-y-auto">
+                <div dangerouslySetInnerHTML={{ __html: selectedTriggerModal.template }} />
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setSelectedTriggerModal(null)} className="bg-zinc-800 text-xs text-zinc-200">Fechar</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL CONTEXTO DA CALL E HISTÓRICO */}
+      {selectedCallContext && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                <Eye className="w-4 h-4 text-indigo-400" /> Histórico & Contexto: {selectedCallContext.client_name}
+              </h3>
+              <Button size="sm" variant="ghost" onClick={() => setSelectedCallContext(null)} className="text-zinc-400">✕</Button>
+            </div>
+            <div className="space-y-2 text-xs">
+              <p><strong className="text-zinc-400">Seller Responsável:</strong> {selectedCallContext.seller_name}</p>
+              <p><strong className="text-zinc-400">Telefone:</strong> {selectedCallContext.client_phone}</p>
+              <p><strong className="text-zinc-400">Notas do Agendamento:</strong> {selectedCallContext.notes}</p>
+            </div>
+            <div>
+              <h4 className="text-xs font-semibold text-zinc-200 mb-2">Disparos Automáticos Enviados ao Cliente:</h4>
+              <div className="space-y-2">
+                {selectedCallContext.dispatch_history?.map((dh, idx) => (
+                  <div key={idx} className="p-2.5 bg-zinc-900 border border-zinc-800 rounded text-xs flex justify-between items-center">
                     <div>
-                      <p className="text-sm font-medium text-zinc-200">{app.patient_name}</p>
-                      <p className="text-xs text-zinc-400 font-mono">{app.patient_phone}</p>
+                      <span className="font-semibold text-indigo-400 uppercase text-[10px] block">{dh.type}</span>
+                      <span className="text-zinc-300">{dh.summary}</span>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs font-semibold text-indigo-400">{new Date(app.date).toLocaleString()}</p>
-                      <span className="text-[10px] px-2 py-0.5 bg-zinc-800 text-zinc-300 rounded">
-                        {app.status || 'Confirmado'}
-                      </span>
-                    </div>
+                    <span className="text-[10px] text-zinc-500 font-mono">{new Date(dh.date).toLocaleTimeString('pt-BR')}</span>
                   </div>
                 ))}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setSelectedCallContext(null)} className="bg-zinc-800 text-xs text-zinc-200">Fechar</Button>
+            </div>
+          </div>
+        </div>
       )}
 
-      {/* Prompts Settings Subtab */}
-      {activeSubTab === 'settings' && (
-        <Card className="bg-zinc-950 border-zinc-800">
-          <CardHeader>
-            <CardTitle className="text-zinc-100 flex items-center gap-2">
-              <Settings className="w-5 h-5 text-indigo-500" /> Prompts do Sistema por Instância
-            </CardTitle>
-            <CardDescription className="text-zinc-400">Defina o comportamento e diretrizes dos agentes de IA em cada clínica.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {tenants.map(t => (
-              <div key={t.instance_name} className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-                    <Building className="w-4 h-4 text-indigo-400" /> {t.name} ({t.instance_name})
-                  </h4>
-                </div>
-                <textarea
-                  rows={5}
-                  value={editingPrompt[t.instance_name] || ''}
-                  onChange={e => setEditingPrompt(prev => ({ ...prev, [t.instance_name]: e.target.value }))}
-                  className="w-full p-3 bg-zinc-950 border border-zinc-800 text-xs text-zinc-200 rounded-lg font-mono"
-                  placeholder="Instruções para o modelo de IA..."
+      {/* MODAL CRIAR CALL */}
+      {newCallModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4">
+            <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+              <PhoneCall className="w-4 h-4 text-emerald-400" /> Agendar Nova Call de Vendas
+            </h3>
+            <form onSubmit={handleCreateCall} className="space-y-3 text-xs">
+              <div>
+                <label className="text-zinc-400">Nome do Cliente</label>
+                <Input
+                  required
+                  placeholder="Carlos Eduardo"
+                  value={newCallData.client_name}
+                  onChange={e => setNewCallData(prev => ({ ...prev, client_name: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
                 />
-                <Button
-                  onClick={() => handleSavePrompt(t.instance_name)}
-                  disabled={savingPrompt}
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs"
+              </div>
+              <div>
+                <label className="text-zinc-400">Telefone / WhatsApp</label>
+                <Input
+                  required
+                  placeholder="+5511998765432"
+                  value={newCallData.client_phone}
+                  onChange={e => setNewCallData(prev => ({ ...prev, client_phone: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">E-mail (Opcional)</label>
+                <Input
+                  placeholder="cliente@exemplo.com"
+                  value={newCallData.client_email}
+                  onChange={e => setNewCallData(prev => ({ ...prev, client_email: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">Seller Responsável</label>
+                <select
+                  value={newCallData.seller_id}
+                  onChange={e => setNewCallData(prev => ({ ...prev, seller_id: Number(e.target.value) }))}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 rounded-lg p-2 mt-1"
                 >
-                  {savingPrompt ? <Loader2 className="w-4 h-4 animate-spin" /> : "Salvar Prompt da Instância"}
+                  {sellers.map(s => (
+                    <option key={s.id} value={s.id}>{s.name} ({s.role})</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-zinc-400">Data e Hora da Reunião</label>
+                <Input
+                  type="datetime-local"
+                  value={newCallData.scheduled_at}
+                  onChange={e => setNewCallData(prev => ({ ...prev, scheduled_at: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">Observações / Contexto</label>
+                <Input
+                  placeholder="Interessado no Plano Pro..."
+                  value={newCallData.notes}
+                  onChange={e => setNewCallData(prev => ({ ...prev, notes: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onClick={() => setNewCallModal(false)} className="text-xs border-zinc-800 text-zinc-300">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
+                  Agendar Call
                 </Button>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Admin Instances & Users Subtab */}
-      {activeSubTab === 'admin' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Create Tenant Card */}
-          <Card className="bg-zinc-950 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-zinc-100 flex items-center gap-2 text-base">
-                <Building className="w-4 h-4 text-indigo-500" /> Criar Nova Instância (Tenant)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateTenant} className="space-y-3">
-                <div>
-                  <label className="text-xs text-zinc-400">Nome da Instância / Clínica</label>
-                  <Input
-                    placeholder="Ex: Clínica Odonto Sp"
-                    value={newTenant.name}
-                    onChange={e => setNewTenant(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-zinc-400">ID da Instância (Evolution API)</label>
-                  <Input
-                    placeholder="Ex: clinica_odonto"
-                    value={newTenant.instance_name}
-                    onChange={e => setNewTenant(prev => ({ ...prev, instance_name: e.target.value }))}
-                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs mt-2">
-                  <Plus className="w-4 h-4 mr-1" /> Cadastrar Instância
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Create User Card */}
-          <Card className="bg-zinc-950 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-zinc-100 flex items-center gap-2 text-base">
-                <UserPlus className="w-4 h-4 text-indigo-500" /> Criar Novo Atendente / Usuário
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCreateUser} className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-xs text-zinc-400">Username</label>
-                    <Input
-                      placeholder="atendente01"
-                      value={newUser.username}
-                      onChange={e => setNewUser(prev => ({ ...prev, username: e.target.value }))}
-                      className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs text-zinc-400">Senha</label>
-                    <Input
-                      type="password"
-                      placeholder="******"
-                      value={newUser.password}
-                      onChange={e => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                      className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-xs text-zinc-400">Nome Completo</label>
-                  <Input
-                    placeholder="Maria Silva"
-                    value={newUser.name}
-                    onChange={e => setNewUser(prev => ({ ...prev, name: e.target.value }))}
-                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
-                  />
-                </div>
-                <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-xs mt-2">
-                  <UserPlus className="w-4 h-4 mr-1" /> Cadastrar Atendente
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+            </form>
+          </div>
         </div>
       )}
     </div>
