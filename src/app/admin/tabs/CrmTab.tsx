@@ -31,7 +31,8 @@ import {
   Filter,
   Eye,
   Edit3,
-  UserCheck
+  UserCheck,
+  FileText
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -191,15 +192,15 @@ const MOCK_USERS: UserAccount[] = [
 ]
 
 const MOCK_TRIGGERS: TriggerRule[] = [
-  { id: "cadastrar", trigger_type: "cadastrar", title: "Boas-vindas (Novo Cadastro)", subject: "🎉 Bem-vindo ao ScreenAI! Seu teste gratuito começou", enabled: true, delay_minutes: 0, template: "<h1>Olá, {name}!</h1><p>Bem-vindo ao ScreenAI.</p>" },
-  { id: "apos_1_dia", trigger_type: "apos_1_dia", title: "Engajamento (1 Dia de Uso)", subject: "💡 Dicas para aproveitar 100% da sua IA no ScreenAI", enabled: true, delay_minutes: 1440, template: "<h1>Olá, {name}!</h1><p>Confira novas dicas.</p>" },
-  { id: "apos_7_dias", trigger_type: "apos_7_dias", title: "Retenção (7 Dias de Uso)", subject: "🌟 7 dias com o ScreenAI! Como podemos ajudar mais?", enabled: true, delay_minutes: 10080, template: "<h1>Olá, {name}!</h1><p>7 dias juntos!</p>" },
-  { id: "abriu_checkout", trigger_type: "abriu_checkout", title: "Checkout Abandonado", subject: "⚡ Não perca o seu acesso Pro no ScreenAI!", enabled: true, delay_minutes: 15, template: "<h1>Olá, {name}!</h1><p>Finalize seu Plano Pro.</p>" },
-  { id: "nao_completou_cadastro", trigger_type: "nao_completou_cadastro", title: "Onboarding Incompleto", subject: "📝 Falta pouco para concluir seu perfil no ScreenAI", enabled: true, delay_minutes: 30, template: "<h1>Olá, {name}!</h1><p>Complete seu perfil.</p>" },
-  { id: "cadastrou_mas_nao_usou", trigger_type: "cadastrou_mas_nao_usou", title: "Usuário Inativo (Sem Uso)", subject: "❓ Precisa de ajuda para fazer sua primeira pergunta?", enabled: true, delay_minutes: 2880, template: "<h1>Olá, {name}!</h1><p>Faça seu primeiro teste.</p>" },
-  { id: "pagamento_recusado", trigger_type: "pagamento_recusado", title: "Pagamento Recusado", subject: "⚠️ Houve um problema com o seu pagamento - ScreenAI Pro", enabled: true, delay_minutes: 0, template: "<h1>Ops, {name}!</h1><p>Pagamento recusado. Tente o PIX.</p>" },
-  { id: "trial_acabando", trigger_type: "trial_acabando", title: "Aviso de Fim de Testes", subject: "⏳ Seu período de testes no ScreenAI está terminando", enabled: true, delay_minutes: 0, template: "<h1>Atenção, {name}!</h1><p>Falta 48h para terminar.</p>" },
-  { id: "bateu_limite_tokens", trigger_type: "bateu_limite_tokens", title: "Limite de Tokens Atingido", subject: "⚡ Seus créditos acabaram! Recarregue para continuar usando a IA", enabled: true, delay_minutes: 0, template: "<h1>Créditos acabaram, {name}!</h1><p>Faça o upgrade.</p>" }
+  { id: "cadastrar", trigger_type: "cadastrar", title: "Boas-vindas (Novo Cadastro)", subject: "Bem-vindo ao ScreenAI! Seu teste gratuito começou", enabled: true, delay_minutes: 0, template: "<h1>Olá, {name}!</h1><p>Seja muito bem-vindo ao ScreenAI. Sua conta foi criada com sucesso!</p>" },
+  { id: "apos_1_dia", trigger_type: "apos_1_dia", title: "Engajamento (1 Dia de Uso)", subject: "Dicas para aproveitar 100% da sua IA no ScreenAI", enabled: true, delay_minutes: 1440, template: "<h1>Olá, {name}!</h1><p>Confira dicas avançadas para potencializar sua IA.</p>" },
+  { id: "apos_7_dias", trigger_type: "apos_7_dias", title: "Retenção (7 Dias de Uso)", subject: "7 dias com o ScreenAI! Como podemos ajudar mais?", enabled: true, delay_minutes: 10080, template: "<h1>Olá, {name}!</h1><p>Parabéns por completar sua primeira semana no ScreenAI.</p>" },
+  { id: "abriu_checkout", trigger_type: "abriu_checkout", title: "Checkout Abandonado", subject: "Não perca o seu acesso Pro no ScreenAI", enabled: true, delay_minutes: 15, template: "<h1>Esqueceu de finalizar, {name}?</h1><p>Vimos que você abriu a página de checkout para o Plano Pro.</p>" },
+  { id: "nao_completou_cadastro", trigger_type: "nao_completou_cadastro", title: "Onboarding Incompleto", subject: "Falta pouco para concluir seu perfil no ScreenAI", enabled: true, delay_minutes: 30, template: "<h1>Complete seu cadastro, {name}!</h1><p>Falta pouco para liberar todos os recursos.</p>" },
+  { id: "cadastrou_mas_nao_usou", trigger_type: "cadastrou_mas_nao_usou", title: "Usuário Inativo (Sem Uso)", subject: "Precisa de ajuda para fazer sua primeira pergunta?", enabled: true, delay_minutes: 2880, template: "<h1>Oi, {name}!</h1><p>Sentimos sua falta. Faça sua primeira pergunta agora mesmo.</p>" },
+  { id: "pagamento_recusado", trigger_type: "pagamento_recusado", title: "Pagamento Recusado", subject: "Houve um problema com o seu pagamento - ScreenAI Pro", enabled: true, delay_minutes: 0, template: "<h1>Atenção: Pagamento não aprovado, {name}</h1><p>Atualize seu cartão ou utilize o PIX com desconto.</p>" },
+  { id: "trial_acabando", trigger_type: "trial_acabando", title: "Aviso de Fim de Testes", subject: "Seu período de testes no ScreenAI está terminando", enabled: true, delay_minutes: 0, template: "<h1>Atenção, {name}!</h1><p>Faltam 48 horas para encerrar seu período de testes.</p>" },
+  { id: "bateu_limite_tokens", trigger_type: "bateu_limite_tokens", title: "Limite de Tokens Atingido", subject: "Seus créditos acabaram! Recarregue para continuar usando a IA", enabled: true, delay_minutes: 0, template: "<h1>Você atingiu o limite de tokens, {name}!</h1><p>Faça a recarga para continuar utilizando o Studio.</p>" }
 ]
 
 const MOCK_SELLERS: Seller[] = [
@@ -209,8 +210,8 @@ const MOCK_SELLERS: Seller[] = [
 ]
 
 const MOCK_DISPATCHES: DispatchRecord[] = [
-  { id: 1, user_id: 10, recipient_email: "carlos.eduardo@exemplo.com", user_name: "Carlos Eduardo", trigger_type: "abriu_checkout", trigger_title: "Checkout Abandonado", subject: "⚡ Não perca o seu acesso Pro no ScreenAI!", channel: "email", status: "success", dispatched_at: new Date().toISOString() },
-  { id: 2, user_id: 12, recipient_email: "ana.paula@exemplo.com", user_name: "Ana Paula Souza", trigger_type: "bateu_limite_tokens", trigger_title: "Limite de Tokens Atingido", subject: "⚡ Seus créditos acabaram!", channel: "email", status: "success", dispatched_at: new Date().toISOString() }
+  { id: 1, user_id: 10, recipient_email: "carlos.eduardo@exemplo.com", user_name: "Carlos Eduardo", trigger_type: "abriu_checkout", trigger_title: "Checkout Abandonado", subject: "Não perca o seu acesso Pro no ScreenAI", channel: "email", status: "success", dispatched_at: new Date().toISOString() },
+  { id: 2, user_id: 12, recipient_email: "ana.paula@exemplo.com", user_name: "Ana Paula Souza", trigger_type: "bateu_limite_tokens", trigger_title: "Limite de Tokens Atingido", subject: "Seus créditos acabaram!", channel: "email", status: "success", dispatched_at: new Date().toISOString() }
 ]
 
 const MOCK_CALLS: SalesCall[] = [
@@ -268,6 +269,16 @@ export function CrmTab() {
   const [triggers, setTriggers] = useState<TriggerRule[]>(MOCK_TRIGGERS)
   const [dispatches, setDispatches] = useState<DispatchRecord[]>(MOCK_DISPATCHES)
   const [selectedTriggerModal, setSelectedTriggerModal] = useState<TriggerRule | null>(null)
+  const [editingTriggerModal, setEditingTriggerModal] = useState<TriggerRule | null>(null)
+  const [newTriggerModal, setNewTriggerModal] = useState(false)
+  const [newTriggerData, setNewTriggerData] = useState({
+    trigger_type: '',
+    title: '',
+    subject: '',
+    template: '<h1>Olá, {name}!</h1><p>Digite sua mensagem aqui.</p>',
+    delay_minutes: 0
+  })
+
   const [testingTrigger, setTestingTrigger] = useState<string | null>(null)
   const [testEmailInput, setTestEmailInput] = useState("")
 
@@ -329,7 +340,7 @@ export function CrmTab() {
       const resT = await fetch('/api/crm/triggers')
       if (resT.ok) {
         const d = await resT.json()
-        if (d.triggers) setTriggers(d.triggers)
+        if (d.triggers && d.triggers.length > 0) setTriggers(d.triggers)
       }
 
       const resD = await fetch('/api/crm/dispatches')
@@ -373,14 +384,64 @@ export function CrmTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trigger_type: triggerType, email: testEmailInput || undefined })
       })
-      const data = await res.json()
-      alert(`✅ Disparo de teste para '${triggerType}' concluído com sucesso! (Log gerado para o Grafana)`)
+      alert(`Disparo de teste para '${triggerType}' concluído com sucesso. (Log gerado para o Grafana)`)
       fetchCrmData()
     } catch (e) {
-      alert(`✅ Simulação de disparo para '${triggerType}' executada com sucesso!`)
+      alert(`Simulação de disparo para '${triggerType}' executada com sucesso.`)
     } finally {
       setTestingTrigger(null)
     }
+  }
+
+  const handleSaveTriggerEdit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingTriggerModal) return
+
+    setTriggers(prev => prev.map(t => t.id === editingTriggerModal.id ? editingTriggerModal : t))
+    try {
+      await fetch(`/api/crm/triggers/${editingTriggerModal.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editingTriggerModal)
+      })
+    } catch (e) {
+      console.warn("Trigger atualizado no modo local")
+    }
+
+    setEditingTriggerModal(null)
+    alert("Template de disparo atualizado com sucesso!")
+  }
+
+  const handleCreateNewTrigger = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newTriggerData.trigger_type || !newTriggerData.title || !newTriggerData.subject) return
+
+    const newKey = newTriggerData.trigger_type.toLowerCase().replace(/\s+/g, '_')
+    const created: TriggerRule = {
+      id: newKey,
+      trigger_type: newKey,
+      title: newTriggerData.title,
+      subject: newTriggerData.subject,
+      enabled: true,
+      delay_minutes: newTriggerData.delay_minutes || 0,
+      template: newTriggerData.template
+    }
+
+    setTriggers(prev => [created, ...prev])
+
+    try {
+      await fetch('/api/crm/triggers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTriggerData)
+      })
+    } catch (e) {
+      console.warn("Disparo criado em modo local")
+    }
+
+    setNewTriggerModal(false)
+    setNewTriggerData({ trigger_type: '', title: '', subject: '', template: '<h1>Olá, {name}!</h1><p>Digite sua mensagem aqui.</p>', delay_minutes: 0 })
+    alert("Novo disparo automático cadastrado com sucesso!")
   }
 
   const handleCreateCall = async (e: React.FormEvent) => {
@@ -456,8 +517,8 @@ export function CrmTab() {
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold text-zinc-100">Módulo WhatsApp CRM & Automações</h3>
               {isMockMode && (
-                <span className="px-2 py-0.5 text-[10px] font-medium bg-amber-500/10 text-amber-400 border border-amber-500/30 rounded-md">
-                  Modo Ativo (Mock & API)
+                <span className="px-2 py-0.5 text-[10px] font-medium bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-md">
+                  Modo Ativo (API & Local)
                 </span>
               )}
             </div>
@@ -494,7 +555,7 @@ export function CrmTab() {
               activeSubTab === 'disparos' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
             }`}
           >
-            <Zap className="w-3.5 h-3.5 text-amber-400" /> Disparos Automáticos
+            <Mail className="w-3.5 h-3.5 text-indigo-400" /> Disparos Automáticos
           </button>
           <button
             onClick={() => setActiveSubTab('calls')}
@@ -521,21 +582,27 @@ export function CrmTab() {
           <div className="flex items-center justify-between bg-zinc-900/40 p-4 border border-zinc-800 rounded-xl">
             <div>
               <h4 className="text-base font-semibold text-zinc-100 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-amber-400" /> Eventos de Disparos Automáticos (9 Gatilhos)
+                <Mail className="w-5 h-5 text-indigo-400" /> Eventos de Disparos Automáticos ({triggers.length} Gatilhos)
               </h4>
               <p className="text-xs text-zinc-400">Mensagens e e-mails disparados 100% automaticamente conforme eventos do ciclo de vida.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <Input
                 placeholder="E-mail para teste de disparo..."
                 value={testEmailInput}
                 onChange={e => setTestEmailInput(e.target.value)}
-                className="w-64 bg-zinc-950 border-zinc-800 text-xs text-zinc-100"
+                className="w-56 bg-zinc-950 border-zinc-800 text-xs text-zinc-100"
               />
+              <Button
+                onClick={() => setNewTriggerModal(true)}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4 mr-1" /> Criar Novo Disparo
+              </Button>
             </div>
           </div>
 
-          {/* Cards dos 9 Gatilhos */}
+          {/* Cards dos Gatilhos */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {triggers.map(trig => (
               <Card key={trig.id} className="bg-zinc-950 border-zinc-800 relative overflow-hidden flex flex-col justify-between">
@@ -544,8 +611,8 @@ export function CrmTab() {
                     <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">
                       {trig.trigger_type}
                     </span>
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-400">
-                      <CheckCircle className="w-3 h-3" /> Automático
+                    <span className={`flex items-center gap-1 text-[11px] font-medium ${trig.enabled ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                      <CheckCircle className="w-3 h-3" /> {trig.enabled ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
                   <CardTitle className="text-sm font-semibold text-zinc-100 mt-2">
@@ -560,25 +627,35 @@ export function CrmTab() {
                     {trig.template.replace(/<[^>]*>?/gm, '')}
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-900">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedTriggerModal(trig)}
-                      className="text-xs border-zinc-800 hover:bg-zinc-900 text-zinc-300"
-                    >
-                      <Eye className="w-3.5 h-3.5 mr-1" /> Ver Template
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedTriggerModal(trig)}
+                        className="text-[11px] border-zinc-800 hover:bg-zinc-900 text-zinc-300 px-2"
+                      >
+                        <Eye className="w-3 h-3 mr-1" /> Ver
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEditingTriggerModal(trig)}
+                        className="text-[11px] border-zinc-800 hover:bg-zinc-900 text-indigo-400 px-2"
+                      >
+                        <Edit3 className="w-3 h-3 mr-1" /> Editar
+                      </Button>
+                    </div>
                     <Button
                       size="sm"
                       disabled={testingTrigger === trig.trigger_type}
                       onClick={() => handleTestDispatch(trig.trigger_type)}
-                      className="text-xs bg-amber-600 hover:bg-amber-700 text-white"
+                      className="text-[11px] bg-indigo-600 hover:bg-indigo-700 text-white px-2.5"
                     >
                       {testingTrigger === trig.trigger_type ? (
                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                       ) : (
                         <>
-                          <Send className="w-3.5 h-3.5 mr-1" /> Testar Disparo
+                          <Send className="w-3 h-3 mr-1" /> Testar
                         </>
                       )}
                     </Button>
@@ -890,13 +967,137 @@ export function CrmTab() {
         </div>
       )}
 
+      {/* MODAL EDITAR TEMPLATE DISPARO */}
+      {editingTriggerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                <Edit3 className="w-4 h-4 text-indigo-400" /> Editar Disparo: {editingTriggerModal.title}
+              </h3>
+              <Button size="sm" variant="ghost" onClick={() => setEditingTriggerModal(null)} className="text-zinc-400">✕</Button>
+            </div>
+            <form onSubmit={handleSaveTriggerEdit} className="space-y-3 text-xs">
+              <div>
+                <label className="text-zinc-400">Título do Gatilho</label>
+                <Input
+                  value={editingTriggerModal.title}
+                  onChange={e => setEditingTriggerModal(prev => prev ? ({ ...prev, title: e.target.value }) : null)}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">Assunto do E-mail</label>
+                <Input
+                  value={editingTriggerModal.subject}
+                  onChange={e => setEditingTriggerModal(prev => prev ? ({ ...prev, subject: e.target.value }) : null)}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">Conteúdo HTML do Template</label>
+                <textarea
+                  rows={6}
+                  value={editingTriggerModal.template}
+                  onChange={e => setEditingTriggerModal(prev => prev ? ({ ...prev, template: e.target.value }) : null)}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 rounded-lg p-3 mt-1 font-mono focus:outline-none"
+                />
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <input
+                  type="checkbox"
+                  id="trig_enabled"
+                  checked={editingTriggerModal.enabled}
+                  onChange={e => setEditingTriggerModal(prev => prev ? ({ ...prev, enabled: e.target.checked }) : null)}
+                  className="rounded border-zinc-800 bg-zinc-900 text-indigo-600"
+                />
+                <label htmlFor="trig_enabled" className="text-zinc-300">Disparo Ativo no Servidor</label>
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-900">
+                <Button type="button" variant="outline" onClick={() => setEditingTriggerModal(null)} className="text-xs border-zinc-800 text-zinc-300">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL NOVO DISPARO CUSTOMIZADO */}
+      {newTriggerModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                <Plus className="w-4 h-4 text-indigo-400" /> Cadastrar Novo Disparo Automático
+              </h3>
+              <Button size="sm" variant="ghost" onClick={() => setNewTriggerModal(false)} className="text-zinc-400">✕</Button>
+            </div>
+            <form onSubmit={handleCreateNewTrigger} className="space-y-3 text-xs">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-zinc-400">Identificador (Gatilho)</label>
+                  <Input
+                    required
+                    placeholder="ex: campanha_black_friday"
+                    value={newTriggerData.trigger_type}
+                    onChange={e => setNewTriggerData(prev => ({ ...prev, trigger_type: e.target.value }))}
+                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                  />
+                </div>
+                <div>
+                  <label className="text-zinc-400">Título do Gatilho</label>
+                  <Input
+                    required
+                    placeholder="Promoção Especial"
+                    value={newTriggerData.title}
+                    onChange={e => setNewTriggerData(prev => ({ ...prev, title: e.target.value }))}
+                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-zinc-400">Assunto do E-mail</label>
+                <Input
+                  required
+                  placeholder="Aproveite esta oferta exclusiva do ScreenAI"
+                  value={newTriggerData.subject}
+                  onChange={e => setNewTriggerData(prev => ({ ...prev, subject: e.target.value }))}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 mt-1"
+                />
+              </div>
+              <div>
+                <label className="text-zinc-400">Conteúdo HTML do Template</label>
+                <textarea
+                  rows={6}
+                  value={newTriggerData.template}
+                  onChange={e => setNewTriggerData(prev => ({ ...prev, template: e.target.value }))}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-xs text-zinc-100 rounded-lg p-3 mt-1 font-mono focus:outline-none"
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-3 border-t border-zinc-900">
+                <Button type="button" variant="outline" onClick={() => setNewTriggerModal(false)} className="text-xs border-zinc-800 text-zinc-300">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
+                  Cadastrar Disparo
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* MODAL TEMPLATE TRIGGER PREVIEW */}
       {selectedTriggerModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4">
             <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
               <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-                <Zap className="w-4 h-4 text-amber-400" /> {selectedTriggerModal.title}
+                <Mail className="w-4 h-4 text-indigo-400" /> {selectedTriggerModal.title}
               </h3>
               <Button size="sm" variant="ghost" onClick={() => setSelectedTriggerModal(null)} className="text-zinc-400">✕</Button>
             </div>
