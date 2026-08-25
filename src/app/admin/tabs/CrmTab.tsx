@@ -30,7 +30,8 @@ import {
   DollarSign,
   Filter,
   Eye,
-  Edit3
+  Edit3,
+  UserCheck
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
