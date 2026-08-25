@@ -14,3 +14,17 @@ export function isMobileDevice() {
   // Isso permite laptops com touch e iPads em modo desktop (que são largos) funcionarem.
   return isSmallScreen && (isMobileUA || navigator.maxTouchPoints > 0)
 }
+
+export function formatErrorMessage(detail: any, defaultMsg = 'Erro inesperado'): string {
+  if (!detail) return defaultMsg
+  if (typeof detail === 'string') return detail
+  if (Array.isArray(detail)) {
+    return detail
+      .map(item => (typeof item === 'object' && item !== null ? item.msg || item.message || JSON.stringify(item) : String(item)))
+      .join('; ')
+  }
+  if (typeof detail === 'object') {
+    return detail.message || detail.msg || detail.detail || JSON.stringify(detail)
+  }
+  return String(detail)
+}

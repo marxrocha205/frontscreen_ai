@@ -152,11 +152,13 @@ export function useWebsocket() {
     wsRef.current = ws
 
     ws.onopen = () => {
+      if (wsRef.current !== ws) return
       console.log("Conectado ao ScreenAI Backend!")
       setIsConnected(true)
     }
 
     ws.onclose = (event) => {
+      if (wsRef.current !== ws) return
       setIsConnected(false)
       if (event.code === 1008) {
         alert(t('error.session_expired') || "Sessão Encerrada: A sua conta foi aberta noutro dispositivo.")
@@ -164,6 +166,7 @@ export function useWebsocket() {
     }
 
     ws.onmessage = (event) => {
+      if (wsRef.current !== ws) return
       const data = JSON.parse(event.data)
 
       switch (data.type) {

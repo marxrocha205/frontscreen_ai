@@ -19,6 +19,11 @@ export function middleware(request: NextRequest) {
 
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/painel')
 
+  // Em modo de desenvolvimento (npm run dev), permite acessar o Admin sem precisar logar
+  if (process.env.NODE_ENV === 'development' && isAdminRoute) {
+    return NextResponse.next()
+  }
+
   if (!token && isAdminRoute) {
     return NextResponse.redirect(new URL('/login', request.url))
   }

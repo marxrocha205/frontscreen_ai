@@ -86,6 +86,7 @@ import { UpsellChatCard } from '@/components/upsell-chat-card'
 import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
+import { formatErrorMessage } from '@/lib/utils'
 
 const AgentIconSvg = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
   <svg
@@ -620,11 +621,12 @@ export function ChatInterface() {
 
       if (mediaMode !== 'text') {
         const token = localStorage.getItem('access_token') || ''
+        const promptText = textToSend.trim() || (mediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo')
 
         addMessage({
           id: Date.now().toString(),
           role: 'user',
-          content: textToSend || (mediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo')
+          content: promptText
         })
 
         setIsGeneratingMedia(mediaMode)
@@ -635,13 +637,14 @@ export function ChatInterface() {
 
         const formData = new FormData()
         formData.append('token', token)
-        formData.append('prompt', textToSend || '')
+        formData.append('prompt', promptText)
         formData.append('media_type', mediaMode)
         if (activeId) formData.append('session_id', activeId)
 
         try {
           const res = await fetch(`${config.apiUrl}/api/studio/media/generate`, {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: formData
           })
           const data = await res.json()
@@ -662,14 +665,16 @@ export function ChatInterface() {
             })
             setMediaMode('text')
           } else {
-            if (data.detail && data.detail.includes('Saldo insuficiente')) {
-              setUpgradeDialogMessage(data.detail)
+            const errDetail = data.detail || data.message
+            if (typeof errDetail === 'string' && errDetail.includes('Saldo insuficiente')) {
+              setUpgradeDialogMessage(errDetail)
               setIsUpgradeDialogOpen(true)
             } else {
+              const errText = formatErrorMessage(errDetail, 'Falha na comunicação com o AI Studio.')
               addMessage({
                 id: Date.now().toString(),
                 role: 'assistant',
-                content: `Erro: ${data.detail || 'Falha na comunicação com o AI Studio.'}`
+                content: `Erro: ${errText}`
               })
             }
           }
@@ -677,6 +682,12 @@ export function ChatInterface() {
           setIsGeneratingMedia(null)
           setIsStreaming(false)
           console.error("Erro na geração de mídia:", error)
+          const errText = formatErrorMessage(error, 'Falha de conexão com o AI Studio.')
+          addMessage({
+            id: Date.now().toString(),
+            role: 'assistant',
+            content: `Erro: ${errText}`
+          })
         }
       } else if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
