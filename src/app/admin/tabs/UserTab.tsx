@@ -16,6 +16,9 @@ interface UserData {
   is_active: boolean
   is_admin: boolean
   created_at: string
+  total_tokens_used?: number
+  remaining_credits?: number
+  credits?: number
 }
 
 /** Detalhes completos do utilizador retornados por GET /api/admin/users/{id}/details */
@@ -25,6 +28,7 @@ interface UserDetails {
   ai_costs: Array<{ model: string; tokens: number; cost_usd: number }>
   total_ai_cost_usd: number
   lifetime_value_brl: number
+  total_tokens_used?: number
 }
 
 // ─── Constantes ────────────────────────────────────────────────
@@ -234,6 +238,7 @@ export function UsersTab() {
                   <th className="p-4 font-medium">ID</th>
                   <th className="p-4 font-medium">Email</th>
                   <th className="p-4 font-medium">Tipo</th>
+                  <th className="p-4 font-medium">Tokens Utilizados</th>
                   <th className="p-4 font-medium">Estado</th>
                   <th className="p-4 font-medium text-right">Ações</th>
                 </tr>
@@ -245,6 +250,9 @@ export function UsersTab() {
                     <td className="p-4 font-medium text-zinc-100">{user.email}</td>
                     <td className="p-4">
                       {getPlanBadge(user.email, user.is_admin)}
+                    </td>
+                    <td className="p-4 font-mono text-xs font-semibold text-indigo-400">
+                      {(user.total_tokens_used ?? 0).toLocaleString()} tokens
                     </td>
                     <td className="p-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-medium border ${
@@ -376,10 +384,16 @@ export function UsersTab() {
                       {userDetails.subscription.status}
                     </span>
                   </div>
-                  <div className="col-span-2">
+                  <div>
                     <span className="text-zinc-500">Créditos Restantes:</span>{" "}
                     <span className="text-zinc-200 font-mono font-medium">
                       {userDetails.subscription.remaining_credits.toLocaleString()}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-zinc-500">Total Tokens Usados:</span>{" "}
+                    <span className="text-indigo-400 font-mono font-bold">
+                      {(userDetails.total_tokens_used ?? 0).toLocaleString()} tokens
                     </span>
                   </div>
                 </div>

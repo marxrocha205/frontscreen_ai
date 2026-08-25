@@ -3,6 +3,7 @@
 import { Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { DashboardTab } from "./tabs/DashboardTab"
+import { CrmTab } from "./tabs/CrmTab"
 import { UsersTab } from "./tabs/UserTab"
 import { SessionsTab } from "./tabs/SessionsTab"
 import { BillingTab } from "./tabs/BillingTab"
@@ -23,6 +24,8 @@ function AdminPageContent() {
     switch (currentTab) {
       case 'dashboard':
         return <DashboardTab />
+      case 'crm':
+        return <CrmTab />
       case 'users':
         return <UsersTab />
       case 'sessions':

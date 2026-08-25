@@ -3,7 +3,7 @@
 import { ReactNode, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { LayoutDashboard, Users, Activity, HardDrive, Radio, Settings, ShieldCheck, Terminal, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, Activity, HardDrive, Radio, Settings, ShieldCheck, Terminal, CreditCard, MessageSquare } from 'lucide-react'
 
 function AdminLayoutContent({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams()
@@ -11,12 +11,13 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'crm', label: 'WhatsApp CRM', icon: MessageSquare },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'sessions', label: 'Sessions', icon: Activity },
     { id: 'storage', label: 'Storage', icon: HardDrive },
     { id: 'websockets', label: 'Websockets', icon: Radio },
     { id: 'billing', label: 'Billing', icon: CreditCard },
-     { id: 'logs', label: 'Logs', icon: Terminal },
+    { id: 'logs', label: 'Logs', icon: Terminal },
     { id: 'settings', label: 'Settings', icon: Settings },
     { id: 'audit', label: 'Audit', icon: ShieldCheck },
   ]
