@@ -245,10 +245,16 @@ export default function LoginPage() {
                 placeholder={t('login.password_placeholder')} 
                 className="bg-zinc-900 border-zinc-800 h-11 rounded-lg text-zinc-300 placeholder:text-zinc-500 focus-visible:ring-zinc-700" 
               />
+              <div className="flex justify-end pt-1 pb-1">
+                <Link href="/forgot-password" className="text-xs text-zinc-400 hover:text-zinc-200 transition-colors">
+                  Esqueceu a senha?
+                </Link>
+              </div>
               <Button onClick={handleLogin} disabled={isLoading} className="w-full bg-zinc-100 text-zinc-900 hover:bg-zinc-200 rounded-lg h-11 font-medium">
                 {isLoading ? t('login.connecting') : t('login.continue')}
               </Button>
             </div>
+
           </CardContent>
           <CardFooter className="flex flex-col gap-4 pb-6">
             <div className="text-sm text-zinc-400 text-center w-full">
