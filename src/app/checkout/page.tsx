@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { config } from '@/lib/config'
 import { useI18n } from '@/context/i18n-context'
 import { StripeCardForm } from './StripeCardForm'
+import { CieloCardForm } from './CieloCardForm'
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
@@ -916,14 +917,21 @@ function CheckoutContent() {
             </div>
 
             
-            {/* ── CARD FIELDS (Stripe PaymentElement) ── */}
+            {/* ── CARD FIELDS (Stripe / Cielo) ── */}
             {paymentMethod === 'card' && (
               <div style={{ marginTop: 4 }}>
-                <StripeCardForm 
-                  planId={selectedPlan.id} 
-                  currency={currency} 
-                  language={language} 
-                />
+                {language === 'pt-BR' ? (
+                  <CieloCardForm 
+                    planId={selectedPlan.id} 
+                    language={language} 
+                  />
+                ) : (
+                  <StripeCardForm 
+                    planId={selectedPlan.id} 
+                    currency={currency} 
+                    language={language} 
+                  />
+                )}
               </div>
             )}
 
