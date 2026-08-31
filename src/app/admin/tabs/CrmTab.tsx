@@ -418,7 +418,8 @@ export function CrmTab() {
         body: JSON.stringify({
           phone: waTargetPhone,
           template_name: waTargetTemplate,
-          name: waTargetName || "Marx"
+          name: waTargetName || "Marx",
+          language_code: waTargetTemplate === 'hello_world' ? 'en_US' : 'pt_BR'
         })
       })
       const data = await res.json()
