@@ -37,6 +37,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { config } from "@/lib/config"
 
 interface Contact {
   phone_number: string
@@ -343,31 +344,31 @@ export function CrmTab() {
 
   const fetchCrmData = async () => {
     try {
-      const resT = await fetch('/api/crm/triggers')
+      const resT = await fetch(`${config.apiUrl}/api/crm/triggers`)
       if (resT.ok) {
         const d = await resT.json()
         if (d.triggers && d.triggers.length > 0) setTriggers(d.triggers)
       }
 
-      const resD = await fetch('/api/crm/dispatches')
+      const resD = await fetch(`${config.apiUrl}/api/crm/dispatches`)
       if (resD.ok) {
         const d = await resD.json()
         if (d.dispatches) setDispatches(d.dispatches)
       }
 
-      const resS = await fetch('/api/crm/sellers')
+      const resS = await fetch(`${config.apiUrl}/api/crm/sellers`)
       if (resS.ok) {
         const d = await resS.json()
         if (d.sellers) setSellers(d.sellers)
       }
 
-      const resC = await fetch('/api/crm/calls')
+      const resC = await fetch(`${config.apiUrl}/api/crm/calls`)
       if (resC.ok) {
         const d = await resC.json()
         if (d.calls) setCalls(d.calls)
       }
 
-      const resM = await fetch('/api/crm/metrics')
+      const resM = await fetch(`${config.apiUrl}/api/crm/metrics`)
       if (resM.ok) {
         const d = await resM.json()
         if (d.summary) setMetrics(d.summary)
@@ -385,7 +386,7 @@ export function CrmTab() {
   const handleTestDispatch = async (triggerType: string) => {
     setTestingTrigger(triggerType)
     try {
-      const res = await fetch('/api/crm/triggers/test-dispatch', {
+      const res = await fetch(`${config.apiUrl}/api/crm/triggers/test-dispatch`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -411,7 +412,7 @@ export function CrmTab() {
     }
     setSendingWa(true)
     try {
-      const res = await fetch('/api/crm/whatsapp/send-template', {
+      const res = await fetch(`${config.apiUrl}/api/crm/whatsapp/send-template`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -440,7 +441,7 @@ export function CrmTab() {
 
     setTriggers(prev => prev.map(t => t.id === editingTriggerModal.id ? editingTriggerModal : t))
     try {
-      await fetch(`/api/crm/triggers/${editingTriggerModal.id}`, {
+      await fetch(`${config.apiUrl}/api/crm/triggers/${editingTriggerModal.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editingTriggerModal)
@@ -471,7 +472,7 @@ export function CrmTab() {
     setTriggers(prev => [created, ...prev])
 
     try {
-      await fetch('/api/crm/triggers', {
+      await fetch(`${config.apiUrl}/api/crm/triggers`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newTriggerData)
@@ -507,7 +508,7 @@ export function CrmTab() {
     }
 
     try {
-      await fetch('/api/crm/calls', {
+      await fetch(`${config.apiUrl}/api/crm/calls`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCallData)
@@ -525,7 +526,7 @@ export function CrmTab() {
   const handleUpdateCallStatus = async (callId: number, status: string, dealAmount?: number) => {
     setCalls(prev => prev.map(c => c.id === callId ? { ...c, status, deal_amount: dealAmount ?? c.deal_amount } : c))
     try {
-      await fetch(`/api/crm/calls/${callId}/status`, {
+      await fetch(`${config.apiUrl}/api/crm/calls/${callId}/status`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, deal_amount: dealAmount })
