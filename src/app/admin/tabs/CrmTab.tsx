@@ -282,6 +282,12 @@ export function CrmTab() {
   const [testingTrigger, setTestingTrigger] = useState<string | null>(null)
   const [testEmailInput, setTestEmailInput] = useState("")
 
+  // Estados de Disparo WhatsApp Cloud API
+  const [waTargetPhone, setWaTargetPhone] = useState("5599981099729")
+  const [waTargetName, setWaTargetName] = useState("Marx")
+  const [waTargetTemplate, setWaTargetTemplate] = useState("boas_vindas")
+  const [sendingWa, setSendingWa] = useState(false)
+
   // Estados das Calls e Sellers
   const [sellers, setSellers] = useState<Seller[]>(MOCK_SELLERS)
   const [calls, setCalls] = useState<SalesCall[]>(MOCK_CALLS)
@@ -382,7 +388,12 @@ export function CrmTab() {
       const res = await fetch('/api/crm/triggers/test-dispatch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trigger_type: triggerType, email: testEmailInput || undefined })
+        body: JSON.stringify({
+          trigger_type: triggerType,
+          email: testEmailInput || undefined,
+          phone: waTargetPhone || undefined,
+          name: waTargetName || undefined
+        })
       })
       alert(`Disparo de teste para '${triggerType}' concluído com sucesso. (Log gerado para o Grafana)`)
       fetchCrmData()
@@ -390,6 +401,36 @@ export function CrmTab() {
       alert(`Simulação de disparo para '${triggerType}' executada com sucesso.`)
     } finally {
       setTestingTrigger(null)
+    }
+  }
+
+  const handleSendWhatsAppTemplate = async () => {
+    if (!waTargetPhone) {
+      alert("Por favor, digite o número do WhatsApp com DDD.")
+      return
+    }
+    setSendingWa(true)
+    try {
+      const res = await fetch('/api/crm/whatsapp/send-template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: waTargetPhone,
+          template_name: waTargetTemplate,
+          name: waTargetName || "Marx"
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.status === 'success') {
+        alert(`✅ WhatsApp enviado com sucesso para ${waTargetPhone}!\n\nModelo: ${waTargetTemplate}`)
+        fetchCrmData()
+      } else {
+        alert(`❌ Erro no envio WhatsApp: ${data.detail || data.message || JSON.stringify(data)}`)
+      }
+    } catch (e: any) {
+      alert(`❌ Erro na conexão: ${e.message}`)
+    } finally {
+      setSendingWa(false)
     }
   }
 
@@ -599,6 +640,73 @@ export function CrmTab() {
               >
                 <Plus className="w-4 h-4 mr-1" /> Criar Novo Disparo
               </Button>
+            </div>
+          </div>
+
+          {/* Disparo Oficial WhatsApp Meta Cloud API */}
+          <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-zinc-950 p-5 border border-emerald-500/30 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
+                    Disparo Oficial WhatsApp Cloud API (Meta Tech Provider)
+                    <span className="px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded font-mono">
+                      WABA: 129820869420083
+                    </span>
+                  </h4>
+                  <p className="text-xs text-zinc-400">Envie templates aprovados (ex: boas_vindas) em tempo real para qualquer número de WhatsApp.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
+              <div>
+                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">WhatsApp com DDI e DDD</label>
+                <Input
+                  placeholder="Ex: 5599981099729"
+                  value={waTargetPhone}
+                  onChange={e => setWaTargetPhone(e.target.value)}
+                  className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 font-mono"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Nome do Cliente {"{{1}}"}</label>
+                <Input
+                  placeholder="Nome do cliente"
+                  value={waTargetName}
+                  onChange={e => setWaTargetName(e.target.value)}
+                  className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100"
+                />
+              </div>
+              <div>
+                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Modelo Aprovado (Template)</label>
+                <select
+                  value={waTargetTemplate}
+                  onChange={e => setWaTargetTemplate(e.target.value)}
+                  className="w-full h-9 px-3 bg-zinc-900/90 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  <option value="boas_vindas">boas_vindas (Marketing / Ativo)</option>
+                  <option value="hello_world">hello_world (Template Padrão)</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <Button
+                  onClick={handleSendWhatsAppTemplate}
+                  disabled={sendingWa}
+                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-9 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50"
+                >
+                  {sendingWa ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" /> Disparar WhatsApp
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </div>
 
