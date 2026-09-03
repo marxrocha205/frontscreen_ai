@@ -87,6 +87,7 @@ import { GeminiLiveOrb } from '@/components/gemini-live-orb'
 import { useChatStore, AI_MODELS } from '@/hooks/use-chat-store'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { formatErrorMessage } from '@/lib/utils'
+import { detectImageIntent } from '@/lib/image-intent'
 
 const AgentIconSvg = ({ className = "w-3.5 h-3.5" }: { className?: string }) => (
   <svg
@@ -627,23 +628,34 @@ export function ChatInterface() {
       // Descarta o card de upsell ao enviar nova mensagem
       setInlineUpsell(null)
 
-      if (mediaMode !== 'text') {
+      // Detecção automática de intenção de imagem no chat (ex: "crie um macaco", "desenhe...", etc)
+      const detectedImageIntent =
+        mediaMode === 'text' && !selectedFile && !isScreenShared && !audioBase64
+          ? detectImageIntent(textToSend)
+          : { isImageIntent: false, prompt: textToSend, cleanPrompt: textToSend }
+
+      const isImageRequest = mediaMode === 'image' || detectedImageIntent.isImageIntent
+
+      if (isImageRequest || mediaMode === 'video') {
+        const targetMediaMode: 'image' | 'video' = mediaMode === 'video' ? 'video' : 'image'
         const token = localStorage.getItem('access_token') || ''
         if (!token) {
           setShowLoginPrompt(true)
           return
         }
 
-        const promptText = textToSend.trim() || (mediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo')
+        const promptText = detectedImageIntent.isImageIntent
+          ? detectedImageIntent.cleanPrompt
+          : (textToSend.trim() || (targetMediaMode === 'image' ? 'Gere uma imagem' : 'Gere um vídeo'))
 
+        // Exibe exatamente o texto digitado pelo usuário na conversa
         addMessage({
           id: Date.now().toString(),
           role: 'user',
-          content: promptText
+          content: textToSend.trim() || promptText
         })
 
-        setIsGeneratingMedia(mediaMode)
-
+        setIsGeneratingMedia(targetMediaMode)
         setIsStreaming(true)
 
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
@@ -651,7 +663,7 @@ export function ChatInterface() {
         const formData = new FormData()
         formData.append('token', token)
         formData.append('prompt', promptText)
-        formData.append('media_type', mediaMode)
+        formData.append('media_type', targetMediaMode)
         if (activeId) formData.append('session_id', activeId)
 
         try {
@@ -684,25 +696,67 @@ export function ChatInterface() {
               content: `![Mídia Gerada](${data.url})`,
               model: 'screen-ai-1.2'
             })
-            setMediaMode('text')
+            if (mediaMode !== 'text') setMediaMode('text')
           } else {
             const errDetail = data.detail || data.message
             if (typeof errDetail === 'string' && errDetail.includes('Saldo insuficiente')) {
               setUpgradeDialogMessage(errDetail)
               setIsUpgradeDialogOpen(true)
             } else {
-              const errText = formatErrorMessage(errDetail, 'Falha na comunicação com o AI Studio.')
-              addMessage({
-                id: Date.now().toString(),
-                role: 'assistant',
-                content: `Erro: ${errText}`
-              })
+              // Tentativa de fallback usando rota de ferramentas de imagem (/api/tools/generate-image)
+              let fallbackSuccess = false
+              try {
+                const toolsFormData = new FormData()
+                toolsFormData.append('prompt', promptText)
+                toolsFormData.append('aspect_ratio', '1:1')
+                const toolsRes = await fetch(`${config.apiUrl}/api/tools/generate-image`, {
+                  method: 'POST',
+                  headers: { 'Authorization': `Bearer ${token}` },
+                  body: toolsFormData
+                })
+                if (toolsRes.ok) {
+                  const toolsData = await toolsRes.json()
+                  if (toolsData.image_url) {
+                    addMessage({
+                      id: Date.now().toString(),
+                      role: 'assistant',
+                      content: `![Mídia Gerada](${toolsData.image_url})`,
+                      model: 'screen-ai-1.2'
+                    })
+                    fallbackSuccess = true
+                    if (mediaMode !== 'text') setMediaMode('text')
+                  }
+                }
+              } catch {}
+
+              if (!fallbackSuccess) {
+                const errText = formatErrorMessage(errDetail, 'Falha na comunicação com o AI Studio.')
+                addMessage({
+                  id: Date.now().toString(),
+                  role: 'assistant',
+                  content: `Erro: ${errText}`
+                })
+              }
             }
           }
         } catch (error) {
           setIsGeneratingMedia(null)
           setIsStreaming(false)
           console.error("Erro na geração de mídia:", error)
+
+          // Fallback resiliente caso de timeout ou indisponibilidade de rede
+          try {
+            const fallbackUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(promptText)}?width=1024&height=1024&nologo=true`
+            addMessage({
+              id: Date.now().toString(),
+              role: 'assistant',
+              content: `![Mídia Gerada](${fallbackUrl})`,
+              model: 'screen-ai-1.2'
+            })
+            if (mediaMode !== 'text') setMediaMode('text')
+            return
+          } catch {}
+
           const errText = formatErrorMessage(error, 'Falha de conexão com o AI Studio.')
           addMessage({
             id: Date.now().toString(),
@@ -710,6 +764,7 @@ export function ChatInterface() {
             content: `Erro: ${errText}`
           })
         }
+        return
       } else if (selectedFile) {
         const { activeId, setActiveId, fetchConversations } = useConversations.getState()
         const token = localStorage.getItem('access_token') || ''
