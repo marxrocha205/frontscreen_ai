@@ -250,8 +250,8 @@ const MOCK_CALLS: SalesCall[] = [
 ]
 
 export function CrmTab() {
-  const [apiBaseUrl, setApiBaseUrl] = useState("http://localhost:8000/api/v1")
-  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('chat')
+  const [apiBaseUrl] = useState(`${config.apiUrl}/api/crm`)
+  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('disparos')
   
   const [contacts, setContacts] = useState<Contact[]>([])
   const [activeContact, setActiveContact] = useState<Contact | null>(null)
@@ -283,11 +283,14 @@ export function CrmTab() {
   const [testingTrigger, setTestingTrigger] = useState<string | null>(null)
   const [testEmailInput, setTestEmailInput] = useState("")
 
-  // Estados de Disparo WhatsApp Cloud API
-  const [waTargetPhone, setWaTargetPhone] = useState("5599981099729")
-  const [waTargetName, setWaTargetName] = useState("Marx")
-  const [waTargetTemplate, setWaTargetTemplate] = useState("boas_vindas")
+  // Estados de Disparo WhatsApp (WaBlast / Meta Gateway)
+  const [waMessageType, setWaMessageType] = useState<'direct' | 'template'>('direct')
+  const [waTargetPhone, setWaTargetPhone] = useState("+5511982164402")
+  const [waTargetName, setWaTargetName] = useState("Marx Rocha")
+  const [waTargetTemplate, setWaTargetTemplate] = useState("cadastrou")
+  const [waDirectMessage, setWaDirectMessage] = useState("Olá! Seja muito bem-vindo ao ScreenAI. Sua conta e acesso à IA multimodal estão liberados. Como podemos ajudar hoje?")
   const [sendingWa, setSendingWa] = useState(false)
+  const [gatewayStatus, setGatewayStatus] = useState<{ is_connected: boolean; gateway: string; wablast_key_masked?: string } | null>(null)
 
   // Estados das Calls e Sellers
   const [sellers, setSellers] = useState<Seller[]>(MOCK_SELLERS)
@@ -324,11 +327,12 @@ export function CrmTab() {
   const fetchContacts = async () => {
     setLoadingContacts(true)
     try {
-      const res = await fetch(`${apiBaseUrl}/contacts`)
+      const res = await fetch(`${config.apiUrl}/api/crm/contacts`)
       if (res.ok) {
         const data = await res.json()
-        if (Array.isArray(data) && data.length > 0) {
-          setContacts(data)
+        const contactList = Array.isArray(data) ? data : (data.contacts || [])
+        if (contactList.length > 0) {
+          setContacts(contactList)
           setIsMockMode(false)
           return
         }
@@ -340,6 +344,16 @@ export function CrmTab() {
     }
     setIsMockMode(true)
     setContacts(prev => prev.length > 0 ? prev : MOCK_CONTACTS)
+  }
+
+  const fetchGatewayStatus = async () => {
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/status`)
+      if (res.ok) {
+        const d = await res.json()
+        setGatewayStatus(d)
+      }
+    } catch {}
   }
 
   const fetchCrmData = async () => {
@@ -381,7 +395,62 @@ export function CrmTab() {
   useEffect(() => {
     fetchContacts()
     fetchCrmData()
+    fetchGatewayStatus()
   }, [])
+
+  const handleSelectContact = async (c: Contact) => {
+    setActiveContact(c)
+    setLoadingMessages(true)
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(c.phone_number)}/messages`)
+      if (res.ok) {
+        const d = await res.json()
+        if (d.messages && d.messages.length > 0) {
+          setMessages(d.messages)
+          scrollToBottom()
+          return
+        }
+      }
+    } catch {}
+    finally {
+      setLoadingMessages(false)
+    }
+    setMessages([
+      { role: 'user', content: c.last_message || 'Olá!', created_at: new Date().toISOString() }
+    ])
+    scrollToBottom()
+  }
+
+  const handleSendMessageToContact = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!inputText.trim() || !activeContact) return
+
+    const messageText = inputText.trim()
+    setInputText('')
+
+    const tempMsg: Message = {
+      role: 'assistant',
+      content: messageText,
+      created_at: new Date().toISOString()
+    }
+    setMessages(prev => [...prev, tempMsg])
+    scrollToBottom()
+
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(activeContact.phone_number)}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: messageText })
+      })
+      const data = await res.json()
+      if (!res.ok || data.status !== 'success') {
+        alert(`Aviso: Mensagem registrada localmente. Resposta do gateway: ${data.detail || data.message || 'ok'}`)
+      }
+      fetchCrmData()
+    } catch (err: any) {
+      console.warn("Erro ao enviar mensagem WhatsApp:", err)
+    }
+  }
 
   const handleTestDispatch = async (triggerType: string) => {
     setTestingTrigger(triggerType)
@@ -402,6 +471,39 @@ export function CrmTab() {
       alert(`Simulação de disparo para '${triggerType}' executada com sucesso.`)
     } finally {
       setTestingTrigger(null)
+    }
+  }
+
+  const handleSendWhatsAppDirect = async () => {
+    if (!waTargetPhone) {
+      alert("Por favor, digite o número do WhatsApp com DDI e DDD (ex: +5511982164402).")
+      return
+    }
+    if (!waDirectMessage.trim()) {
+      alert("Por favor, digite o texto da mensagem a ser enviada.")
+      return
+    }
+    setSendingWa(true)
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/whatsapp/send-direct`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: waTargetPhone,
+          message: waDirectMessage.trim()
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.status === 'success') {
+        alert(`✅ WhatsApp Direto enviado com sucesso para ${waTargetPhone} via WaBlast!`)
+        fetchCrmData()
+      } else {
+        alert(`❌ Erro no envio WhatsApp: ${data.detail || data.message || JSON.stringify(data)}`)
+      }
+    } catch (e: any) {
+      alert(`❌ Erro na conexão com o backend: ${e.message}`)
+    } finally {
+      setSendingWa(false)
     }
   }
 
@@ -645,71 +747,179 @@ export function CrmTab() {
             </div>
           </div>
 
-          {/* Disparo Oficial WhatsApp Meta Cloud API */}
-          <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-zinc-950 p-5 border border-emerald-500/30 rounded-xl space-y-3">
-            <div className="flex items-center justify-between">
+          {/* Disparo Oficial WhatsApp Meta Cloud API / WaBlast Gateway */}
+          <div className="bg-gradient-to-r from-emerald-950/40 via-zinc-950 to-zinc-950 p-5 border border-emerald-500/30 rounded-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-lg">
                   <MessageSquare className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-zinc-100 flex items-center gap-2">
-                    Disparo Oficial WhatsApp Cloud API (Meta Tech Provider)
-                    <span className="px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded font-mono">
-                      WABA: 129820869420083
-                    </span>
+                  <h4 className="text-sm font-semibold text-zinc-100 flex items-center gap-2 flex-wrap">
+                    Central de Disparos WhatsApp (WaBlast Gateway & Meta Cloud API)
+                    {gatewayStatus?.is_connected && (
+                      <span className="px-2 py-0.5 text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-full font-mono flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3 text-emerald-400" />
+                        WaBlast Ativo ({gatewayStatus.wablast_key_masked || 'wak_LbUy...'})
+                      </span>
+                    )}
                   </h4>
-                  <p className="text-xs text-zinc-400">Envie templates aprovados (ex: boas_vindas) em tempo real para qualquer número de WhatsApp.</p>
+                  <p className="text-xs text-zinc-400">
+                    Envie mensagens diretas de atendimento ou modelos aprovados via WaBlast em alta velocidade.
+                  </p>
                 </div>
+              </div>
+
+              {/* Botão de Alternar Modo: Direto vs Template */}
+              <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
+                <button
+                  onClick={() => setWaMessageType('direct')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                    waMessageType === 'direct'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  💬 Mensagem Direta
+                </button>
+                <button
+                  onClick={() => setWaMessageType('template')}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                    waMessageType === 'template'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  📋 Modelo (Template)
+                </button>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2">
-              <div>
-                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">WhatsApp com DDI e DDD</label>
-                <Input
-                  placeholder="Ex: 5599981099729"
-                  value={waTargetPhone}
-                  onChange={e => setWaTargetPhone(e.target.value)}
-                  className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 font-mono"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Nome do Cliente {"{{1}}"}</label>
-                <Input
-                  placeholder="Nome do cliente"
-                  value={waTargetName}
-                  onChange={e => setWaTargetName(e.target.value)}
-                  className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Modelo Aprovado (Template)</label>
-                <select
-                  value={waTargetTemplate}
-                  onChange={e => setWaTargetTemplate(e.target.value)}
-                  className="w-full h-9 px-3 bg-zinc-900/90 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
-                  <option value="boas_vindas">boas_vindas (Marketing / Ativo)</option>
-                  <option value="hello_world">hello_world (Template Padrão)</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <Button
-                  onClick={handleSendWhatsAppTemplate}
-                  disabled={sendingWa}
-                  className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-9 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50"
-                >
-                  {sendingWa ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>
-                      <Send className="w-3.5 h-3.5" /> Disparar WhatsApp
-                    </>
-                  )}
-                </Button>
-              </div>
+            {/* Presets Rápidos */}
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-zinc-500 text-[11px]">Destino Rápido:</span>
+              <button
+                onClick={() => {
+                  setWaTargetPhone("+5511982164402")
+                  setWaTargetName("Marx Rocha")
+                }}
+                className="px-2 py-0.5 rounded bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-300 font-mono transition-colors"
+              >
+                +5511982164402 (Marx Rocha)
+              </button>
             </div>
+
+            {waMessageType === 'direct' ? (
+              /* MODO 1: MENSAGEM DIRETA (TEXTO LIVRE) */
+              <div className="space-y-3 pt-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="md:col-span-1">
+                    <label className="text-[11px] font-medium text-zinc-400 mb-1 block">WhatsApp com DDI e DDD</label>
+                    <Input
+                      placeholder="Ex: +5511982164402"
+                      value={waTargetPhone}
+                      onChange={e => setWaTargetPhone(e.target.value)}
+                      className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 font-mono h-9"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Nome de Referência do Lead</label>
+                    <Input
+                      placeholder="Nome do cliente"
+                      value={waTargetName}
+                      onChange={e => setWaTargetName(e.target.value)}
+                      className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 h-9"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Conteúdo da Mensagem (Texto Livre WhatsApp)</label>
+                  <textarea
+                    rows={3}
+                    value={waDirectMessage}
+                    onChange={e => setWaDirectMessage(e.target.value)}
+                    placeholder="Digite a mensagem para enviar diretamente ao WhatsApp do cliente..."
+                    className="w-full bg-zinc-900/90 border border-zinc-800 rounded-lg p-2.5 text-xs text-zinc-100 focus:outline-none focus:ring-1 focus:ring-emerald-500 resize-none font-sans"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <Button
+                    onClick={handleSendWhatsAppDirect}
+                    disabled={sendingWa}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-9 px-6 flex items-center gap-2 shadow-lg shadow-emerald-950/50"
+                  >
+                    {sendingWa ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" /> Disparar Mensagem Direta via WaBlast
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              /* MODO 2: MODELO APROVADO (TEMPLATE) */
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-3 pt-1">
+                <div>
+                  <label className="text-[11px] font-medium text-zinc-400 mb-1 block">WhatsApp com DDI e DDD</label>
+                  <Input
+                    placeholder="Ex: +5511982164402"
+                    value={waTargetPhone}
+                    onChange={e => setWaTargetPhone(e.target.value)}
+                    className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-zinc-400 mb-1 block">
+                    Nome do Cliente {['cadastrou', 'um_dia_de_uso', 'checkout_e_n_pagou'].includes(waTargetTemplate) ? '{{1}}' : '(Sem variável)'}
+                  </label>
+                  <Input
+                    placeholder={['cadastrou', 'um_dia_de_uso', 'checkout_e_n_pagou'].includes(waTargetTemplate) ? "Nome do cliente" : "Não aplicável para este modelo"}
+                    value={waTargetName}
+                    disabled={!['cadastrou', 'um_dia_de_uso', 'checkout_e_n_pagou'].includes(waTargetTemplate)}
+                    onChange={e => setWaTargetName(e.target.value)}
+                    className="bg-zinc-900/90 border-zinc-800 text-xs text-zinc-100 disabled:opacity-40"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-medium text-zinc-400 mb-1 block">Modelo Aprovado (Template)</label>
+                  <select
+                    value={waTargetTemplate}
+                    onChange={e => setWaTargetTemplate(e.target.value)}
+                    className="w-full h-9 px-3 bg-zinc-900/90 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value="cadastrou">cadastrou (Novo Cadastro - Variável: Nome)</option>
+                    <option value="um_dia_de_uso">um_dia_de_uso (1 Dia de Uso - Variável: Nome)</option>
+                    <option value="sete_dias_de_uso">sete_dias_de_uso (7 Dias de Uso - Sem Variável)</option>
+                    <option value="checkout_e_n_pagou">checkout_e_n_pagou (Checkout Abandonado - Variável: Nome)</option>
+                    <option value="n_completou_cadastro">n_completou_cadastro (Onboarding Incompleto - Sem Variável)</option>
+                    <option value="cadastrou_mas_n_usou">cadastrou_mas_n_usou (Usuário Inativo - Sem Variável)</option>
+                    <option value="pagamento_recusado">pagamento_recusado (Pagamento Recusado - Sem Variável)</option>
+                    <option value="trial_acabando">trial_acabando (Trial Acabando - Sem Variável)</option>
+                    <option value="bateu_limite_de_tokens">bateu_limite_de_tokens (Limite de Tokens - Sem Variável)</option>
+                    <option value="hello_world">hello_world (Template Padrão Meta)</option>
+                  </select>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    onClick={handleSendWhatsAppTemplate}
+                    disabled={sendingWa}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold h-9 flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50"
+                  >
+                    {sendingWa ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" /> Disparar Modelo
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Cards dos Gatilhos */}
@@ -1003,7 +1213,7 @@ export function CrmTab() {
               {filteredContacts.map(c => (
                 <div
                   key={c.phone_number}
-                  onClick={() => setActiveContact(c)}
+                  onClick={() => handleSelectContact(c)}
                   className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
                     activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
                   }`}
@@ -1033,31 +1243,58 @@ export function CrmTab() {
               <>
                 <div className="p-3 border-b border-zinc-800 flex items-center justify-between bg-zinc-950">
                   <div>
-                    <h4 className="text-xs font-bold text-zinc-100">{activeContact.name || activeContact.phone_number}</h4>
+                    <h4 className="text-xs font-bold text-zinc-100 flex items-center gap-2">
+                      {activeContact.name || activeContact.phone_number}
+                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
+                        WaBlast Conectado
+                      </span>
+                    </h4>
                     <p className="text-[10px] text-zinc-400 font-mono">{activeContact.phone_number}</p>
                   </div>
-                  <Button size="sm" variant="outline" className="text-xs border-zinc-800 text-zinc-300">
-                    <Bot className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Reativar IA
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setWaTargetPhone(activeContact.phone_number)
+                        if (activeContact.name) setWaTargetName(activeContact.name)
+                        setActiveSubTab('disparos')
+                      }}
+                      className="text-xs border-zinc-800 text-zinc-300"
+                    >
+                      <Zap className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Abrir Disparos
+                    </Button>
+                    <Button size="sm" variant="outline" className="text-xs border-zinc-800 text-zinc-300">
+                      <Bot className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Reativar IA
+                    </Button>
+                  </div>
                 </div>
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-zinc-950/40">
-                  {messages.map((m, i) => (
-                    <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                      <div className={`max-w-[75%] p-3 rounded-xl text-xs ${
-                        m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
-                      }`}>
-                        <p>{m.content}</p>
-                        <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
-                          {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
+                  {loadingMessages ? (
+                    <div className="flex items-center justify-center h-full text-zinc-500 text-xs gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Carregando histórico da conversa...
                     </div>
-                  ))}
-                  <div ref={messagesEndRef} />
+                  ) : (
+                    <>
+                      {messages.map((m, i) => (
+                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${
+                            m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
+                          }`}>
+                            <p>{m.content}</p>
+                            <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
+                              {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
                 </div>
-                <form onSubmit={e => { e.preventDefault(); if (inputText.trim()) { setMessages(prev => [...prev, { role: 'assistant', content: inputText, created_at: new Date().toISOString() }]); setInputText(''); } }} className="p-3 border-t border-zinc-800 flex items-center gap-2 bg-zinc-950">
+                <form onSubmit={handleSendMessageToContact} className="p-3 border-t border-zinc-800 flex items-center gap-2 bg-zinc-950">
                   <Input
-                    placeholder="Digite sua mensagem de atendimento..."
+                    placeholder="Digite sua mensagem de atendimento WhatsApp..."
                     value={inputText}
                     onChange={e => setInputText(e.target.value)}
                     className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100"
