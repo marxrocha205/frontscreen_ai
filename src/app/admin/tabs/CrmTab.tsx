@@ -1,22 +1,22 @@
 "use client"
 
 import React, { useState, useEffect, useRef } from 'react'
-import { 
-  MessageSquare, 
-  Bot, 
-  User as UserIcon, 
-  CheckCircle2, 
-  AlertCircle, 
-  Calendar, 
-  History, 
-  Settings, 
-  ShieldAlert, 
-  Send, 
-  Clock, 
-  Search, 
-  RefreshCw, 
-  Loader2, 
-  Plus, 
+import {
+  MessageSquare,
+  Bot,
+  User as UserIcon,
+  CheckCircle2,
+  AlertCircle,
+  Calendar,
+  History,
+  Settings,
+  ShieldAlert,
+  Send,
+  Clock,
+  Search,
+  RefreshCw,
+  Loader2,
+  Plus,
   Phone,
   Building,
   UserPlus,
@@ -252,7 +252,7 @@ const MOCK_CALLS: SalesCall[] = [
 export function CrmTab() {
   const [apiBaseUrl] = useState(`${config.apiUrl}/api/crm`)
   const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('disparos')
-  
+
   const [contacts, setContacts] = useState<Contact[]>([])
   const [activeContact, setActiveContact] = useState<Contact | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
@@ -353,7 +353,7 @@ export function CrmTab() {
         const d = await res.json()
         setGatewayStatus(d)
       }
-    } catch {}
+    } catch { }
   }
 
   const fetchCrmData = async () => {
@@ -411,7 +411,7 @@ export function CrmTab() {
           return
         }
       }
-    } catch {}
+    } catch { }
     finally {
       setLoadingMessages(false)
     }
@@ -645,8 +645,8 @@ export function CrmTab() {
 
   const pendingContacts = contacts.filter(c => c.status === 'waiting_human')
 
-  const filteredContacts = contacts.filter(c => 
-    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredContacts = contacts.filter(c =>
+    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
     c.phone_number.includes(searchTerm)
   )
 
@@ -675,17 +675,15 @@ export function CrmTab() {
         <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 overflow-x-auto max-w-full">
           <button
             onClick={() => setActiveSubTab('chat')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'chat' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'chat' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
           >
             <MessageSquare className="w-3.5 h-3.5" /> Conversas
           </button>
           <button
             onClick={() => setActiveSubTab('queue')}
-            className={`relative flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'queue' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={`relative flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'queue' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
           >
             <AlertCircle className="w-3.5 h-3.5" /> Fila Pendente
             {pendingContacts.length > 0 && (
@@ -696,25 +694,22 @@ export function CrmTab() {
           </button>
           <button
             onClick={() => setActiveSubTab('disparos')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'disparos' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'disparos' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
           >
             <Mail className="w-3.5 h-3.5 text-indigo-400" /> Disparos Automáticos
           </button>
           <button
             onClick={() => setActiveSubTab('calls')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'calls' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'calls' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
           >
             <PhoneCall className="w-3.5 h-3.5 text-emerald-400" /> Calls & Sellers
           </button>
           <button
             onClick={() => setActiveSubTab('agenda')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-              activeSubTab === 'agenda' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-            }`}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'agenda' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+              }`}
           >
             <Calendar className="w-3.5 h-3.5" /> Agendamentos
           </button>
@@ -774,21 +769,19 @@ export function CrmTab() {
               <div className="flex items-center bg-zinc-900 border border-zinc-800 rounded-lg p-0.5">
                 <button
                   onClick={() => setWaMessageType('direct')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                    waMessageType === 'direct'
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${waMessageType === 'direct'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
+                    }`}
                 >
                   💬 Mensagem Direta
                 </button>
                 <button
                   onClick={() => setWaMessageType('template')}
-                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
-                    waMessageType === 'template'
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${waMessageType === 'template'
                       ? 'bg-emerald-600 text-white shadow-sm'
                       : 'text-zinc-400 hover:text-zinc-200'
-                  }`}
+                    }`}
                 >
                   📋 Modelo (Template)
                 </button>
@@ -1214,9 +1207,8 @@ export function CrmTab() {
                 <div
                   key={c.phone_number}
                   onClick={() => handleSelectContact(c)}
-                  className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
-                    activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
-                  }`}
+                  className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
+                    }`}
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs">
@@ -1227,9 +1219,8 @@ export function CrmTab() {
                       <p className="text-[11px] text-zinc-400 truncate max-w-[160px]">{c.last_message}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${
-                    c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-400'
-                  }`}>
+                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-400'
+                    }`}>
                     {c.status === 'ai' ? 'IA Ativa' : 'Humano'}
                   </span>
                 </div>
@@ -1278,9 +1269,8 @@ export function CrmTab() {
                     <>
                       {messages.map((m, i) => (
                         <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${
-                            m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
-                          }`}>
+                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
+                            }`}>
                             <p>{m.content}</p>
                             <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
                               {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
