@@ -146,6 +146,73 @@ interface CrmMetrics {
   }[]
 }
 
+interface WhatsAppTemplate {
+  name: string
+  category?: string
+  language?: string
+  status?: string
+  variables_count?: number
+  sample_body?: string
+  description?: string
+}
+
+const DEFAULT_APPROVED_TEMPLATES: WhatsAppTemplate[] = [
+  {
+    name: "cadastrou",
+    description: "Boas-vindas imediata (Novo Cadastro)",
+    variables_count: 1,
+    sample_body: "Fala {{1}} vi aqui que você acabou de criar sua conta na ScreenAI. Antes de você começar a usar, me conta: qual o principal desafio que você quer resolver com a gente?"
+  },
+  {
+    name: "um_dia_de_uso",
+    description: "Engajamento (1 Dia de Uso)",
+    variables_count: 1,
+    sample_body: "Opa {{1}} você usou a ScreenAI ontem. Uma pergunta rápida: o que você tentou fazer deu certo de primeira ou sentiu falta de alguma coisa?"
+  },
+  {
+    name: "sete_dias_de_uso",
+    description: "Retenção (7 Dias de Uso)",
+    variables_count: 1,
+    sample_body: "7 dias de ScreenAI. Me responde uma coisa: teve alguma tarefa que você parou de fazer manualmente essa semana porque a plataforma resolveu?"
+  },
+  {
+    name: "n_completou_cadastro",
+    description: "Recuperação (Cadastro Incompleto)",
+    variables_count: 0,
+    sample_body: "Seu cadastro na ScreenAI parou faltando 1 passo. Se travou em alguma tela, me fala que eu libero por aqui agora."
+  },
+  {
+    name: "cadastrou_mas_n_usou",
+    description: "Usuário Inativo (3 Dias Sem Uso)",
+    variables_count: 0,
+    sample_body: "Você criou conta na ScreenAI e nunca abriu. Não vou insistir. Só uma pergunta antes de eu fechar seu acesso: faltou o quê?"
+  },
+  {
+    name: "checkout_e_n_pagou",
+    description: "Recuperação (Checkout Abandonado)",
+    variables_count: 0,
+    sample_body: "Vi que você tentou assinar o Pro mas não concluiu. O cartão deu erro ou ficou alguma dúvida sobre o que vem incluso?"
+  },
+  {
+    name: "pagamento_recusado",
+    description: "Aviso Urgente (Pagamento Recusado)",
+    variables_count: 0,
+    sample_body: "Seu pagamento da ScreenAI foi recusado e a conta entra em bloqueio. Na maioria das vezes é só o banco segurando. Consegue tentar de novo ou prefere um link por Pix?"
+  },
+  {
+    name: "trial_acabando",
+    description: "Alerta de Expiração (Trial Acabando)",
+    variables_count: 0,
+    sample_body: "Seu teste da ScreenAI acaba amanhã. Antes de acabar quero saber uma coisa só: vai continuar usando ou teve algo que não te atendeu?"
+  },
+  {
+    name: "bateu_limite_de_tokens",
+    description: "Créditos Esgotados (Limite de Tokens)",
+    variables_count: 0,
+    sample_body: "Você bateu o limite de tokens da ScreenAI. Isso significa que você usa mais que 90% dos usuários. Quer que eu libere um pacote extra de créditos agora?"
+  }
+]
+
 const MOCK_CONTACTS: Contact[] = [
   {
     phone_number: "+5511998765432",
@@ -292,6 +359,18 @@ export function CrmTab() {
   const [sendingWa, setSendingWa] = useState(false)
   const [gatewayStatus, setGatewayStatus] = useState<{ is_connected: boolean; gateway: string; wablast_key_masked?: string } | null>(null)
 
+  // Modelos Aprovados do WhatsApp e Conversas em Tempo Real
+  const [whatsappTemplates, setWhatsappTemplates] = useState<WhatsAppTemplate[]>(DEFAULT_APPROVED_TEMPLATES)
+  const [chatTemplateModalOpen, setChatTemplateModalOpen] = useState(false)
+  const [selectedChatTemplate, setSelectedChatTemplate] = useState("cadastrou")
+  const [windowClosedContact, setWindowClosedContact] = useState<string | null>(null)
+
+  // Iniciar Nova Conversa
+  const [newContactModalOpen, setNewContactModalOpen] = useState(false)
+  const [newContactPhone, setNewContactPhone] = useState("")
+  const [newContactName, setNewContactName] = useState("")
+  const [newContactTemplate, setNewContactTemplate] = useState("cadastrou")
+
   // Estados das Calls e Sellers
   const [sellers, setSellers] = useState<Seller[]>(MOCK_SELLERS)
   const [calls, setCalls] = useState<SalesCall[]>(MOCK_CALLS)
@@ -387,6 +466,15 @@ export function CrmTab() {
         const d = await resM.json()
         if (d.summary) setMetrics(d.summary)
       }
+
+      // Busca os modelos de mensagem aprovados no WaBlast/Meta
+      const resW = await fetch(`${config.apiUrl}/api/crm/whatsapp/templates`)
+      if (resW.ok) {
+        const d = await resW.json()
+        if (d.templates && d.templates.length > 0) {
+          setWhatsappTemplates(d.templates)
+        }
+      }
     } catch (e) {
       console.warn("CRM API em modo Mock local:", e)
     }
@@ -443,12 +531,122 @@ export function CrmTab() {
         body: JSON.stringify({ message: messageText })
       })
       const data = await res.json()
-      if (!res.ok || data.status !== 'success') {
-        alert(`Aviso: Mensagem registrada localmente. Resposta do gateway: ${data.detail || data.message || 'ok'}`)
+      if (!res.ok) {
+        if (res.status === 409 || data.detail?.includes("WINDOW_CLOSED") || data.detail?.includes("Janela de 24h")) {
+          setWindowClosedContact(activeContact.phone_number)
+          setChatTemplateModalOpen(true)
+        } else {
+          alert(`Aviso: ${data.detail || data.message || 'Erro ao enviar mensagem'}`)
+        }
+      } else {
+        setWindowClosedContact(null)
       }
       fetchCrmData()
     } catch (err: any) {
       console.warn("Erro ao enviar mensagem WhatsApp:", err)
+    }
+  }
+
+  const handleSendTemplateInChat = async (templateName: string) => {
+    if (!activeContact) return
+    setSendingWa(true)
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(activeContact.phone_number)}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_name: templateName,
+          template_variables: [activeContact.name || 'Cliente']
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.status === 'success') {
+        setWindowClosedContact(null)
+        setChatTemplateModalOpen(false)
+        const tObj = whatsappTemplates.find(t => t.name === templateName)
+        let sample = tObj?.sample_body || templateName
+        sample = sample.replace("{{1}}", activeContact.name || 'Cliente')
+        setMessages(prev => [...prev, {
+          role: 'assistant',
+          content: `📋 [Modelo: ${templateName}]\n${sample}`,
+          created_at: new Date().toISOString()
+        }])
+        scrollToBottom()
+        fetchCrmData()
+        alert(`✅ Modelo aprovado '${templateName}' enviado com sucesso para ${activeContact.phone_number}!`)
+      } else {
+        alert(`❌ Erro ao enviar modelo: ${data.detail || data.message || 'Erro'}`)
+      }
+    } catch (err: any) {
+      alert(`❌ Erro de conexão: ${err.message}`)
+    } finally {
+      setSendingWa(false)
+    }
+  }
+
+  const handleStartNewChat = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newContactPhone) {
+      alert("Informe o número com DDD e DDI (ex: +5511982164402)")
+      return
+    }
+    setSendingWa(true)
+    try {
+      const clean = newContactPhone.startsWith("+") ? newContactPhone : `+${newContactPhone.replace(/\D/g, "")}`
+      const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(clean)}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          template_name: newContactTemplate,
+          template_variables: [newContactName || 'Cliente']
+        })
+      })
+      const data = await res.json()
+      if (res.ok && data.status === 'success') {
+        const tObj = whatsappTemplates.find(t => t.name === newContactTemplate)
+        let sample = tObj?.sample_body || newContactTemplate
+        sample = sample.replace("{{1}}", newContactName || 'Cliente')
+
+        const newContact: Contact = {
+          phone_number: clean,
+          name: newContactName || clean,
+          instance: 'screenai',
+          status: 'human',
+          last_message: `[Modelo: ${newContactTemplate}]`,
+          updated_at: new Date().toISOString()
+        }
+        setContacts(prev => [newContact, ...prev.filter(c => c.phone_number !== clean)])
+        setActiveContact(newContact)
+        setNewContactModalOpen(false)
+        setNewContactPhone("")
+        setNewContactName("")
+        setMessages([
+          { role: 'assistant', content: `📋 [Modelo: ${newContactTemplate}]\n${sample}`, created_at: new Date().toISOString() }
+        ])
+        scrollToBottom()
+        alert(`✅ Conversa iniciada com sucesso com o modelo '${newContactTemplate}'!`)
+      } else {
+        alert(`❌ Erro ao iniciar conversa: ${data.detail || data.message || 'Erro'}`)
+      }
+    } catch (err: any) {
+      alert(`❌ Erro: ${err.message}`)
+    } finally {
+      setSendingWa(false)
+    }
+  }
+
+  const handleSyncTemplates = async () => {
+    try {
+      const res = await fetch(`${config.apiUrl}/api/crm/whatsapp/templates/sync`, { method: 'POST' })
+      const data = await res.json()
+      if (res.ok) {
+        alert("✅ Modelos sincronizados com a Meta no WaBlast com sucesso!")
+        fetchCrmData()
+      } else {
+        alert(`Aviso: ${data.detail || 'Não foi possível sincronizar no momento'}`)
+      }
+    } catch (e: any) {
+      alert(`Erro: ${e.message}`)
     }
   }
 
@@ -1188,17 +1386,29 @@ export function CrmTab() {
 
       {/* CONVERSAS CHAT TAB */}
       {activeSubTab === 'chat' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[650px]">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[670px]">
           {/* Contacts Sidebar */}
           <div className="md:col-span-4 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col overflow-hidden">
-            <div className="p-3 border-b border-zinc-800">
+            <div className="p-3 border-b border-zinc-800 space-y-2 bg-zinc-950/60">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> Conversas WhatsApp
+                </span>
+                <Button
+                  size="sm"
+                  onClick={() => setNewContactModalOpen(true)}
+                  className="h-7 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 flex items-center gap-1 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Nova Conversa
+                </Button>
+              </div>
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
                 <Input
                   placeholder="Buscar contato ou telefone..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
-                  className="pl-9 bg-zinc-950 border-zinc-800 text-xs text-zinc-100"
+                  className="pl-9 bg-zinc-950 border-zinc-800 text-xs text-zinc-100 h-9"
                 />
               </div>
             </div>
@@ -1206,12 +1416,15 @@ export function CrmTab() {
               {filteredContacts.map(c => (
                 <div
                   key={c.phone_number}
-                  onClick={() => handleSelectContact(c)}
+                  onClick={() => {
+                    handleSelectContact(c)
+                    setWindowClosedContact(null)
+                  }}
                   className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
                     }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs">
+                    <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs border border-zinc-700/50">
                       {(c.name || c.phone_number).substring(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -1219,7 +1432,7 @@ export function CrmTab() {
                       <p className="text-[11px] text-zinc-400 truncate max-w-[160px]">{c.last_message}</p>
                     </div>
                   </div>
-                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-amber-500/10 text-amber-400'
+                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'
                     }`}>
                     {c.status === 'ai' ? 'IA Ativa' : 'Humano'}
                   </span>
@@ -1236,13 +1449,21 @@ export function CrmTab() {
                   <div>
                     <h4 className="text-xs font-bold text-zinc-100 flex items-center gap-2">
                       {activeContact.name || activeContact.phone_number}
-                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono">
-                        WaBlast Conectado
+                      <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        WaBlast Oficial
                       </span>
                     </h4>
                     <p className="text-[10px] text-zinc-400 font-mono">{activeContact.phone_number}</p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => setChatTemplateModalOpen(true)}
+                      className="text-xs bg-emerald-600/20 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-600/30 h-8"
+                    >
+                      <FileText className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Inserir Modelo (Template)
+                    </Button>
                     <Button
                       size="sm"
                       variant="outline"
@@ -1251,15 +1472,32 @@ export function CrmTab() {
                         if (activeContact.name) setWaTargetName(activeContact.name)
                         setActiveSubTab('disparos')
                       }}
-                      className="text-xs border-zinc-800 text-zinc-300"
+                      className="text-xs border-zinc-800 text-zinc-300 h-8"
                     >
-                      <Zap className="w-3.5 h-3.5 mr-1 text-emerald-400" /> Abrir Disparos
-                    </Button>
-                    <Button size="sm" variant="outline" className="text-xs border-zinc-800 text-zinc-300">
-                      <Bot className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Reativar IA
+                      <Zap className="w-3.5 h-3.5 mr-1 text-indigo-400" /> Disparos
                     </Button>
                   </div>
                 </div>
+
+                {/* Aviso se a janela de 24h estiver fechada */}
+                {windowClosedContact === activeContact.phone_number && (
+                  <div className="m-3 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center justify-between text-xs text-amber-300">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>
+                        <strong>Janela de 24h fechada pela Meta.</strong> Para enviar mensagem para este contato, selecione um dos 9 Modelos Aprovados.
+                      </span>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => setChatTemplateModalOpen(true)}
+                      className="bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold text-xs h-7 px-3 shrink-0 ml-2"
+                    >
+                      Selecionar Modelo
+                    </Button>
+                  </div>
+                )}
+
                 <div className="flex-1 p-4 overflow-y-auto space-y-3 bg-zinc-950/40">
                   {loadingMessages ? (
                     <div className="flex items-center justify-center h-full text-zinc-500 text-xs gap-2">
@@ -1269,9 +1507,9 @@ export function CrmTab() {
                     <>
                       {messages.map((m, i) => (
                         <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${m.role === 'user' ? 'bg-zinc-800 text-zinc-200' : 'bg-indigo-600 text-white'
+                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${m.role === 'user' ? 'bg-zinc-800 text-zinc-200 border border-zinc-700/50' : 'bg-indigo-600 text-white shadow-md'
                             }`}>
-                            <p>{m.content}</p>
+                            <p className="whitespace-pre-wrap">{m.content}</p>
                             <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
                               {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                             </span>
@@ -1282,14 +1520,26 @@ export function CrmTab() {
                     </>
                   )}
                 </div>
+
                 <form onSubmit={handleSendMessageToContact} className="p-3 border-t border-zinc-800 flex items-center gap-2 bg-zinc-950">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatTemplateModalOpen(true)}
+                    className="border-zinc-800 bg-zinc-900/80 text-zinc-300 hover:text-emerald-400 hover:bg-zinc-900 text-xs px-2.5 shrink-0 h-9"
+                    title="Inserir modelo oficial do WhatsApp aprovado na Meta"
+                  >
+                    <FileText className="w-4 h-4 mr-1 text-emerald-400" />
+                    <span className="hidden sm:inline">Modelos Aprovados</span>
+                  </Button>
                   <Input
                     placeholder="Digite sua mensagem de atendimento WhatsApp..."
                     value={inputText}
                     onChange={e => setInputText(e.target.value)}
-                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100"
+                    className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 flex-1 h-9"
                   />
-                  <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white">
+                  <Button type="submit" size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white shrink-0 h-9 px-3">
                     <Send className="w-3.5 h-3.5" />
                   </Button>
                 </form>
@@ -1298,6 +1548,13 @@ export function CrmTab() {
               <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-zinc-500">
                 <MessageSquare className="w-12 h-12 mb-3 text-zinc-700" />
                 <p className="text-xs">Selecione um contato na lista para iniciar o atendimento humano.</p>
+                <Button
+                  size="sm"
+                  onClick={() => setNewContactModalOpen(true)}
+                  className="mt-4 text-xs bg-emerald-600 hover:bg-emerald-500 text-white"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" /> Iniciar Nova Conversa
+                </Button>
               </div>
             )}
           </div>
@@ -1566,6 +1823,186 @@ export function CrmTab() {
                 </Button>
                 <Button type="submit" className="text-xs bg-indigo-600 hover:bg-indigo-700 text-white">
                   Agendar Call
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DISPARAR MODELO NO CHAT */}
+      {chatTemplateModalOpen && activeContact && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-emerald-400" /> Modelos Aprovados do WhatsApp (Meta)
+                </h3>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Para {activeContact.name || activeContact.phone_number} ({activeContact.phone_number})
+                </p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setChatTemplateModalOpen(false)} className="text-zinc-400">✕</Button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1.5">Selecione o Modelo Cadastrado:</label>
+                <select
+                  value={selectedChatTemplate}
+                  onChange={e => setSelectedChatTemplate(e.target.value)}
+                  className="w-full h-10 px-3 bg-zinc-900 border border-zinc-800 rounded-lg text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  {whatsappTemplates.map(t => (
+                    <option key={t.name} value={t.name}>
+                      {t.name} — {t.description || t.name} ({t.variables_count ? `${t.variables_count} variável` : 'Sem variável'})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Prévia da Mensagem Formatada com o Nome */}
+              <div>
+                <label className="text-zinc-400 block mb-1.5">Prévia da Mensagem (com dados do contato):</label>
+                <div className="p-3.5 bg-zinc-900/90 border border-zinc-800 rounded-xl text-xs text-emerald-200 font-sans leading-relaxed whitespace-pre-wrap">
+                  {(() => {
+                    const t = whatsappTemplates.find(item => item.name === selectedChatTemplate)
+                    let text = t?.sample_body || "Mensagem do modelo aprovado na Meta."
+                    text = text.replace("{{1}}", activeContact.name || 'Cliente')
+                    return text
+                  })()}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-2.5 bg-zinc-900/50 border border-zinc-800/80 rounded-lg text-[11px] text-zinc-400">
+                <span>Idioma: <strong className="text-zinc-300 font-mono">pt_BR</strong></span>
+                <span>Status Meta: <strong className="text-emerald-400 font-semibold">APROVADO</strong></span>
+                <span>Canal: <strong className="text-indigo-400 font-semibold">WaBlast Gateway</strong></span>
+              </div>
+
+              <div className="flex items-center justify-between gap-2 pt-3 border-t border-zinc-900">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSyncTemplates}
+                  className="text-xs border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 mr-1" /> Sincronizar da Meta
+                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setChatTemplateModalOpen(false)}
+                    className="text-xs border-zinc-800 text-zinc-300"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="button"
+                    disabled={sendingWa}
+                    onClick={() => handleSendTemplateInChat(selectedChatTemplate)}
+                    className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1.5"
+                  >
+                    {sendingWa ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="w-3.5 h-3.5" /> Disparar no Chat
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL INICIAR NOVA CONVERSA */}
+      {newContactModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div>
+                <h3 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4 text-emerald-400" /> Iniciar Nova Conversa no WhatsApp
+                </h3>
+                <p className="text-[11px] text-zinc-400 mt-0.5">
+                  Conforme a regra da Meta, o primeiro contato deve ser feito através de um modelo aprovado.
+                </p>
+              </div>
+              <Button size="sm" variant="ghost" onClick={() => setNewContactModalOpen(false)} className="text-zinc-400">✕</Button>
+            </div>
+
+            <form onSubmit={handleStartNewChat} className="space-y-3.5 text-xs">
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Telefone WhatsApp (com DDI e DDD)</label>
+                <Input
+                  required
+                  placeholder="+5511982164402"
+                  value={newContactPhone}
+                  onChange={e => setNewContactPhone(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 font-mono h-9"
+                />
+              </div>
+
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Nome do Cliente / Contato</label>
+                <Input
+                  placeholder="Nome do contato (opcional)"
+                  value={newContactName}
+                  onChange={e => setNewContactName(e.target.value)}
+                  className="bg-zinc-900 border-zinc-800 text-xs text-zinc-100 h-9"
+                />
+              </div>
+
+              <div>
+                <label className="text-zinc-300 font-medium block mb-1">Modelo Aprovado de Abertura (Template)</label>
+                <select
+                  value={newContactTemplate}
+                  onChange={e => setNewContactTemplate(e.target.value)}
+                  className="w-full h-9 px-3 bg-zinc-900 border border-zinc-800 rounded-md text-xs text-zinc-200 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                >
+                  {whatsappTemplates.map(t => (
+                    <option key={t.name} value={t.name}>
+                      {t.name} — {t.description || t.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-zinc-400 block mb-1">Prévia da Mensagem Inicial:</label>
+                <div className="p-3 bg-zinc-900/90 border border-zinc-800 rounded-lg text-xs text-zinc-200 whitespace-pre-wrap leading-relaxed">
+                  {(() => {
+                    const t = whatsappTemplates.find(item => item.name === newContactTemplate)
+                    let text = t?.sample_body || "Mensagem aprovada na Meta."
+                    text = text.replace("{{1}}", newContactName || 'Cliente')
+                    return text
+                  })()}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2 border-t border-zinc-900">
+                <Button type="button" variant="outline" onClick={() => setNewContactModalOpen(false)} className="text-xs border-zinc-800 text-zinc-300">
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={sendingWa}
+                  className="text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-semibold flex items-center gap-1.5"
+                >
+                  {sendingWa ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Send className="w-3.5 h-3.5" /> Iniciar Conversa
+                    </>
+                  )}
                 </Button>
               </div>
             </form>
