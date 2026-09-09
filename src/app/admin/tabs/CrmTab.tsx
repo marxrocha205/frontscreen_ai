@@ -90,6 +90,8 @@ interface TriggerRule {
   enabled: boolean
   delay_minutes: number
   template: string
+  whatsapp_template?: string
+  variables?: string[]
 }
 
 interface DispatchRecord {
@@ -215,60 +217,145 @@ const DEFAULT_APPROVED_TEMPLATES: WhatsAppTemplate[] = [
 
 const MOCK_CONTACTS: Contact[] = [
   {
-    phone_number: "+5511998765432",
-    name: "Carlos Eduardo",
-    instance: "empresa_sp",
-    status: "ai",
-    last_message: "Gostaria de agendar uma demonstração do sistema.",
-    updated_at: new Date().toISOString()
-  },
-  {
-    phone_number: "+5511981234567",
-    name: "Ana Paula Souza",
-    instance: "empresa_sp",
-    status: "waiting_human",
-    last_message: "Quero falar com um atendente humano, por favor!",
-    updated_at: new Date().toISOString()
-  },
-  {
-    phone_number: "+5511977778888",
-    name: "Juliana Mendes",
-    instance: "empresa_tech",
+    phone_number: "+5511982164402",
+    name: "Marx Rocha",
+    instance: "screenai",
     status: "human",
-    last_message: "Atendimento iniciado pela equipe comercial.",
+    last_message: "Fala Marx vi aqui que você acabou de criar sua conta na ScreenAI...",
+    updated_at: new Date().toISOString()
+  },
+  {
+    phone_number: "+5599981099729",
+    name: "Contato +5599981099729",
+    instance: "screenai",
+    status: "human",
+    last_message: "Opa você usou a ScreenAI ontem. Uma pergunta rápida...",
     updated_at: new Date().toISOString()
   }
 ]
 
 const MOCK_MESSAGES: Record<string, Message[]> = {
-  "+5511998765432": [
-    { id: "1", role: "user", content: "Olá! Vocês têm integração da IA com WhatsApp?", created_at: new Date(Date.now() - 3600000).toISOString() },
-    { id: "2", role: "assistant", content: "Olá Carlos! Sim, possuímos integração completa via API com WhatsApp. Gostaria de agendar uma demonstração?", created_at: new Date(Date.now() - 3500000).toISOString() }
+  "+5511982164402": [
+    { id: "1", role: "assistant", content: "📋 [Modelo: cadastrou]\nFala Marx vi aqui que você acabou de criar sua conta na ScreenAI. Antes de você começar a usar, me conta: qual o principal desafio que você quer resolver com a gente?", created_at: new Date(Date.now() - 3600000).toISOString() },
+    { id: "2", role: "user", content: "Olá! Acabei de criar a conta e estou configurando a API multimodal.", created_at: new Date(Date.now() - 3500000).toISOString() }
+  ],
+  "+5599981099729": [
+    { id: "1", role: "assistant", content: "📋 [Modelo: um_dia_de_uso]\nOpa você usou a ScreenAI ontem. Uma pergunta rápida: o que você tentou fazer deu certo de primeira ou sentiu falta de alguma coisa?", created_at: new Date(Date.now() - 1800000).toISOString() }
   ]
 }
 
 const MOCK_APPOINTMENTS: Appointment[] = [
-  { id: 1, client_name: "Carlos Eduardo", client_phone: "+5511998765432", date: "2026-08-20T14:00:00.000Z", status: "Confirmado", attendant_name: "Atendente Beatriz", instance_name: "empresa_sp" }
+  { id: 1, client_name: "Marx Rocha", client_phone: "+5511982164402", date: "2026-09-10T14:00:00.000Z", status: "Confirmado", attendant_name: "Gabriel Caldas", instance_name: "screenai" }
 ]
 
 const MOCK_TENANTS: Tenant[] = [
-  { id: 1, name: "Empresa SP Workspace", instance_name: "empresa_sp", system_prompt: "Você é a assistente virtual da Empresa SP Workspace." }
+  { id: 1, name: "ScreenAI Workspace", instance_name: "screenai", system_prompt: "Você é a assistente virtual oficial da ScreenAI." }
 ]
 
 const MOCK_USERS: UserAccount[] = [
-  { id: 1, username: "maria_atendente", name: "Maria Silva", role: "attendant", whatsapp_number: "+5511911112222", specialty: "Recepção" }
+  { id: 1, username: "marx_admin", name: "Marx Rocha", role: "admin", whatsapp_number: "+5511982164402", specialty: "Head Comercial" }
 ]
 
 const MOCK_TRIGGERS: TriggerRule[] = [
-  { id: "cadastrar", trigger_type: "cadastrar", title: "Boas-vindas (Novo Cadastro)", subject: "Bem-vindo ao ScreenAI! Seu teste gratuito começou", enabled: true, delay_minutes: 0, template: "<h1>Olá, {name}!</h1><p>Seja muito bem-vindo ao ScreenAI. Sua conta foi criada com sucesso!</p>" },
-  { id: "apos_1_dia", trigger_type: "apos_1_dia", title: "Engajamento (1 Dia de Uso)", subject: "Dicas para aproveitar 100% da sua IA no ScreenAI", enabled: true, delay_minutes: 1440, template: "<h1>Olá, {name}!</h1><p>Confira dicas avançadas para potencializar sua IA.</p>" },
-  { id: "apos_7_dias", trigger_type: "apos_7_dias", title: "Retenção (7 Dias de Uso)", subject: "7 dias com o ScreenAI! Como podemos ajudar mais?", enabled: true, delay_minutes: 10080, template: "<h1>Olá, {name}!</h1><p>Parabéns por completar sua primeira semana no ScreenAI.</p>" },
-  { id: "abriu_checkout", trigger_type: "abriu_checkout", title: "Checkout Abandonado", subject: "Não perca o seu acesso Pro no ScreenAI", enabled: true, delay_minutes: 15, template: "<h1>Esqueceu de finalizar, {name}?</h1><p>Vimos que você abriu a página de checkout para o Plano Pro.</p>" },
-  { id: "nao_completou_cadastro", trigger_type: "nao_completou_cadastro", title: "Onboarding Incompleto", subject: "Falta pouco para concluir seu perfil no ScreenAI", enabled: true, delay_minutes: 30, template: "<h1>Complete seu cadastro, {name}!</h1><p>Falta pouco para liberar todos os recursos.</p>" },
-  { id: "cadastrou_mas_nao_usou", trigger_type: "cadastrou_mas_nao_usou", title: "Usuário Inativo (Sem Uso)", subject: "Precisa de ajuda para fazer sua primeira pergunta?", enabled: true, delay_minutes: 2880, template: "<h1>Oi, {name}!</h1><p>Sentimos sua falta. Faça sua primeira pergunta agora mesmo.</p>" },
-  { id: "pagamento_recusado", trigger_type: "pagamento_recusado", title: "Pagamento Recusado", subject: "Houve um problema com o seu pagamento - ScreenAI Pro", enabled: true, delay_minutes: 0, template: "<h1>Atenção: Pagamento não aprovado, {name}</h1><p>Atualize seu cartão ou utilize o PIX com desconto.</p>" },
-  { id: "trial_acabando", trigger_type: "trial_acabando", title: "Aviso de Fim de Testes", subject: "Seu período de testes no ScreenAI está terminando", enabled: true, delay_minutes: 0, template: "<h1>Atenção, {name}!</h1><p>Faltam 48 horas para encerrar seu período de testes.</p>" },
-  { id: "bateu_limite_tokens", trigger_type: "bateu_limite_tokens", title: "Limite de Tokens Atingido", subject: "Seus créditos acabaram! Recarregue para continuar usando a IA", enabled: true, delay_minutes: 0, template: "<h1>Você atingiu o limite de tokens, {name}!</h1><p>Faça a recarga para continuar utilizando o Studio.</p>" }
+  {
+    id: "cadastrar",
+    trigger_type: "cadastrar",
+    whatsapp_template: "cadastrou",
+    title: "Boas-vindas (Novo Cadastro)",
+    subject: "Fala {{1}} vi aqui que você acabou de criar sua conta na ScreenAI",
+    enabled: true,
+    delay_minutes: 0,
+    variables: ["{{1}} (Nome)"],
+    template: "Fala {{1}} vi aqui que você acabou de criar sua conta na ScreenAI. Antes de você começar a usar, me conta: qual o principal desafio que você quer resolver com a gente?"
+  },
+  {
+    id: "apos_1_dia",
+    trigger_type: "apos_1_dia",
+    whatsapp_template: "um_dia_de_uso",
+    title: "Engajamento (1 Dia de Uso)",
+    subject: "Opa {{1}} você usou a ScreenAI ontem",
+    enabled: true,
+    delay_minutes: 1440,
+    variables: ["{{1}} (Nome)"],
+    template: "Opa {{1}} você usou a ScreenAI ontem. Uma pergunta rápida: o que você tentou fazer deu certo de primeira ou sentiu falta de alguma coisa?"
+  },
+  {
+    id: "apos_7_dias",
+    trigger_type: "apos_7_dias",
+    whatsapp_template: "sete_dias_de_uso",
+    title: "Retenção (7 Dias de Uso)",
+    subject: "7 dias de ScreenAI",
+    enabled: true,
+    delay_minutes: 10080,
+    variables: ["{{1}} (Nome)"],
+    template: "7 dias de ScreenAI. Me responde uma coisa: teve alguma tarefa que você parou de fazer manualmente essa semana porque a plataforma resolveu?"
+  },
+  {
+    id: "abriu_checkout",
+    trigger_type: "abriu_checkout",
+    whatsapp_template: "checkout_e_n_pagou",
+    title: "Checkout Abandonado",
+    subject: "Vi que você tentou assinar o Pro mas não concluiu",
+    enabled: true,
+    delay_minutes: 15,
+    variables: ["Sem variáveis"],
+    template: "Vi que você tentou assinar o Pro mas não concluiu. O cartão deu erro ou ficou alguma dúvida sobre o que vem incluso?"
+  },
+  {
+    id: "nao_completou_cadastro",
+    trigger_type: "nao_completou_cadastro",
+    whatsapp_template: "n_completou_cadastro",
+    title: "Onboarding Incompleto",
+    subject: "Seu cadastro na ScreenAI parou faltando 1 passo",
+    enabled: true,
+    delay_minutes: 30,
+    variables: ["Sem variáveis"],
+    template: "Seu cadastro na ScreenAI parou faltando 1 passo. Se travou em alguma tela, me fala que eu libero por aqui agora."
+  },
+  {
+    id: "cadastrou_mas_nao_usou",
+    trigger_type: "cadastrou_mas_nao_usou",
+    whatsapp_template: "cadastrou_mas_n_usou",
+    title: "Usuário Inativo (Sem Uso)",
+    subject: "Você criou conta na ScreenAI e nunca abriu",
+    enabled: true,
+    delay_minutes: 2880,
+    variables: ["Sem variáveis"],
+    template: "Você criou conta na ScreenAI e nunca abriu. Não vou insistir. Só uma pergunta antes de eu fechar seu acesso: faltou o quê?"
+  },
+  {
+    id: "pagamento_recusado",
+    trigger_type: "pagamento_recusado",
+    whatsapp_template: "pagamento_recusado",
+    title: "Pagamento Recusado",
+    subject: "Seu pagamento da ScreenAI foi recusado e a conta entra em bloqueio",
+    enabled: true,
+    delay_minutes: 0,
+    variables: ["Sem variáveis"],
+    template: "Seu pagamento da ScreenAI foi recusado e a conta entra em bloqueio. Na maioria das vezes é só o banco segurando. Consegue tentar de novo ou prefere um link por Pix?"
+  },
+  {
+    id: "trial_acabando",
+    trigger_type: "trial_acabando",
+    whatsapp_template: "trial_acabando",
+    title: "Aviso de Fim de Testes",
+    subject: "Seu teste da ScreenAI acaba amanhã",
+    enabled: true,
+    delay_minutes: 0,
+    variables: ["Sem variáveis"],
+    template: "Seu teste da ScreenAI acaba amanhã. Antes de acabar quero saber uma coisa só: vai continuar usando ou teve algo que não te atendeu?"
+  },
+  {
+    id: "bateu_limite_tokens",
+    trigger_type: "bateu_limite_tokens",
+    whatsapp_template: "bateu_limite_de_tokens",
+    title: "Limite de Tokens Atingido",
+    subject: "Você bateu o limite de tokens da ScreenAI",
+    enabled: true,
+    delay_minutes: 0,
+    variables: ["Sem variáveis"],
+    template: "Você bateu o limite de tokens da ScreenAI. Isso significa que você usa mais que 90% dos usuários. Quer que eu libere um pacote extra de créditos agora?"
+  }
 ]
 
 const MOCK_SELLERS: Seller[] = [
@@ -1119,23 +1206,27 @@ export function CrmTab() {
               <Card key={trig.id} className="bg-zinc-950 border-zinc-800 relative overflow-hidden flex flex-col justify-between">
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between">
-                    <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 rounded">
-                      {trig.trigger_type}
+                    <span className="px-2 py-0.5 text-[10px] font-bold font-mono tracking-wider bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      Modelo: {trig.whatsapp_template || trig.trigger_type}
                     </span>
                     <span className={`flex items-center gap-1 text-[11px] font-medium ${trig.enabled ? 'text-emerald-400' : 'text-zinc-500'}`}>
-                      <CheckCircle className="w-3 h-3" /> {trig.enabled ? 'Ativo' : 'Inativo'}
+                      <CheckCircle className="w-3 h-3" /> {trig.enabled ? 'Ativo na Fila' : 'Inativo'}
                     </span>
                   </div>
-                  <CardTitle className="text-sm font-semibold text-zinc-100 mt-2">
-                    {trig.title}
+                  <CardTitle className="text-sm font-semibold text-zinc-100 mt-2 flex items-center justify-between">
+                    <span>{trig.title}</span>
+                    <span className="text-[10px] text-zinc-400 font-mono font-normal">
+                      {trig.variables ? trig.variables.join(', ') : 'pt_BR'}
+                    </span>
                   </CardTitle>
-                  <CardDescription className="text-xs text-zinc-400 truncate">
-                    Assunto: "{trig.subject}"
+                  <CardDescription className="text-[11px] text-zinc-400 truncate font-mono">
+                    Meta/WaBlast Oficial: {trig.whatsapp_template || trig.trigger_type}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
-                  <div className="p-2.5 bg-zinc-900/80 border border-zinc-800 rounded text-[11px] text-zinc-300 font-mono line-clamp-3">
-                    {trig.template.replace(/<[^>]*>?/gm, '')}
+                  <div className="p-3 bg-zinc-900/90 border border-zinc-800/80 rounded-lg text-xs text-emerald-200 font-sans leading-relaxed whitespace-pre-wrap line-clamp-3">
+                    {trig.template}
                   </div>
                   <div className="flex items-center justify-between gap-2 pt-2 border-t border-zinc-900">
                     <div className="flex items-center gap-1">
