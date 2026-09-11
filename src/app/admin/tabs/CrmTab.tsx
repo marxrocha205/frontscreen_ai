@@ -573,6 +573,46 @@ export function CrmTab() {
     fetchGatewayStatus()
   }, [])
 
+  // Polling em tempo real a cada 3s para o chat ativo e lista de contatos
+  useEffect(() => {
+    if (activeSubTab !== 'chat') return
+
+    const interval = setInterval(async () => {
+      // 1. Atualiza mensagens do contato ativo silenciosamente
+      if (activeContact?.phone_number) {
+        try {
+          const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(activeContact.phone_number)}/messages`)
+          if (res.ok) {
+            const d = await res.json()
+            if (d.messages && Array.isArray(d.messages)) {
+              setMessages(prev => {
+                if (d.messages.length !== prev.length || JSON.stringify(d.messages) !== JSON.stringify(prev)) {
+                  setTimeout(() => scrollToBottom(), 100)
+                  return d.messages
+                }
+                return prev
+              })
+            }
+          }
+        } catch { }
+      }
+
+      // 2. Atualiza a lista de contatos periodicamente
+      try {
+        const resC = await fetch(`${config.apiUrl}/api/crm/contacts`)
+        if (resC.ok) {
+          const dC = await resC.json()
+          if (dC.contacts && dC.contacts.length > 0) {
+            setContacts(dC.contacts)
+          }
+        }
+      } catch { }
+    }, 3000)
+
+    return () => clearInterval(interval)
+  }, [activeSubTab, activeContact?.phone_number])
+
+
   const handleSelectContact = async (c: Contact) => {
     setActiveContact(c)
     setLoadingMessages(true)
@@ -1542,6 +1582,9 @@ export function CrmTab() {
                       {activeContact.name || activeContact.phone_number}
                       <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        Tempo Real Ativo
+                      </span>
+                      <span className="text-[10px] text-zinc-400 bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded-full font-mono">
                         WaBlast Oficial
                       </span>
                     </h4>
