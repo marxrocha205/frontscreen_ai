@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ChevronDown } from 'lucide-react'
+import { config } from '@/lib/config'
 
 const COUNTRIES = [
   { code: 'BR', name: 'Brasil', dial: '+55', flag: '🇧🇷', mask: '(##) #####-####' },
@@ -117,7 +118,7 @@ export default function OnboardingClient() {
     try {
       const token = localStorage.getItem('access_token')
       if (token) {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL || ''}/auth/profile`, {
+        const res = await fetch(`${config.apiUrl}/auth/profile`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -128,10 +129,14 @@ export default function OnboardingClient() {
             phone: `${selectedCountry.dial} ${phone}`
           })
         })
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}))
+          console.warn('[ONBOARDING] Resposta inesperada ao salvar perfil:', errData)
+        }
       }
     } catch (err) {
       console.error('[ONBOARDING] Falha ao salvar perfil na API:', err)
-      // Não bloqueamos o usuário por erro de API — o dado já está no localStorage
+      // Não bloqueamos o usuário por erro de rede — o dado já está no localStorage
     }
 
     router.push('/app')

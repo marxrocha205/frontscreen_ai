@@ -99,8 +99,7 @@ function RegisterForm() {
         }
 
         login(userEmail)
-        const isMobile = window.innerWidth < 768
-        if (data.is_new_user && !isMobile) {
+        if (data.is_new_user) {
           localStorage.setItem('is_new_user', 'true')
           window.location.href = '/onboarding'
         } else {
@@ -240,8 +239,7 @@ function RegisterForm() {
         }
 
         login(email)
-        const isMobile = window.innerWidth < 768
-        if (data.is_new_user && !isMobile) {
+        if (data.is_new_user) {
           localStorage.setItem('is_new_user', 'true')
           router.push('/onboarding')
         } else {
