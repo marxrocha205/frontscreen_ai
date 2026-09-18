@@ -1763,12 +1763,6 @@ export function CrmTab() {
                       <div ref={messagesEndRef} />
                     </>
                   )}
-                </div>                </div>
-                        </div>
-                      ))}
-                      <div ref={messagesEndRef} />
-                    </>
-                  )}
                 </div>
 
                 <form onSubmit={handleSendMessageToContact} className="p-3 border-t border-zinc-800 flex items-center gap-2 bg-zinc-950">
