@@ -122,6 +122,7 @@ type LocalizedAgent = { id: string; label: LocalizedText; description: Localized
 
 const AGENT_DEFINITIONS: LocalizedAgent[] = [
   { id: '', label: { 'pt-BR': 'Assistente Geral', 'en-US': 'General Assistant' }, description: { 'pt-BR': 'Responde de forma geral e acessível sobre qualquer assunto.', 'en-US': 'Answers general questions clearly and accessibly.' } },
+  { id: 'agent_chart_analyst', label: { 'pt-BR': 'Analista de Gráficos e Mercado', 'en-US': 'Chart & Market Analyst' }, description: { 'pt-BR': 'Lê e interpreta gráficos financeiros, candlesticks, tendências e dashboards.', 'en-US': 'Reads and analyzes financial charts, candlesticks, trends, and dashboards.' } },
   { id: 'agent_programming', label: { 'pt-BR': 'Programador Sênior', 'en-US': 'Senior Programmer' }, description: { 'pt-BR': 'Escreve, depura e explica códigos em várias linguagens.', 'en-US': 'Writes, debugs, and explains code across multiple languages.' } },
   { id: 'agent_contract_analyst', label: { 'pt-BR': 'Analista de Contratos', 'en-US': 'Contract Analyst' }, description: { 'pt-BR': 'Analisa e resume contratos e termos jurídicos.', 'en-US': 'Analyzes and summarizes contracts and legal terms.' } },
   { id: 'agent_web_researcher', label: { 'pt-BR': 'Pesquisa Web', 'en-US': 'Web Researcher' }, description: { 'pt-BR': 'Investiga tópicos complexos e faz resumos estruturados.', 'en-US': 'Researches complex topics and creates structured summaries.' } },
