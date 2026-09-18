@@ -42,9 +42,11 @@ import { config } from "@/lib/config"
 interface Contact {
   phone_number: string
   name?: string
-  instance: string
+  instance?: string
   status: 'ai' | 'human' | 'waiting_human'
   last_message?: string
+  has_responded?: boolean
+  unread_count?: number
   updated_at?: string
 }
 
@@ -405,7 +407,9 @@ const MOCK_CALLS: SalesCall[] = [
 
 export function CrmTab() {
   const [apiBaseUrl] = useState(`${config.apiUrl}/api/crm`)
-  const [activeSubTab, setActiveSubTab] = useState<'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('disparos')
+  const [activeSubTab, setActiveSubTab] = useState<'replied' | 'chat' | 'queue' | 'agenda' | 'disparos' | 'calls' | 'settings' | 'admin'>('replied')
+  const [chatFilter, setChatFilter] = useState<'all' | 'responded' | 'unread'>('responded')
+  const [totalResponded, setTotalResponded] = useState<number>(0)
 
   const [contacts, setContacts] = useState<Contact[]>([])
   const [activeContact, setActiveContact] = useState<Contact | null>(null)
@@ -490,13 +494,20 @@ export function CrmTab() {
     }, 100)
   }
 
-  const fetchContacts = async () => {
+  const fetchContacts = async (filterResponded?: boolean) => {
     setLoadingContacts(true)
     try {
-      const res = await fetch(`${config.apiUrl}/api/crm/contacts`)
+      const isOnlyResponded = filterResponded !== undefined ? filterResponded : (activeSubTab === 'replied' || chatFilter === 'responded')
+      const url = `${config.apiUrl}/api/crm/contacts${isOnlyResponded ? '?responded_only=true' : ''}`
+      const res = await fetch(url)
       if (res.ok) {
         const data = await res.json()
         const contactList = Array.isArray(data) ? data : (data.contacts || [])
+        if (data.total_responded !== undefined) {
+          setTotalResponded(data.total_responded)
+        } else {
+          setTotalResponded(contactList.filter((c: Contact) => c.has_responded).length)
+        }
         if (contactList.length > 0) {
           setContacts(contactList)
           setIsMockMode(false)
@@ -573,9 +584,9 @@ export function CrmTab() {
     fetchGatewayStatus()
   }, [])
 
-  // Polling em tempo real a cada 3s para o chat ativo e lista de contatos
+  // Polling em tempo real a cada 2.5s para o chat ativo e lista de contatos
   useEffect(() => {
-    if (activeSubTab !== 'chat') return
+    if (activeSubTab !== 'chat' && activeSubTab !== 'replied') return
 
     const interval = setInterval(async () => {
       // 1. Atualiza mensagens do contato ativo silenciosamente
@@ -599,30 +610,41 @@ export function CrmTab() {
 
       // 2. Atualiza a lista de contatos periodicamente
       try {
-        const resC = await fetch(`${config.apiUrl}/api/crm/contacts`)
+        const isOnlyResponded = activeSubTab === 'replied' || chatFilter === 'responded'
+        const resC = await fetch(`${config.apiUrl}/api/crm/contacts${isOnlyResponded ? '?responded_only=true' : ''}`)
         if (resC.ok) {
           const dC = await resC.json()
+          if (dC.total_responded !== undefined) {
+            setTotalResponded(dC.total_responded)
+          }
           if (dC.contacts && dC.contacts.length > 0) {
             setContacts(dC.contacts)
           }
         }
       } catch { }
-    }, 3000)
+    }, 2500)
 
     return () => clearInterval(interval)
-  }, [activeSubTab, activeContact?.phone_number])
+  }, [activeSubTab, chatFilter, activeContact?.phone_number])
 
 
   const handleSelectContact = async (c: Contact) => {
     setActiveContact(c)
     setLoadingMessages(true)
+
+    // Zera contagem de não lidos
+    try {
+      fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(c.phone_number)}/mark-read`, { method: 'POST' })
+      setContacts(prev => prev.map(item => item.phone_number === c.phone_number ? { ...item, unread_count: 0 } : item))
+    } catch { }
+
     try {
       const res = await fetch(`${config.apiUrl}/api/crm/contacts/${encodeURIComponent(c.phone_number)}/messages`)
       if (res.ok) {
         const d = await res.json()
         if (d.messages && d.messages.length > 0) {
           setMessages(d.messages)
-          scrollToBottom()
+          setTimeout(() => scrollToBottom(), 100)
           return
         }
       }
@@ -633,7 +655,7 @@ export function CrmTab() {
     setMessages([
       { role: 'user', content: c.last_message || 'Olá!', created_at: new Date().toISOString() }
     ])
-    scrollToBottom()
+    setTimeout(() => scrollToBottom(), 100)
   }
 
   const handleSendMessageToContact = async (e: React.FormEvent) => {
@@ -970,10 +992,18 @@ export function CrmTab() {
 
   const pendingContacts = contacts.filter(c => c.status === 'waiting_human')
 
-  const filteredContacts = contacts.filter(c =>
-    (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.phone_number.includes(searchTerm)
-  )
+  const filteredContacts = contacts.filter(c => {
+    const matchesSearch = (c.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone_number.includes(searchTerm)
+    if (!matchesSearch) return false
+    if (activeSubTab === 'replied' || chatFilter === 'responded') {
+      return Boolean(c.has_responded)
+    }
+    if (chatFilter === 'unread') {
+      return (c.unread_count || 0) > 0
+    }
+    return true
+  })
 
   return (
     <div className="space-y-6">
@@ -999,11 +1029,36 @@ export function CrmTab() {
         {/* Sub-tabs Navigation */}
         <div className="flex items-center gap-1 bg-zinc-950 p-1 rounded-lg border border-zinc-800 overflow-x-auto max-w-full">
           <button
-            onClick={() => setActiveSubTab('chat')}
-            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${activeSubTab === 'chat' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
+            onClick={() => {
+              setActiveSubTab('replied')
+              setChatFilter('responded')
+              fetchContacts(true)
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-md transition-all ${
+              activeSubTab === 'replied' ? 'bg-emerald-600 text-white shadow-md' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
           >
-            <MessageSquare className="w-3.5 h-3.5" /> Conversas
+            <MessageSquare className="w-3.5 h-3.5 text-emerald-300" />
+            <span>Respostas WhatsApp</span>
+            {totalResponded > 0 && (
+              <span className={`px-1.5 py-0.2 text-[10px] font-bold rounded-full ${
+                activeSubTab === 'replied' ? 'bg-white text-emerald-900' : 'bg-emerald-500 text-black animate-pulse'
+              }`}>
+                {totalResponded}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => {
+              setActiveSubTab('chat')
+              setChatFilter('all')
+              fetchContacts(false)
+            }}
+            className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+              activeSubTab === 'chat' ? 'bg-indigo-600 text-white' : 'text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5" /> Todas as Conversas
           </button>
           <button
             onClick={() => setActiveSubTab('queue')}
@@ -1516,14 +1571,15 @@ export function CrmTab() {
       )}
 
       {/* CONVERSAS CHAT TAB */}
-      {activeSubTab === 'chat' && (
+      {(activeSubTab === 'chat' || activeSubTab === 'replied') && (
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[670px]">
           {/* Contacts Sidebar */}
           <div className="md:col-span-4 bg-zinc-900/50 border border-zinc-800 rounded-xl flex flex-col overflow-hidden">
             <div className="p-3 border-b border-zinc-800 space-y-2 bg-zinc-950/60">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-zinc-200 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> Conversas WhatsApp
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> 
+                  {activeSubTab === 'replied' ? 'Clientes que Responderam' : 'Conversas WhatsApp'}
                 </span>
                 <Button
                   size="sm"
@@ -1533,6 +1589,31 @@ export function CrmTab() {
                   <Plus className="w-3.5 h-3.5" /> Nova Conversa
                 </Button>
               </div>
+
+              {/* Filtros Rápidos */}
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  onClick={() => setChatFilter('responded')}
+                  className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full transition-all flex items-center gap-1 ${
+                    chatFilter === 'responded'
+                      ? 'bg-emerald-500 text-black shadow-sm font-bold'
+                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  💬 Responderam ({totalResponded})
+                </button>
+                <button
+                  onClick={() => setChatFilter('all')}
+                  className={`px-2.5 py-0.5 text-[10px] font-semibold rounded-full transition-all ${
+                    chatFilter === 'all'
+                      ? 'bg-zinc-200 text-black shadow-sm font-bold'
+                      : 'bg-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  }`}
+                >
+                  👥 Todos ({contacts.length})
+                </button>
+              </div>
+
               <div className="relative">
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-zinc-500" />
                 <Input
@@ -1544,31 +1625,52 @@ export function CrmTab() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto divide-y divide-zinc-800/50">
-              {filteredContacts.map(c => (
-                <div
-                  key={c.phone_number}
-                  onClick={() => {
-                    handleSelectContact(c)
-                    setWindowClosedContact(null)
-                  }}
-                  className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/10 border-l-2 border-indigo-500' : 'hover:bg-zinc-900/60'
-                    }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs border border-zinc-700/50">
-                      {(c.name || c.phone_number).substring(0, 2).toUpperCase()}
-                    </div>
-                    <div>
-                      <h4 className="text-xs font-semibold text-zinc-200">{c.name || c.phone_number}</h4>
-                      <p className="text-[11px] text-zinc-400 truncate max-w-[160px]">{c.last_message}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-0.5 text-[10px] rounded font-medium ${c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'
-                    }`}>
-                    {c.status === 'ai' ? 'IA Ativa' : 'Humano'}
-                  </span>
+              {filteredContacts.length === 0 ? (
+                <div className="p-6 text-center text-xs text-zinc-500 space-y-1">
+                  <p>Nenhum contato encontrado.</p>
+                  {chatFilter === 'responded' && (
+                    <p className="text-[11px] text-zinc-600">Nenhum cliente respondeu ainda com este filtro.</p>
+                  )}
                 </div>
-              ))}
+              ) : (
+                filteredContacts.map(c => (
+                  <div
+                    key={c.phone_number}
+                    onClick={() => {
+                      handleSelectContact(c)
+                      setWindowClosedContact(null)
+                    }}
+                    className={`p-3 cursor-pointer transition-colors flex items-center justify-between ${
+                      activeContact?.phone_number === c.phone_number ? 'bg-indigo-600/15 border-l-2 border-emerald-500' : 'hover:bg-zinc-900/60'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300 font-semibold text-xs border border-zinc-700/50 shrink-0">
+                        {(c.name || c.phone_number).substring(0, 2).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <h4 className="text-xs font-semibold text-zinc-200 truncate max-w-[130px]">{c.name || c.phone_number}</h4>
+                          {c.unread_count && c.unread_count > 0 ? (
+                            <span className="px-1.5 py-0.2 text-[9px] bg-emerald-500 text-black font-bold rounded-full animate-pulse shrink-0">
+                              +{c.unread_count}
+                            </span>
+                          ) : c.has_responded ? (
+                            <span className="px-1.5 py-0.2 text-[9px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded font-medium shrink-0">
+                              Respondeu
+                            </span>
+                          ) : null}
+                        </div>
+                        <p className="text-[11px] text-zinc-400 truncate max-w-[160px]">{c.last_message}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 text-[10px] rounded font-medium shrink-0 ${c.status === 'ai' ? 'bg-indigo-500/10 text-indigo-400' : 'bg-emerald-500/10 text-emerald-400'
+                      }`}>
+                      {c.status === 'ai' ? 'IA Ativa' : 'Humano'}
+                    </span>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
@@ -1582,10 +1684,10 @@ export function CrmTab() {
                       {activeContact.name || activeContact.phone_number}
                       <span className="text-[10px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-mono flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Tempo Real Ativo
+                        Live Chat Ativo
                       </span>
                       <span className="text-[10px] text-zinc-400 bg-zinc-800/80 border border-zinc-700/50 px-2 py-0.5 rounded-full font-mono">
-                        WaBlast Oficial
+                        WaBlast / Meta
                       </span>
                     </h4>
                     <p className="text-[10px] text-zinc-400 font-mono">{activeContact.phone_number}</p>
@@ -1641,13 +1743,27 @@ export function CrmTab() {
                     <>
                       {messages.map((m, i) => (
                         <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
-                          <div className={`max-w-[75%] p-3 rounded-xl text-xs ${m.role === 'user' ? 'bg-zinc-800 text-zinc-200 border border-zinc-700/50' : 'bg-indigo-600 text-white shadow-md'
+                          <div className={`max-w-[75%] p-3.5 rounded-xl text-xs ${
+                            m.role === 'user'
+                              ? 'bg-zinc-800/90 text-zinc-100 border border-emerald-500/30 shadow-sm'
+                              : 'bg-indigo-600 text-white shadow-md'
+                          }`}>
+                            <div className={`text-[10px] font-semibold mb-1 flex items-center gap-1 ${
+                              m.role === 'user' ? 'text-emerald-400' : 'text-indigo-200'
                             }`}>
-                            <p className="whitespace-pre-wrap">{m.content}</p>
-                            <span className="text-[9px] opacity-60 mt-1 block text-right font-mono">
+                              {m.role === 'user' ? '👤 Cliente (WhatsApp)' : '🏢 Atendente ScreenAI'}
+                            </div>
+                            <p className="whitespace-pre-wrap leading-relaxed">{m.content}</p>
+                            <span className="text-[9px] opacity-60 mt-1.5 block text-right font-mono">
                               {new Date(m.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
+                        </div>
+                      ))}
+                      <div ref={messagesEndRef} />
+                    </>
+                  )}
+                </div>                </div>
                         </div>
                       ))}
                       <div ref={messagesEndRef} />
